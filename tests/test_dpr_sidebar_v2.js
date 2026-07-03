@@ -245,7 +245,7 @@ function testAxisTabsRenderUnreadCounts() {
   assert.ok(html.includes('data-axis-key="neurips-2024"'));
   assert.ok(html.includes('data-axis-key="neurips-2024" data-unread="0"'));
   assert.ok(html.includes('<span class="dpr-sidebar-axis-tab-unread">0</span>/<span class="dpr-sidebar-axis-tab-total">1</span>'));
-  assert.ok(html.includes('data-axis-section-toggle="daily:date:20260624" aria-expanded="true" data-unread="1"'));
+  assert.ok(html.includes('data-axis-section-toggle="daily:date:20260624" aria-expanded="false" data-unread="1"'));
   assert.ok(!html.includes('dpr-sidebar-axis-section-dot'));
 
   assert.equal(typeof tools.buildAxisViewForMode, 'function');
@@ -867,7 +867,7 @@ function testRenderBodyPutsConferenceAboveDaily() {
   assert.ok(html.includes('data-axis-mode="date"'));
 }
 
-function testTopLevelPanelsDefaultCollapsed() {
+function testTopLevelPanelsDefaultExpanded() {
   const sidebar = loadSidebarForTest('#/conference/neurips-2024/paper-c');
   const tools = sidebar.__test;
   const model = tools.parseSidebar(sampleSidebar);
@@ -875,21 +875,21 @@ function testTopLevelPanelsDefaultCollapsed() {
 
   assert.ok(/data-panel="conference"/.test(html));
   assert.ok(/data-panel="daily"/.test(html));
-  assert.ok(!/dpr-sidebar-group-conference[^"]*is-expanded/.test(html));
-  assert.ok(!/dpr-sidebar-group-daily[^"]*is-expanded/.test(html));
-  assert.ok(/data-panel-toggle="conference" aria-expanded="false"/.test(html));
-  assert.ok(/data-panel-toggle="daily" aria-expanded="false"/.test(html));
+  assert.ok(/dpr-sidebar-group-conference[^"]*is-expanded/.test(html));
+  assert.ok(/dpr-sidebar-group-daily[^"]*is-expanded/.test(html));
+  assert.ok(/data-panel-toggle="conference" aria-expanded="true"/.test(html));
+  assert.ok(/data-panel-toggle="daily" aria-expanded="true"/.test(html));
 }
 
-function testActivePaperDoesNotForceOpenTopLevelPanel() {
+function testActivePaperCanForceOpenTopLevelPanel() {
   const js = fs.readFileSync('app/dpr-sidebar.js', 'utf8');
   const start = js.indexOf('function syncAxisStateToHref(href)');
   const end = js.indexOf('function buildDailyCalendarView', start);
   assert.ok(start > 0 && end > start, 'syncAxisStateToHref should be present');
   const block = js.slice(start, end);
 
-  assert.ok(!block.includes('state.expandedGroups.daily = true'));
-  assert.ok(!block.includes('state.expandedGroups.conference = true'));
+  assert.ok(block.includes('state.expandedGroups.daily = true'));
+  assert.ok(block.includes('state.expandedGroups.conference = true'));
 }
 
 function testPanelHeaderClickOnlyChangesSidebarViewState() {
@@ -912,29 +912,29 @@ function testAxisSectionsAreExpandable() {
   assert.equal(typeof tools.axisSectionStateKey, 'function');
 
   const sectionKey = tools.axisSectionStateKey('conference', 'conf', 'neurips-2024:rl');
-  const expandedHtml = tools.renderBodyHtml(model, {
-    expandedGroups: { conference: true, daily: true },
-    conferenceViewMode: 'conf',
-    dailyViewMode: 'date',
-    activeConference: 'neurips-2024',
-    activeDailyDate: '20260624',
-  });
-
-  assert.ok(/class="[^"]*dpr-sidebar-axis-section-conference[^"]*is-expanded[^"]*"/.test(expandedHtml));
-  assert.ok(expandedHtml.includes(`data-axis-section-toggle="${sectionKey}"`));
-  assert.ok(expandedHtml.includes('aria-expanded="true"'));
-
   const collapsedHtml = tools.renderBodyHtml(model, {
     expandedGroups: { conference: true, daily: true },
     conferenceViewMode: 'conf',
     dailyViewMode: 'date',
     activeConference: 'neurips-2024',
     activeDailyDate: '20260624',
-    collapsedAxisSections: new Set([sectionKey]),
   });
 
-  assert.ok(collapsedHtml.includes('data-axis-section-toggle="' + sectionKey + '" aria-expanded="false"'));
-  assert.ok(!collapsedHtml.includes('dpr-sidebar-axis-section-conference is-expanded" data-axis-section="neurips-2024:rl"'));
+  assert.ok(!/class="[^"]*dpr-sidebar-axis-section-conference[^"]*is-expanded[^"]*"/.test(collapsedHtml));
+  assert.ok(collapsedHtml.includes(`data-axis-section-toggle="${sectionKey}"`));
+  assert.ok(collapsedHtml.includes('aria-expanded="false"'));
+
+  const expandedHtml = tools.renderBodyHtml(model, {
+    expandedGroups: { conference: true, daily: true },
+    conferenceViewMode: 'conf',
+    dailyViewMode: 'date',
+    activeConference: 'neurips-2024',
+    activeDailyDate: '20260624',
+    expandedAxisSections: new Set([sectionKey]),
+  });
+
+  assert.ok(expandedHtml.includes('data-axis-section-toggle="' + sectionKey + '" aria-expanded="true"'));
+  assert.ok(/class="[^"]*dpr-sidebar-axis-section-conference[^"]*is-expanded[^"]*"/.test(expandedHtml));
 }
 
 function testPanelCountsUseFullModel() {
@@ -1263,10 +1263,18 @@ function testAxisToggleCollapsesOnlyItsOwnPanel() {
   assert.ok(start > 0 && end > start, 'axis toggle click handler should be present');
   const block = js.slice(start, end);
 
-  assert.ok(block.includes('state.expandedGroups[axisGroup] = false;'));
+  assert.ok(block.includes('collapseAxisSectionsForGroup(axisGroup);'));
   assert.ok(block.includes('persistCollapse();'));
+  assert.ok(!block.includes('state.expandedGroups[axisGroup] = false;'));
   assert.ok(!block.includes('state.expandedGroups.daily = false;'));
   assert.ok(!block.includes('state.expandedGroups.conference = false;'));
+}
+
+function testExpandedAxisSectionSetSerializesCorrectly() {
+  const js = fs.readFileSync('app/dpr-sidebar.js', 'utf8');
+  assert.ok(js.includes('Array.from(state.expandedAxisSections).forEach(function (key)'));
+  assert.ok(js.includes('sections: state.expandedAxisSections ? Array.from(state.expandedAxisSections) : []'));
+  assert.ok(!js.includes('Array.prototype.slice.call(state.expandedAxisSections)'));
 }
 
 function testReadStatusNormalization() {
@@ -1301,8 +1309,8 @@ testEvidenceCssIsPersistent();
 testSidebarPaperVisualStateCssContract();
 testSidebarStickyHierarchyCssContract();
 testRenderBodyPutsConferenceAboveDaily();
-testTopLevelPanelsDefaultCollapsed();
-testActivePaperDoesNotForceOpenTopLevelPanel();
+testTopLevelPanelsDefaultExpanded();
+testActivePaperCanForceOpenTopLevelPanel();
 testPanelHeaderClickOnlyChangesSidebarViewState();
 testAxisSectionsAreExpandable();
 testPanelCountsUseFullModel();
@@ -1317,6 +1325,7 @@ testPaperLinkClickStoresPendingHrefBeforeRouteChange();
 testStatusClickKeepsPaperRowInPlace();
 testAxisControlClicksKeepSidebarScrollInPlace();
 testAxisToggleCollapsesOnlyItsOwnPanel();
+testExpandedAxisSectionSetSerializesCorrectly();
 testReadStatusNormalization();
 
 console.log('dpr sidebar v2 tests passed');

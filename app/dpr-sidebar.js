@@ -6,7 +6,7 @@
  *
  * UI：
  *   - 顶部工具条：[全部 / 未读] segmented control + 搜索框（debounce 200ms）
- *   - 主体：会议论文 + 日报两个一级面板默认收起，用户分别展开
+ *   - 主体：会议论文 + 日报两个一级面板，面板内第三级目录默认收起
  *   - 阅读状态接入 window.DPRReadStateSync（Supabase）或 localStorage 回退
  *   - hashchange → syncActive() 高亮 + 滚动居中
  */
@@ -19,7 +19,7 @@
   var REFRESH_AFTER_HIDDEN_MS = 5 * 60 * 1000;
   var SEARCH_DEBOUNCE_MS = 200;
   var FILTER_KEY = 'dpr_sidebar_filter_v2';
-  var COLLAPSE_KEY = 'dpr_sidebar_collapse_v3';
+  var COLLAPSE_KEY = 'dpr_sidebar_collapse_v4';
   var WIDTH_KEY = 'dpr_sidebar_width_v2';
   var DEFAULT_SIDEBAR_WIDTH = 280;
   var MIN_SIDEBAR_WIDTH = 240;
@@ -958,6 +958,7 @@
   function syncAxisStateToHref(href) {
     var daily = findDailyRecordByHref(state.model, href);
     if (daily) {
+      state.expandedGroups.daily = true;
       state.activeDailyDate = daily.dateKey;
       state.activeDailyMonth = monthKeyFromDateKey(daily.dateKey) || state.activeDailyMonth;
       var dailyTags = paperTagLabels(daily.paper);
@@ -966,6 +967,7 @@
     }
     var conf = findConferenceRecordByHref(state.model, href);
     if (conf) {
+      state.expandedGroups.conference = true;
       state.activeConference = conf.confKey;
       var confTags = paperTagLabels(conf.paper);
       if (confTags.indexOf(state.activeConferenceTag) === -1) state.activeConferenceTag = confTags[0] || '';
@@ -1177,14 +1179,21 @@
     return new Set();
   }
   function defaultExpandedGroups() {
-    return { conference: false, daily: false };
+    return { conference: true, daily: true };
   }
   function normalizeExpandedGroups(groups) {
     if (!groups || typeof groups !== 'object') return defaultExpandedGroups();
     return {
-      conference: groups.conference === true,
-      daily: groups.daily === true,
+      conference: groups.conference !== false,
+      daily: groups.daily !== false,
     };
+  }
+  function collapseAxisSectionsForGroup(group) {
+    if (!state.expandedAxisSections) state.expandedAxisSections = new Set();
+    var prefix = String(group || '') + ':';
+    Array.from(state.expandedAxisSections).forEach(function (key) {
+      if (String(key).indexOf(prefix) === 0) state.expandedAxisSections.delete(key);
+    });
   }
 
   // ---------- 状态 ----------
@@ -1200,7 +1209,7 @@
     pendingPaperHref: '',
     lastFetchAt: 0,
     expandedGroups: defaultExpandedGroups(),
-    collapsedAxisSections: new Set(),
+    expandedAxisSections: new Set(),
     dailyViewMode: 'date',
     dailyCalendarPlacement: 'top',
     conferenceViewMode: 'conf',
@@ -1235,7 +1244,7 @@
       if (!obj || typeof obj !== 'object') return null;
       return {
         expandedGroups: normalizeExpandedGroups(obj.groups),
-        collapsedAxisSections: Array.isArray(obj.sections) ? new Set(obj.sections) : new Set(),
+        expandedAxisSections: Array.isArray(obj.sections) ? new Set(obj.sections) : new Set(),
       };
     } catch (e) {
       return null;
@@ -1245,7 +1254,7 @@
     try {
       var payload = {
         groups: state.expandedGroups || defaultExpandedGroups(),
-        sections: state.collapsedAxisSections ? Array.prototype.slice.call(state.collapsedAxisSections) : [],
+        sections: state.expandedAxisSections ? Array.from(state.expandedAxisSections) : [],
       };
       window.localStorage && window.localStorage.setItem(COLLAPSE_KEY, JSON.stringify(payload));
     } catch (e) {}
@@ -1406,7 +1415,7 @@
       search: String(vs.search || ''),
       filter: vs.filter === 'unread' ? 'unread' : 'all',
       readMap: vs.readMap || {},
-      collapsedAxisSections: normalizeSet(vs.collapsedAxisSections),
+      expandedAxisSections: normalizeSet(vs.expandedAxisSections),
       currentPaperHref: normalizeRouteHref(vs.currentPaperHref || ''),
       unreadResultPaperIds: normalizePaperIdSet(vs.unreadResultPaperIds),
     };
@@ -1478,7 +1487,7 @@
           toggleLabel: vs.conferenceViewMode === 'tag' ? '按会议' : '按标签',
           totalCount: conferenceTotal,
           unreadCount: conferenceUnread,
-          collapsedAxisSections: vs.collapsedAxisSections,
+          expandedAxisSections: vs.expandedAxisSections,
           readMap: vs.readMap,
           currentPaperId: resultOptions.currentPaperId,
         }));
@@ -1505,7 +1514,7 @@
           toggleLabel: vs.dailyCalendarPlacement === 'top' ? '日历下置' : '日历上置',
           totalCount: dailyTotal,
           unreadCount: dailyUnread,
-          collapsedAxisSections: vs.collapsedAxisSections,
+          expandedAxisSections: vs.expandedAxisSections,
           readMap: vs.readMap,
           currentPaperId: resultOptions.currentPaperId,
         }));
@@ -1533,7 +1542,7 @@
       filter: state.filter,
       readMap: readMap,
       unreadResultPaperIds: state.filter === 'unread' ? ensureUnreadSessionPaperIds(state.model, readMap) : state.unreadResultPaperIds,
-      collapsedAxisSections: state.collapsedAxisSections,
+      expandedAxisSections: state.expandedAxisSections,
     };
     state.bodyEl.innerHTML = renderBodyHtml(state.model, viewState);
     schedulePaperTitleOverflowMarks(state.bodyEl);
@@ -1665,7 +1674,7 @@
     if (isDailyCalendar && calendarPlacement === 'top') {
       html.push(renderDailyCalendar(opts.view && opts.view.calendar, calendarPlacement));
     }
-    html.push(renderAxisContent(opts.group, axisMode, opts.view, opts.collapsedAxisSections, opts.readMap, opts.currentPaperId));
+    html.push(renderAxisContent(opts.group, axisMode, opts.view, opts.expandedAxisSections, opts.readMap, opts.currentPaperId));
     if (isDailyCalendar && calendarPlacement === 'bottom') {
       html.push(renderDailyCalendar(opts.view && opts.view.calendar, calendarPlacement));
     }
@@ -1751,16 +1760,16 @@
     return html.join('');
   }
 
-  function renderAxisContent(group, mode, view, collapsedAxisSections, readMap, currentPaperId) {
+  function renderAxisContent(group, mode, view, expandedAxisSections, readMap, currentPaperId) {
     var html = [];
-    var collapsed = normalizeSet(collapsedAxisSections);
+    var expanded = normalizeSet(expandedAxisSections);
     html.push('<div class="dpr-sidebar-axis-content" data-axis-content="' + safeAttr(group) + '">');
     (view.groups || []).forEach(function (item) {
       var sectionClass = group === 'conference'
         ? ' dpr-sidebar-axis-section-conference'
         : ' dpr-sidebar-axis-section-daily';
       var stateKey = axisSectionStateKey(group, mode, item.key);
-      var isExpanded = !collapsed.has(stateKey);
+      var isExpanded = expanded.has(stateKey);
       var expandedClass = isExpanded ? ' is-expanded' : '';
       var activeSectionClass = (currentPaperId && (item.papers || []).some(function (paper) {
         return paperIdentity(paper) === currentPaperId;
@@ -2122,8 +2131,7 @@
         } else if (axisGroup === 'conference') {
           state.conferenceViewMode = state.conferenceViewMode === 'tag' ? 'conf' : 'tag';
         }
-        if (!state.expandedGroups) state.expandedGroups = defaultExpandedGroups();
-        state.expandedGroups[axisGroup] = false;
+        collapseAxisSectionsForGroup(axisGroup);
         persistCollapse();
         rerenderSidebarBody(rerenderOptionsForAxisControlClick());
         return;
@@ -2192,14 +2200,14 @@
       if (sectionToggle) {
         var sectionKey = sectionToggle.getAttribute('data-axis-section-toggle') || '';
         var section = sectionToggle.closest('.dpr-sidebar-axis-section');
-        if (!state.collapsedAxisSections) state.collapsedAxisSections = new Set();
+        if (!state.expandedAxisSections) state.expandedAxisSections = new Set();
         var openSection;
-        if (state.collapsedAxisSections.has(sectionKey)) {
-          state.collapsedAxisSections.delete(sectionKey);
-          openSection = true;
-        } else {
-          state.collapsedAxisSections.add(sectionKey);
+        if (state.expandedAxisSections.has(sectionKey)) {
+          state.expandedAxisSections.delete(sectionKey);
           openSection = false;
+        } else {
+          state.expandedAxisSections.add(sectionKey);
+          openSection = true;
         }
         if (section) section.classList.toggle('is-expanded', openSection);
         sectionToggle.setAttribute('aria-expanded', openSection ? 'true' : 'false');
@@ -2281,14 +2289,14 @@
 
   // ---------- 启动 ----------
   function determineInitialExpansion() {
-    // 默认收起两个一级面板；用户展开/收起后再尊重本地状态。
+    // 一级面板默认展开；面板内第三级目录默认收起，用户展开后再尊重本地状态。
     var persisted = loadPersistedCollapse();
     if (persisted) {
       state.expandedGroups = persisted.expandedGroups || defaultExpandedGroups();
-      state.collapsedAxisSections = persisted.collapsedAxisSections || new Set();
+      state.expandedAxisSections = persisted.expandedAxisSections || new Set();
     } else {
       state.expandedGroups = defaultExpandedGroups();
-      state.collapsedAxisSections = new Set();
+      state.expandedAxisSections = new Set();
     }
     var href = findActivePaper();
     if (href) syncAxisStateToHref(href);
