@@ -7439,6 +7439,7 @@ body.dpr-sidebar-resizing {
 }
 .dpr-sidebar-calendar-blank,
 .dpr-sidebar-calendar-day {
+  position: relative;
   min-width: 0;
   min-height: 42px;
 }
@@ -7483,19 +7484,27 @@ body.dpr-sidebar-resizing {
   line-height: 1;
 }
 .dpr-sidebar-calendar-day-counts {
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px;
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 5px;
+  display: block;
+  height: 10px;
   font-size: 10.5px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .dpr-sidebar-calendar-day-total {
-  color: #16a34a;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  color: #94a3b8;
   font-weight: 650;
 }
 .dpr-sidebar-calendar-day-unread {
+  position: absolute;
+  left: 0;
+  bottom: 0;
   color: #ef4444;
   font-weight: 700;
 }

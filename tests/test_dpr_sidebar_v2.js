@@ -965,7 +965,23 @@ function testSidebarStickyHierarchyCssContract() {
   assert.ok(/grid-template-columns:\s*repeat\(7,\s*minmax\(0,\s*1fr\)\)/i.test(calendarGridRule));
   const calendarDayRule = cssRule(css, '.dpr-sidebar-calendar-day');
   assert.ok(/min-height:\s*42px/i.test(calendarDayRule));
+  assert.ok(/position:\s*relative/i.test(calendarDayRule));
   assert.ok(/\.dpr-sidebar-calendar-day\s*{[\s\S]*flex-direction:\s*column/i.test(css));
+  const calendarDayCountsRule = cssRule(css, '.dpr-sidebar-calendar-day-counts');
+  assert.ok(/position:\s*absolute/i.test(calendarDayCountsRule));
+  assert.ok(/left:\s*6px/i.test(calendarDayCountsRule));
+  assert.ok(/right:\s*6px/i.test(calendarDayCountsRule));
+  assert.ok(/bottom:\s*5px/i.test(calendarDayCountsRule));
+  assert.ok(/display:\s*block/i.test(calendarDayCountsRule));
+  const calendarDayTotalRule = cssRule(css, '.dpr-sidebar-calendar-day-total');
+  assert.ok(/position:\s*absolute/i.test(calendarDayTotalRule));
+  assert.ok(/right:\s*0/i.test(calendarDayTotalRule));
+  assert.ok(/bottom:\s*0/i.test(calendarDayTotalRule));
+  assert.ok(/color:\s*#94a3b8/i.test(calendarDayTotalRule));
+  const calendarDayUnreadRule = cssRule(css, '.dpr-sidebar-calendar-day-unread');
+  assert.ok(/position:\s*absolute/i.test(calendarDayUnreadRule));
+  assert.ok(/left:\s*0/i.test(calendarDayUnreadRule));
+  assert.ok(/bottom:\s*0/i.test(calendarDayUnreadRule));
 
   const sectionHeaderRule = cssRule(css, '.dpr-sidebar-panel.is-expanded .dpr-sidebar-axis-section-header');
   assert.ok(/position:\s*sticky/i.test(sectionHeaderRule));
