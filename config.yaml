@@ -1,5 +1,5 @@
 github:
-  owner: ''
+  owner: junhao89
   repo: daily-paper-reader
 arxiv_paper_setting:
   mode: standard
@@ -25,3 +25,169 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: Latent-VLA
+      description: Latent空间改进VLA与动作表征
+      enabled: true
+      keywords:
+        - keyword: latent action model
+          keyword_cn: 潜动作模型
+          query: latent action representation learning for vision-language-action robot policies
+        - keyword: vision-language-action
+          keyword_cn: 视觉-语言-动作模型
+          query: vision-language-action models for robotic manipulation and navigation
+        - keyword: latent dynamics
+          keyword_cn: 潜空间动力学
+          query: latent dynamics models for embodied control and action prediction
+        - keyword: JEPA
+          keyword_cn: 联合嵌入预测架构
+          query: joint embedding predictive architecture for visual and action representation
+        - keyword: action tokenization
+          keyword_cn: 动作token化
+          query: discrete latent action tokens and tokenized policies for robot learning
+        - keyword: latent planning
+          keyword_cn: 潜空间规划
+          query: planning and policy learning in latent space for embodied agents
+        - keyword: representation learning robotics
+          keyword_cn: 机器人表征学习
+          query: compact latent representations for visuomotor robot control
+        - keyword: predictive representation
+          keyword_cn: 预测式表征
+          query: predictive latent representations for future-aware VLA policies
+      intent_queries:
+        - query: improving vision-language-action models with latent space action representations
+          query_cn: 在潜空间上改进VLA的动作表征与预测
+          enabled: true
+          source: manual
+          note: ''
+        - query: latent action modeling and compression for robot manipulation policies
+          query_cn: 面向机器人操作的潜动作建模与压缩
+          enabled: true
+          source: manual
+          note: ''
+        - query: joint embedding predictive models applied to vision-language-action learning
+          query_cn: JEPA等预测式潜表征在VLA中的应用
+          enabled: true
+          source: manual
+          note: ''
+        - query: planning and control in latent space for embodied AI agents
+          query_cn: 具身智能体在潜空间中的规划与控制
+          enabled: true
+          source: manual
+          note: ''
+        - query: tokenized or discrete latent actions for generalist robot policies
+          query_cn: 通用机器人策略中的离散/Token化潜动作
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-07-10T07:50:00.000Z'
+    - tag: WAM-VLA
+      description: World Action Model与VLA/WAM联合建模
+      enabled: true
+      keywords:
+        - keyword: world action model
+          keyword_cn: 世界动作模型
+          query: world action models for embodied AI prediction planning and control
+        - keyword: world model robotics
+          keyword_cn: 机器人世界模型
+          query: world models for robot state prediction and model-based control
+        - keyword: action-conditioned world model
+          keyword_cn: 动作条件世界模型
+          query: action-conditioned world models for manipulation and navigation
+        - keyword: video world model
+          keyword_cn: 视频世界模型
+          query: video-based world models for robot imagination and rollout
+        - keyword: imagination policy
+          keyword_cn: 想象策略
+          query: model-based robot policies using imagined latent rollouts
+        - keyword: latent world model
+          keyword_cn: 潜空间世界模型
+          query: latent world models for scalable embodied agent training
+        - keyword: generalist robot policy
+          keyword_cn: 通用机器人策略
+          query: generalist vision-language-action and world model robot policies
+        - keyword: model-based manipulation
+          keyword_cn: 基于模型的操作
+          query: model-based planning and control for dexterous manipulation
+      intent_queries:
+        - query: world action models combined with vision-language-action policies
+          query_cn: WAM与VLA联合建模、预测与控制的最新方法
+          enabled: true
+          source: manual
+          note: ''
+        - query: predicting future observations and actions for robot manipulation
+          query_cn: 面向机器人操作的未来观测与动作联合预测
+          enabled: true
+          source: manual
+          note: ''
+        - query: scaling world models for generalist embodied agents
+          query_cn: 可扩展的世界动作模型与通用具身智能体
+          enabled: true
+          source: manual
+          note: ''
+        - query: imagination-based planning with world action models in robotics
+          query_cn: 基于WAM想象rollout的机器人规划方法
+          enabled: true
+          source: manual
+          note: ''
+        - query: bridging world models and language-conditioned robot policies
+          query_cn: 世界模型与语言条件机器人策略的桥接方法
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-07-10T07:50:00.000Z'
+    - tag: Gen2Embodied
+      description: 视频/图像生成方法迁移到VLA与WAM
+      enabled: true
+      keywords:
+        - keyword: video diffusion policy
+          keyword_cn: 视频扩散策略
+          query: video diffusion and generative models for robot action learning
+        - keyword: flow matching robotics
+          keyword_cn: 流匹配机器人
+          query: flow matching generative models for robot control and trajectory generation
+        - keyword: diffusion transformer
+          keyword_cn: 扩散Transformer
+          query: diffusion transformer architectures for visuomotor and action modeling
+        - keyword: latent diffusion policy
+          keyword_cn: 潜扩散策略
+          query: latent diffusion models for action prediction and world modeling
+        - keyword: text-to-video robotics
+          keyword_cn: 文生视频机器人
+          query: transferring text-to-video and video generation methods to embodied control
+        - keyword: image diffusion control
+          keyword_cn: 图像扩散控制
+          query: image generative models for visuomotor policy and scene understanding
+        - keyword: generative simulator
+          keyword_cn: 生成式仿真器
+          query: generative world simulators as training environments for robot policies
+        - keyword: cross-domain transfer robotics
+          keyword_cn: 跨域迁移机器人
+          query: cross-domain transfer from video and image generation to VLA and WAM
+      intent_queries:
+        - query: applying video generation and diffusion methods to vision-language-action models
+          query_cn: 将视频生成/扩散方法应用到VLA策略学习
+          enabled: true
+          source: manual
+          note: ''
+        - query: using image and video generative models as world simulators for WAM training
+          query_cn: 用图像/视频生成模型作为WAM训练的世界仿真器
+          enabled: true
+          source: manual
+          note: ''
+        - query: flow matching and diffusion transformers for robot action and world modeling
+          query_cn: Flow Matching与DiT在机器人动作/世界建模中的迁移
+          enabled: true
+          source: manual
+          note: ''
+        - query: latent diffusion architectures for embodied action prediction and planning
+          query_cn: 潜扩散架构在具身动作预测与规划中的应用
+          enabled: true
+          source: manual
+          note: ''
+        - query: cross-domain methods from generative AI to world action and VLA systems
+          query_cn: 从AIGC到WAM/VLA系统的跨领域方法迁移
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-07-10T07:50:00.000Z'
