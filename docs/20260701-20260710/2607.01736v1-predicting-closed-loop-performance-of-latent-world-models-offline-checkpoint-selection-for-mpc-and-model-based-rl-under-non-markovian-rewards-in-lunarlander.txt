@@ -1,0 +1,453 @@
+Title: Predicting Closed-Loop Performance of Latent World Models: Offline Checkpoint Selection for MPC and Model-Based RL Under Non-Markovian Rewards in LunarLander
+
+URL Source: https://arxiv.org/pdf/2607.01736v1
+
+Published Time: Fri, 03 Jul 2026 00:34:46 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# Predicting Closed-Loop Performance of Latent World Models: Offline Checkpoint Selection for MPC and Model-Based RL Under Non-Markovian Rewards in LunarLander 
+
+Nikolai Smolyanskiy ∗
+
+Abstract 
+
+We study how to predict the downstream closed-loop performance of a learned latent world model from validation-time diagnostics alone. Choosing the right checkpoint from a world-model training run is difficult: validation loss and multi-step prediction RMSE keep improving long after closed-loop performance has collapsed. We present a suite of structural validation-time diagnostics drawn from optimal-control theory and apply them to Gymnasium’s LunarLander-v3, which features shaped rewards. We train an RSSM [5, 4] world model on it and treat per-checkpoint CEM-MPC return as the oracle for closed-loop quality. By evaluating 40 metrics against this oracle, we find that the strongest single predictor is the Reward Observability Fraction (ROF), which measures the reward predictor’s dependence on the observable subspace. We combine ROF with three structural regularizers into a single-number offline checkpoint-selection score, the Composite Reward Observability Fraction (CROF). The CROF-selected world model trains a model-based A2C policy that beats a fairly evaluated model-free A2C baseline by ∼24 .5 return points while using ∼65 × fewer real-environment interactions, and the same world model also drives a strong zero-shot CEM-MPC policy. Code and data: https: //github.com/nsmoly/LunarLander_RSSM .
+
+# 1 Introduction 
+
+Model-based reinforcement learning promises to reduce the number of real-environment interac-tions needed to learn effective policies by building a predictive model of the environment—a world model —and using it for planning or policy optimization in imagination. The Dreamer or Recurrent State Space Model (RSSM) architecture [5, 4] has become a standard backbone for world models, enabling both online planning via Model Predictive Control (MPC) [5] and policy learning with Reinforcement Learning (RL) through imagined rollouts [4, 6]. A fundamental challenge in model-based RL is objective mismatch [8]: the training objective for the world model (prediction accuracy) does not necessarily align with the downstream objective (closed-loop performance). A model with excellent one-step or even multi-step prediction accuracy may still be unsuitable for planning or policy optimization if its learned latent dynamics lack the structural properties needed for these purposes. In this work, we focus on the LunarLander-v3 Gymnasium environment. It has not been the subject of detailed RSSM/Dreamer-style analysis in prior work and combines two useful properties: an 8-dimensional observation and 4 discrete actions, both small enough to admit direct structural analysis of the learned latent, and—the property that motivates this paper—a reward that is not 
+
+> ∗
+
+Code and experimental data: https://github.com/nsmoly/LunarLander_RSSM .Video: https://youtu.be/4PxHFW_TYUw .
+
+1
+
+> arXiv:2607.01736v1 [cs.LG] 2 Jul 2026
+
+Figure 1: LunarLander-v3: four discrete actions (NOP, left/main/right thruster), 8-D observation, soft-landing objective from a randomized initial state. fully recoverable from the current observation and action alone because of potential-based shaping plus terminal events gated by simulator-internal flags (Section 4.8). LunarLander thus serves as a tractable proxy for the broader class of environments with non-Markovian or shaped reward, where standard one-step prediction metrics turn out to be poor checkpoint-selection criteria. We develop structural diagnostics drawing on classical control theory (controllability, observability, Kalman [7]) and show experimentally that they identify world-model checkpoints that produce substantially better downstream policies than standard model-selection criteria, both for MPC and for model-based actor–critic policy trained in imagination. Our contributions in this work are: 1. A suite of 40 structural validation-time metrics for world-model evaluation, drawing on clas-sical control theory: Jacobian-based controllability/observability analysis (fixed and time-varying linearizations) and three reward/observation subspace-alignment scores. 2. The Composite Reward Observability Fraction (CROF), a single-number offline checkpoint-selection score that combines reward/observation subspace-alignment score with three struc-tural scores (controllability rank, observability rank, open-loop observation error). 3. Experimental evidence on LunarLander-v3 that CROF tracks both zero-shot CEM-MPC returns and downstream A2C training quality, enabling offline selection of better world-model checkpoints for closed-loop use, while standard selection criteria (validation loss, multi-step RMSE, sensitivities) pick overfit checkpoints with poor closed-loop performance. 4. A data-efficiency comparison showing that the CROF-selected world model trains a model-based A2C policy that beats a fairly evaluated model-free A2C baseline using ∼65 × fewer real-environment interactions. 
+
+# 2 Related Work 
+
+Our work draws on three areas: world models for control, the objective mismatch problem in model-based RL, and classical control-theoretic analysis of dynamical systems. 22.1 World Models and Model-Based RL 
+
+The RSSM family — PlaNet [5], Dreamer [4], and DreamerV3 [6] — learns latent dynamics for plan-ning and imagination-based actor–critic training; PETS [2] pairs probabilistic ensemble dynamics with MPC for strong sample efficiency. All of these methods train by maximizing prediction like-lihood and evaluate by downstream task performance, without analyzing the structural properties of the learned dynamics that determine planning quality. 
+
+2.2 Objective Mismatch 
+
+Lambert et al. [8] identified the objective mismatch problem: optimizing a dynamics model for one-step prediction accuracy does not guarantee good downstream closed-loop performance, and proposed re-weighting training objectives as an initial mitigation. Our work proposes a comple-mentary explanation of why this mismatch occurs: prediction accuracy (even multi-step) captures statistical fit, while planning quality depends on the structural alignment between reward-relevant, controllable, and observable subspaces — a geometric property that training losses do not measure. 
+
+2.3 Task-Relevant Representations 
+
+Several works learn representations that preserve task-relevant information at training time: Deep-MDP [3] via bisimulation-inspired losses on reward and transition structure, SOLAR [14] by encour-aging locally linear dynamics for LQR planning from images, and Agarwal et al. [1] via contrastive embeddings of behavioral similarity. These approaches modify the training objective. Our work is complementary: we provide post-hoc validation-time diagnostics that quantify whether the learned structure supports closed-loop planning, regardless of training procedure. 
+
+2.4 Control-Theoretic Analysis of Learned Systems 
+
+Controllability and observability originate with Kalman [7], who showed that the rank of the corre-sponding matrices determines whether a linear system can be fully steered and observed; Moore [9] extended this with balanced realization theory, identifying dimensions that are simultaneously controllable and observable. Sussillo and Barak [13] applied local Jacobian and fixed-point anal-ysis to trained RNNs in neuroscience, revealing interpretable low-dimensional dynamics in high-dimensional recurrent networks. We adapt these tools to the RSSM setting and combine them into scalar reward/observation alignment fractions (RCF, OCF, ROF) used as post-hoc validation-time diagnostics that predict closed-loop performance without environment access. 
+
+# 3 Method 
+
+3.1 World Model Architecture 
+
+We use an RSSM-inspired world model [4, 6] adapted for LunarLander-v3, whose observation is 
+
+p=8-dimensional (6 continuous physics dimensions plus 2 binary leg-contact indicators) with K=4 discrete actions. The RSSM core maintains a deterministic hidden state ht ∈ Rdh (dh=256, single-layer GRU) and a stochastic latent zt ∈ Rdz (dz =16), giving a full latent state st = [ ht; zt] ∈ R272 .Actions at ∈ { 0, 1, 2, 3} are one-hot encoded as ut ∈ R4. The RSSM transition (prior) is 
+
+st+1 = fθ(st, ut) = GRU( ht, [zt; ut]); μprior (ht+1 ), (1) 3the posterior encoder is qθ(zt | ht, ot), and both prior and posterior are 2-layer MLPs (LayerNorm + SiLU) predicting mean and log-std of a diagonal Gaussian; the observation encoder is a 2-layer MLP mapping ot ∈ R8 to a feature vector concatenated with ht for the posterior. 
+
+Structured decoder with heterogeneous heads. Rather than treating all 8 observation di-mensions identically, the decoder uses a shared 2-layer MLP backbone (LayerNorm + SiLU, input 
+
+dh+dz =272) feeding four heads: an MSE-regression physics head ( R6, continuous states), a BCE 
+
+contact head ( R2 logits, sigmoid at inference), a BCE done head ( R1), and a separate 3-layer re-ward MLP ( R272 →256 →256 →1) that operates directly on [ h; z] rather than the shared backbone, so the reward predictor develops its own representation without competing with reconstruction for backbone capacity. The observation decoder is ˆ ot = gθ(st) (physics concatenated with sigmoid of contact logits); the reward predictor is ˆ rt = ρθ(st). 
+
+Training loss. The total loss is a weighted sum: 
+
+L = wrLrecon + wρLrew + wdLdone + wKL LKL , (2) with weights wr=1 .0, wρ=1 .2, wd=0 .5, wKL =1 .0 (KL free-bits floor βKL =0 .5). Lrecon combines MSE for physics and BCE for contacts; Lrew is squared reward error; Ldone is done-flag BCE; 
+
+LKL = KL( qθ∥pθ) is the posterior–prior KL divergence. 
+
+3.2 MPC via Cross-Entropy Method (CEM) 
+
+Since LunarLander-v3 has a discrete action space (4 actions: NOP, left thruster, main engine, right thruster), standard gradient-based planning does not apply. We use the Cross-Entropy Method (CEM) [11] adapted for discrete actions: at each real timestep, CEM iteratively refines a per-step categorical distribution over a planning horizon of H=25 steps. Each iteration samples N =384 candidate action sequences from the current distribution, rolls each one through the world-model prior open-loop while accumulating discounted reward PHk=1 γk−1 ˆrt+k (γ=0 .97), keeps the top 
+
+E=48 elites, and updates the per-step logits toward the elite action frequencies with smoothing factor α=0 .7. After I=4 such iterations, the first action of the best sequence is executed and the procedure repeats at the next real timestep. The planning horizon H=25 matches the rollout horizon used for metric evaluation, so the offline metrics measure exactly the regime CEM operates in. 
+
+3.3 Actor-Critic Policy via Latent Imagination 
+
+Following Dreamer [4], we train an actor–critic policy (A2C) entirely within the latent imagination of the world model. The actor and critic are compact 3-layer MLPs (hidden dimension of 256) that read the latent state [ h; z]; the actor outputs a categorical distribution over the 4 actions, the critic predicts scalar value estimates. Each training step samples a real observation–action sequence from the replay dataset, warms the RSSM posterior up for 5 steps on the real data, then imagines 15 further steps by rolling out the prior with actions sampled from the actor (no observation correction). Value targets are λ-returns [12] ( γ=0 .99, λ=0 .95) computed from the world model’s reward head; the actor is updated by REINFORCE with advantage clipping, the critic by MSE, and entropy is decayed from 0 .5 to 0 .15 over training. We train for 1000 epochs at learning rate 3×10 −5 and batch size 256. Crucially, this stage uses zero additional real-environment interactions :all learning happens in the learned world model on the same offline dataset used to train it. 43.4 Metrics for World Model Quality 
+
+We define metrics in four categories; the full per-metric list with empirical correlations against MPC return is consolidated in Table 1 of Section 4.5. 
+
+3.4.1 Validation Loss Decomposition 
+
+Five standard training diagnostics: val loss (total weighted validation loss as in (2)), its com-ponents val kl (posterior–prior KL) and val recon (physics + contact reconstruction), and the one-step posterior RMSEs post obs rmse and post rew rmse , which measure closed-loop predic-tion quality with encoder corrections. 
+
+3.4.2 Multi-Step Open-Loop Rollout 
+
+These metrics measure what CEM MPC experiences during planning: multi-step prediction qual-ity without encoder corrections. After a 5-step posterior warm-up, the RSSM prior is rolled out for 25 steps using ground-truth actions, with squared errors masked over valid (non-padded, pre-terminal) positions and reduced by a square root. We record nine quantities: observation RMSE at the first horizon step ( ol obs start ), averaged across the horizon ( ol obs avg ), the per-rollout maximum ( ol obs max ), and at the last step ( ol obs end ); the same four for re-ward ( ol rew start , ol rew avg , ol rew max , ol rew end ); and the cumulative-reward RMSE 
+
+ol cumrew err of PHk=1 ˆrt+k against ground truth. 
+
+3.4.3 Jacobian-Based Linear Analysis 
+
+We linearize the transition, decoder, and reward functions around sampled validation states and apply classical control-theoretic analysis [7]. At a state s = [ h; z] with action u, the Jacobians are: 
+
+A = ∂f θ
+
+∂s s,u
+
+∈ Rn×n, B = ∂f θ
+
+∂u s,u
+
+∈ Rn×K , (3) 
+
+C = ∂g θ
+
+∂s s
+
+∈ Rp×n, R = ∂ρ θ
+
+∂s s
+
+∈ R1×n. (4) 
+
+Fixed vs. time-varying linearization. In fixed linearization ( jac prefix), Jacobians A, B, C, R 
+
+are computed once at a sampled state and the controllability/observability matrices use powers Ak:
+
+CH = [ B, AB, . . . , A H−1B], OH = [ C; CA ; . . . ; CA H−1]. In time-varying linearization ( jac dyn 
+
+prefix), fresh Jacobians Ak, B k, C k, R k are computed at each step of an actual latent rollout through the prior and the matrices chain along that rollout. Every Jacobian metric below is computed in both variants; Section 4.6 compares them empirically. 
+
+Spectral and rank summaries. From A and from CH , OH we record six scalar summaries: the mean spectral radius of A (jac spec radius ) and its per-sample maximum ( jac spec radius max ); the effective controllability rank kc (jac ctrl rank ) and its singular-value condition number σ1(CH )/σ kc (CH )(jac ctrl cond ); and the analogous jac obs rank and jac obs cond for OH . Effective ranks use a threshold of 10 −3 relative to the largest singular value. The same six are recorded with the 
+
+jac dyn prefix for time-varying linearization ( jac dyn spec radius , jac dyn spec radius max ,
+
+jac dyn ctrl rank , jac dyn ctrl cond , jac dyn obs rank , jac dyn obs cond ). 5Subspace alignment metrics. SVD the controllability and observability matrices as CH =
+
+UcΣcV ⊤ 
+
+> c
+
+and OH = UoΣoV ⊤ 
+
+> o
+
+. Let U (k) 
+
+> c
+
+∈ Rn×kc and V (k) 
+
+> o
+
+∈ Rn×ko be the controllable and observable subspace bases, r = R⊤ ∈ Rn the reward gradient, ∥·∥ F the Frobenius norm, and ∥·∥ the Euclidean norm. The three subspace-alignment scores are: 
+
+• Reward Controllability Fraction (RCF) : fraction of the reward gradient’s energy in the controllable subspace. RCF = ∥U (k)⊤ 
+
+> c
+
+r∥2
+
+∥r∥2 ∈ [0 , 1] . (5) 
+
+• Observation Controllability Fraction (OCF) : fraction of the decoder’s sensitivity in the controllable subspace. OCF = ∥C U (k) 
+
+> c
+
+∥2
+
+> F
+
+∥C∥2
+
+> F
+
+∈ [0 , 1] . (6) 
+
+• Reward Observability Fraction (ROF) : fraction of the reward gradient’s energy in the observable subspace. ROF = ∥V (k)⊤ 
+
+> o
+
+r∥2
+
+∥r∥2 ∈ [0 , 1] . (7) Each score is recorded for both linearizations: jac rcf , jac ocf , jac rof (fixed) and jac dyn rcf ,
+
+jac dyn ocf , jac dyn rof (time-varying). 
+
+Connection to control theory. Controllability and observability are classical prerequisites for optimal control [7] and carry over directly to MPC and latent-imagination RL, which both roll out the world model through its prior. ROF is the key metric in this regime: it measures the fraction of the reward gradient that lies in the observable subspace, i.e. in the directions that would normally be corrected by the encoder but drift uncorrected during open-loop imagination (see Section 4.7 for the full mechanism). 
+
+Curated state sampling. The ROF score is additionally computed twice per linearization: on “good” (return ≥ +100) and “bad” (return ≤ − 100) validation sequences, giving jac rof (good, fixed) and jac rof bad (bad, fixed), and analogously jac dyn rof and jac dyn rof bad for time-varying. Splitting the classes avoids the seed-dependent batch-composition variance produced by uniform mixing. The headline state-aware metric is the convex combination 
+
+jac rof combined = α · jac rof + (1 − α) · jac rof bad , (8) with α=0 .5 throughout (a sweep confirms a broad optimum near α∈[0 .3, 0.5]). 
+
+3.4.4 Empirical Sensitivity Metrics 
+
+These use finite-difference estimation rather than Jacobians: emp C is the mean pairwise distance between next states produced by different actions (action sensitivity); emp O is the transition re-sponse to perturbations in z (state-perturbation sensitivity); and emp L is the maximum over sampled state pairs of ∥fθ(s1, u) − fθ(s2, u)∥/∥s1 − s2∥ (the max captures localized blow-ups that the mean would dilute). Together with the two CROF composites defined in Section 3.5, these complete the suite at 5 + 9 + 21 + 3 + 2 = 40 metrics per checkpoint. 63.5 Composite Reward Observability Fraction (CROF) 
+
+jac rof combined is the strongest single predictor of MPC performance, but at undertrained check-points the latent is barely organized and ROF can be artificially small. We therefore introduce the 
+
+Composite Reward Observability Fraction (CROF) , combining ROF with three structural regularizers. We report two variants that share the same four components but use different relative weights: CROF-A = ]ROF + 1 .0 · (1 − ekc) + 1 .0 · (1 − eko) + 1 .0 · eeobs , (9) CROF-B = ]ROF + 0 .5 · (1 − ekc) + 0 .5 · (1 − eko) + 0 .5 · eeobs , (10) where f(·) denotes min–max normalization across all checkpoints, ROF = jac rof combined from (8), 
+
+kc = jac ctrl rank , ko = jac obs rank , and eobs = ol obs avg is the open-loop observation RMSE averaged across all rollout steps. Lower CROF = better checkpoint ; all four normal-ized terms are oriented so that smaller is better. 
+
+Rationale. ROF is the primary signal; the three regularizers protect against degenerate corners of it: (1 −kc) penalizes low controllability rank, (1 −ko) penalizes low observability rank, and eobs 
+
+penalizes high open-loop observation RMSE (a sanity check on the dynamics). CROF-A and CROF-B differ only in how heavily these regularizers are weighed against the dominant ROF term; we report both as a transparent ablation rather than picking a single recipe a priori. 
+
+# 4 Experiments 
+
+4.1 Environment and Data 
+
+We use Gymnasium’s LunarLander-v3 (Section 3.1). The reward decomposes into per-step shaping plus terminal events; we give the explicit formula and analyze its observability in Section 4.8. We collected 872 human-piloted episodes (180 ,916 environment steps; 158 ,685 train + 22 ,231 validation), split 750 /122 train/val (32 ,038/4 ,500 valid sequence positions at length 30, stride 5). Two pilots took turns to introduce stylistic diversity, and the mix deliberately covers clean landings, near-misses, and crashes so the world model sees both reward-positive and reward-negative regimes. The dataset is collected once and reused for all model-based training and metric evaluation. 
+
+4.2 World Model Training 
+
+The RSSM world model (WM) is trained for 500 epochs with learning rate 10 −4 (AdamW), batch size 64, sequence length 30 at stride 5, KL free-bits floor βKL =0 .5, and loss weights as in (2). Checkpoints are saved every 5 epochs, yielding 100 for evaluation. All random seeds in this paper (dataloader shuffling, MPC and A2C evaluation episodes, metric sampling, model initialization) are fixed to 12345 so every pair of reported numbers uses identical random draws. 
+
+4.3 MPC Evaluation and Metrics 
+
+Each of the 100 world model checkpoints (epochs 5, 10, . . . , 500) is evaluated using CEM-MPC (Section 3.2) with deterministic seeding for 20 episodes per checkpoint. We report the mean return across these 20 episodes. CEM parameters: horizon H=25, population N =384, elites E=48, iterations I=4, smoothing α=0 .7, planning discount γ=0 .97. 7All metrics from Section 3.4 are computed for each of the 100 checkpoints on the validation set. Per-class ROF metrics additionally use the curated good ( R≥+100, 2 ,713 stride-1 positions) and bad ( R≤− 100, 1 ,027 positions) subsets. Jacobian analysis uses NJ =128 sampled latent states per checkpoint (per state-class for the curated metrics), each collected after a 5-step posterior warm-up, with a 25-step rollout horizon matching the CEM planning horizon. 
+
+4.4 MPC Performance Over Trained World Model Checkpoints 
+
+Figure 2 shows CEM-MPC performance across all 100 world model checkpoints. Per-checkpoint mean returns are highly variable (std ≈ 80–120 across 20 episodes, dominated by LunarLander’s stochastic initial conditions), so we use the 7-point moving-average (MA-7) curve — 140 pooled episodes per smoothed point — as the selection oracle. Three regimes emerge: 
+
+• Early-training / improving (≲200): the raw curve has occasional spikes (e.g. epoch 60 at +173 .5) but the smoothed curve stays below +100 throughout, so these are noisy outliers rather than usable checkpoints. 
+
+• Smoothed peak : the MA-7 mean peaks at epoch 310 (+153 .0) over a broad plateau spanning epochs ∼260–320. Selecting the right checkpoint inside this plateau is what CROF is designed to do offline. 
+
+• Late-training collapse (≳380): the smoothed return drops sharply (e.g. epoch 405 at 
+
+−55 .4). The collapse is invisible to standard training metrics (validation loss, multi-step RMSE), which keep improving monotonically. 
+
+Figure 2: CEM-MPC performance across 500 epochs of world-model training (20 test episodes per checkpoint; 140 pooled per MA-7 point). Bold/faint blue: MA-7-smoothed and raw mean. Green: MA-7-smoothed median. Light band: MA-7 min–max envelope (a few extreme points are clipped). The smoothed mean peaks near epoch 310 and collapses after epoch 380. 
+
+4.5 Metric Correlation Analysis 
+
+We compute Pearson r, Spearman ρs, and quadratic R2 
+
+> q
+
+for each metric against the smoothed MPC mean return (7-point moving average). Table 1 consolidates the 40-metric suite from Section 3.4 into 8one ranked reference: each row lists what the metric measures and its three correlation scores, with strongly correlated rows in bold. Throughout the paper we use the thresholds strong : |ρs| ≥ 0.30, 
+
+moderate : 0.10 ≤ | ρs| < 0.30, and weak : |ρs| < 0.10. Figure 6 in Appendix A shows the same Spearman correlations as a bar chart across all 40 metrics, and Figure 7 in the same appendix shows each metric’s full curve over training (only the ROF family traces MPC’s rise–peak–collapse U-shape). ROF based metrics have the strongest correlation with the MPC returns, with Spearman 
+
+ρs in the range −0.71 ≤ ρs ≤ − 0.395. Some metrics like the validation loss have weak correlation with MPC returns, see Table 1. 
+
+4.6 Fixed vs. Time-Varying Jacobian Analysis 
+
+Contrary to our initial expectation, the fixed linearization is the stronger MPC predictor. The clear-est case is ROF: jac rof (fixed, good states) reaches ρs=−0.65, R2 
+
+> q
+
+=0 .48 vs. ρs=−0.48, R2 
+
+> q
+
+=0 .23 for jac dyn rof , and the gap on the bad-state subscore widens to ρs=−0.69 vs. −0.40 (numbers from Table 1). The remaining structural sub-metrics (spec radius, ctrl/obs rank, RCF, OCF) are weakly correlated in both variants and neither wins consistently. We believe the fixed variant wins because chaining H−1 Jacobians along an open-loop rollout compounds linearization error while CEM-MPC re-plans each step, so a single Jacobian at the current warm-up-grounded state is closer to the regime CEM actually operates in. We therefore drop time-varying metrics from the CROF formulation; they remain available in the released code. 
+
+4.7 ROF as a Predictor of MPC Performance 
+
+jac rof combined is the strongest single predictor in our suite: ρs = −0.71 ( N =100, p ≲ 10 −15 ,
+
+R2 
+
+> q
+
+= 0 .52; visualized in Figure 3). Both per-class subscores are strong on their own ( ρs of −0.65 for good states, −0.69 for bad states), so the combined score rests on two largely independent pieces of evidence rather than a single regression artefact. 
+
+Analysis. ROF measures how much of the reward gradient lies in the observable subspace. The posterior anchors that subspace during training using real observations, but CEM-MPC and latent-imagination A2C roll the prior in imagination for H=25 steps with no encoder corrections, so the observable directions drift uncorrected. A reward head that reads predominantly from those directions (high ROF) therefore degrades along the rollout, while a head that reads from the complementary subspace (low ROF) remains accurate. Section 4.8 confirms that LunarLander’s reward sits exactly in this regime: ∼71% of per-step reward variance is unrecoverable from ( ot, a t)alone, so a well-trained world model must encode that part outside the observation-decoder column space. 
+
+4.8 Reward Predictability from Observations 
+
+LunarLander’s per-step reward, taken from the Gymnasium reference implementation, 1 has the form 
+
+rt = ϕ(ot+1 ) − ϕ(ot)
+
+| {z }
+
+> PBRS shaping
+
+− cmain ⊮[at=main] − cside ⊮[at∈{ L,R }] + rterm  
+
+> t
+
+, (11) with shaping potential ϕ(o) = −100( ∥p∥+∥v∥)−100 |θ|+10(leg 1 +leg 2) defined on the visible state, (cmain , c side ) = (0 .30 , 0.03), and rterm  
+
+> t
+
+∈ {− 100 , +100 , 0} awarded only at episode end and gated by 
+
+> 1https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/box2d/lunar_lander.py
+
+9Metric What it measures Pearson r Spearman ρs R2
+
+> q
+
+Strong predictors ( |ρs| ≥ 0.30 , bold) 
+
+jac rof combined 0.5·jac rof +0 .5·jac rof bad , state-aware ROF 
+
+−0.683 −0.710 0.520 
+
+jac rof bad Fixed-Jacobian ROF on bad (low-return) sequences 
+
+−0.656 −0.692 0.434 
+
+jac rof Fixed-Jacobian ROF on good (high-return) sequences 
+
+−0.558 −0.648 0.479 CROF-B Composite: ROF + 0 .5× rank/OL-err reg-ularizers 
+
+−0.495 −0.568 0.421 
+
+jac dyn rof Time-varying ROF on good sequences −0.467 −0.477 0.229 CROF-A Composite: ROF + 1 .0× rank/OL-err reg-ularizers 
+
+−0.375 −0.443 0.243 
+
+jac dyn rof bad Time-varying ROF on bad sequences −0.277 −0.395 0.182 
+
+ol rew end Open-loop reward RMSE at horizon step 25 +0.272 +0.301 0.101 
+
+val kl KL component of validation loss +0.206 +0.300 0.064 
+
+Moderate predictors ( 0.10 ≤ | ρs| < 0.30 )
+
+jac dyn obs cond Condition number of time-varying observ-ability matrix +0 .243 +0 .273 0.074 
+
+val recon Reconstruction component of validation loss 
+
+−0.082 −0.184 0.018 
+
+jac spec radius Spectral radius of fixed-Jacobian dynamics −0.157 −0.172 0.055 
+
+emp L Max-Lipschitz of fθ over state pairs +0 .327 +0 .154 0.110 
+
+emp O State-perturbation sensitivity (finite-difference) +0 .104 +0 .130 0.051 
+
+ol rew start Open-loop reward RMSE at horizon step 1 −0.156 −0.128 0.086 
+
+Representative weak / near-zero baselines ( |ρs| < 0.10 )
+
+val loss Total weighted validation loss +0 .029 +0 .090 0.015 
+
+post obs rmse One-step posterior observation RMSE −0.084 +0 .012 0.010 
+
+post rew rmse One-step posterior reward RMSE +0 .028 +0 .085 0.018 
+
+ol obs avg Open-loop observation RMSE averaged over horizon 
+
+−0.087 +0 .017 0.011 
+
+ol cumrew err Open-loop cumulative-reward RMSE +0 .002 +0 .107 0.062 
+
+jac ctrl rank Effective controllability rank (fixed Jaco-bian) +0 .113 +0 .015 0.013 
+
+emp C Action sensitivity (finite-difference) +0 .069 −0.093 0.029 
+
+Table 1: Representative metrics from the 40-metric suite (Section 3.4), ranked by Spearman |ρs|
+
+against smoothed MPC mean return (MA-7, N =100 checkpoints). To save space we only list the most informative metrics by correlation and a few additional metrics included by relevance (standard training/prediction baselines, control-theoretic ranks, finite-difference sensitivities); the remaining ∼18 metrics not listed all sit inside the weak band. Top block (bold): the 9 strongly correlated metrics — the ROF/CROF family dominates, joined by ol rew end and val kl . Middle block: 6 moderately correlated metrics. Bottom block: 7 near-zero baselines, where all standard training and one-step-prediction metrics fall. Equations: jac rof combined (8), ROF (7), CROF-A/B (9)/(10). 10 Figure 3: ROF analysis. Top-left: smoothed MPC return (blue) vs. inverted jac rof combined 
+
+(red), with vertical lines at the smoothed MPC peak (epoch 310) and the smoothed 
+
+jac rof combined minimum (epoch 265). Top-right: per-checkpoint scatter with quadratic fit, exhibiting the characteristic U-shape (smoothed Spearman ρs= − 0.71, R2 
+
+> q
+
+=0 .52). Bottom-left: checkpoint selection comparison — the MA-7-smoothed jac rof combined minimum and the MA-7-smoothed CROF-A and CROF-B picks all sit inside or adjacent to the high-MPC plateau (raw minima in Table 2). Bottom-right: subspace alignment metrics (RCF, OCF, ROF) vs. epoch. 11 Box2D-internal flags ( game over , lander.awake ) absent from ot. Two pieces of this expression— the ϕ(ot+1 ) term and rterm  
+
+> t
+
+—are structurally not recoverable from ( ot, a t), which is what we measure below. To measure how much of rt is recoverable from observations alone, we trained MLP regressors (two hidden layers of 256 units, ReLU, AdamW, MSE loss) on the same dataset, in four input configurations and computed R2 score for each that measures the percentage of the data the model can explain from its input. We got the following results: R2: 0 .290 for ( ot, a t) input alone, 0 .670 when terminal events are filtered out (steps where done=1 which account <1% of data), 0 .595 when 
+
+ot+1 is added, and 0.971 when both terminals are filtered and ot+1 is added. Reading the decomposition: ( ot, a t) alone leaves ∼ 71% of per-step reward variance unexplain-able; adding ot+1 and filtering terminals recovers more reward. A sequence-model latent can track the missing context from the trajectory history, so the reward head must read from directions outside the observation-decoder column space. ROF measures the fraction of the reward gradient that lies inside that column space, so lower ROF marks the checkpoints where the reward head has moved its computation to where it belongs. 
+
+Reacher: a Markovian-reward contrast. As a sanity check on the structural argument, we re-ran the same MLP regression and the same Jacobian-based diagnostic suite on a Gymnasium Reacher world model trained with an identical RSSM setup. Predicting rt from ( ot, a t) alone gives MLP validation R2 = 0 .9998: Reacher’s reward is fully Markovian in the observation–action pair. Correspondingly, jac rof combined is essentially uninformative about closed-loop performance — Spearman ρs = +0 .143 against smoothed MPC return ( R2 
+
+> q
+
+= 0 .265), opposite in sign to LunarLan-der’s −0.71, and MPC return rises nearly monotonically over training rather than tracing the LunarLander U-shape (Figure 4). On this task there is no checkpoint-selection problem for ROF to solve: standard one-step prediction metrics work fine. 
+
+Figure 4: Reacher contrast. Smoothed MPC return (blue) and inverted jac rof combined (red) over training on a Gymnasium Reacher world model trained with the identical RSSM setup. Both curves rise nearly monotonically; there is no U-shape and no late-training collapse, and the rank correlation between the two ( ρs = +0 .143, R2 
+
+> q
+
+= 0 .265) is weak and of the opposite sign to Lu-narLander. 
+
+When ROF carries signal. The structural condition for ROF to be informative appears to be that the reward is not Markovian in ( ot, a t), so a well-trained world model has to encode 12 reward-relevant quantities in latent directions outside the observation-decoder column space. This class includes tasks with PBRS shaping [10], tasks whose terminal or sparse rewards depend on hidden simulator state, and partially observed control tasks more generally. LunarLander is a representative example of such setups. We therefore present CROF as a metric targeting this practically common structural condition rather than as a domain-agnostic rule. 
+
+4.9 Checkpoint Selection via CROF and Structural Insights 
+
+Table 2 compares checkpoint-selection criteria: the smoothed-MPC oracle, raw and smoothed-min picks of the structural metrics, and representative weak baselines; Figure 5 plots smoothed CROF-A and CROF-B against MPC return with the same picks marked.                              
+
+> Selection rule Epoch selected MPC return
+> Oracle baseline
+> Best smoothed MPC (oracle, MA-7) 310 +153 .0
+> Structural / proposed metrics
+> Min CROF-A (raw) 280 +162 .8Min CROF-A (smoothed MA-7) 315 +148 .1Min CROF-B (raw) 280 +162 .8Min CROF-B (smoothed MA-7) 270 +117 .5Min jac rof combined (raw) 250 +115 .8Min jac rof combined (smoothed MA-7) 265 +156 .5
+> Standard / weak baselines
+> Min val loss 470 +79 .3Min post rew rmse 470 +79 .3Min ol obs end 495 +55 .9Min ol cumrew err 460 +2 .9Max emp C485 +15 .6Max jac ctrl rank 445 +115 .8
+
+Table 2: Checkpoint selection comparison. The smoothed (MA-7) MPC oracle peaks at epoch 310 with a plateau over epochs 260–320; both CROF variants’ raw-minimum picks (epoch 280) land inside it. The pure-ROF baseline ( jac rof combined ) picks epoch 250 raw / 265 smoothed — only the smoothed pick is in the plateau, motivating the CROF auxiliary terms. All standard criteria pick deeply overfit checkpoints (epoch ≥ 460) with MPC returns of +3 to +79. ROF and CROF are also the only metrics whose informativeness peaks in the regime one would actually select from: a phase-wise breakdown shows jac rof combined reaches Pearson r=−0.65 in mid-training (epochs 100–300) versus −0.20 early and −0.32 late. Two observations from the Jacobian analysis tell the broader story. First, controllability is low-dimensional: kc ≈ 33–47 out of n=272 latent dimensions ( ∼12–17%), with the GRU’s gating preserving historical context in the rest. Second, overfitting is structural : multi-step prediction RMSE keeps improving long after the rewards/observations/controllable subspaces have drifted out of alignment, which is what hurts closed-loop MPC. 
+
+4.10 Model-Based Actor-Critic Policy Training Performance 
+
+To test whether the CROF-driven checkpoint selection (Section 4.9) translates into competitive downstream model-based A2C policies, we train one A2C agent per world-model (WM) checkpoint 13 Figure 5: CROF composite score over training. Left: smoothed MPC return (blue) vs. smoothed CROF-A (red, lower-is-better axis inverted). Right: same for CROF-B. Vertical lines mark the smoothed MPC oracle (blue dashed, epoch 310), the MA-7-smoothed CROF minimum (red dashed: CROF-A at 315, CROF-B at 270), and the raw CROF minimum (red dotted: 280 for both variants); see Table 2. over a purposive sample of nine WMs that includes the CROF-A/B and pure-ROF picks alongside oracle, plateau, pre-plateau, and three early-training references (per-WM selection rules in Table 3; WM 60 is the raw-MPC outlier from Section 4.4). A uniform sweep over all 100 WMs would be prohibitive. All nine runs share the hyperparameters of Section 3.3 (1000 epochs, a checkpoint every 50 epochs, seed 12345), and every saved actor is evaluated on 100 deterministic episodes in the real environment (seed sequence 12345+ k, k = 0 , . . . , 99, max 600 steps) reporting mean, worst-case, catastrophic failures (return <−100), and perfect landings (return ≥+200, the LunarLander “solved” threshold). Table 3 reports, per WM checkpoint, the A2C checkpoint with the highest mean return (“best-by-mean”, BBM) and the checkpoint with the highest worst-case return (“safest-by-worst”, SBW); SBW is the more practically useful pick for deployment, where worst-case behavior matters.                                                                                                                            
+
+> Best-by-mean A2C checkpoint Safest-by-worst A2C checkpoint WM Selection rule Ep. Mean Worst Catas Perfect Ep. Mean Worst Catas Perfect #safe
+> 50 early training 550 +178 .3−120 .8564 900 +141 .3−74 .7047 1/20 60 raw-MPC outlier 500 +206 .3−157 .3579 600 +182 .1−154 .7873 0/20 100 early training 800 +223 .3−108 .0185 200 +65 .0−80 .2025 3/20 200 pre-plateau reference 1000 +191 .4−184 .2370 300 +149 .1−111 .3143 0/20 250 min jac rof combined (raw) 300 +141 .0−161 .2126 200 +127 .3−104 .8128 0/20
+> 280 min CROF-A, CROF-B (raw) 800 +217 .5−178 .9279 300 +191 .3−39 .6071 2/20 300 plateau midpoint 850 +205 .9−95 .5074 600 +138 .3−63 .1049 7/20
+> 310 smoothed-MPC oracle 1000 +209 .6−131 .0275 400 +196 .0−40 .4052 3/20
+> 315 min CROF-A (sm. MA-7) 800 +178 .0−203 .5163 700 +133 .1−72 .1047 1/20
+
+Table 3: A2C training outcomes across purposively sampled world-model checkpoints, 100 deter-ministic episodes per A2C checkpoint (bold rows mark CROF metric-driven picks). Ep. is the AC training epoch of the reported checkpoint; mean /worst are mean and worst-case return; catas 
+
+counts episodes with return < −100, perfect counts ≥ +200; #safe is the number of A2C check-points (out of 20) with 0 catastrophic episodes. The best-by-mean (BBM) and safest-by-worst 
+
+(SBW) blocks report, respectively, the A2C checkpoint with the highest mean and the checkpoint with the highest worst-case return. 14 Analysis. A deployable WM is one whose BBM and SBW checkpoints both report a high mean. By that joint criterion CROF’s raw pick WM 280 wins: BBM +217 .5 and SBW +191 .3 with a 
+
+∼26-point peak-to-safe gap, found offline with no environment evaluation. The smoothed-MPC oracle (WM 310) is comparable but requires the full MPC sweep to identify. WM 100 is the trap that the BBM column alone hides: highest BBM (+223 .3), but its SBW checkpoint collapses to +65 .0 — a ∼158-point peak-to-safe gap. WM 250 (raw min of jac rof combined alone) is the weakest deployable WM, showing that CROF’s auxiliary terms are doing real work: they nudge the selection out of the local-ROF dip at WM 250 into the structurally good region around WM 280. 
+
+4.11 Model-Free Actor-Critic Policy 
+
+As a baseline, we train a model-free A2C agent (MF-AC) that interacts directly with the real environment. Actor and critic are 3-layer MLPs of width 256 over the raw observation; training runs for 1000 epochs at 50 episodes per epoch (50 ,000 total episodes, ≈ 18 .4M transitions, mean episode length ≈ 368), with learning rate 3 ×10 −4, γ=0 .99, λ=0 .95, entropy decayed from 0 .2 to 0.01. MF-AC is evaluated with the same 100-episode protocol used for WM-AC, but with LunarLan-der’s standard 1000-step horizon (WM-AC and MPC use a 600-step cap matching MPC’s per-step inference budget) to give the baseline its strongest evaluation. MF-AC peaks at AC epoch 760 with mean return + 193 .04 (54 /100 perfect, 0/100 catastrophic, worst −35 .55) and forms a reliable plateau over epochs ∼610–910 in the +170 to +195 band. The head-to-head against WM-AC is reported in Table 4: MF-AC has the tightest worst-case, while WM-AC has higher mean and more perfect landings at a fraction of the data cost. 
+
+4.12 Data Efficiency Comparison 
+
+We measure training data efficiency cost for CEM-MPC, WM-AC, and MF-AC. We use real envi-ronment steps so they are compared on the same axis. All model-based methods share the same offline dataset (180 ,916 steps over 872 episodes); MF-AC’s cost is the cumulative transition count up to its best epoch 760. Table 4 summarizes the result.                                   
+
+> Method Env. steps Mean Worst Perfect Catast. Data vs. MF-AC
+> MPC (smoothed best, WM 310) 180 ,916 +166 .60 −138 .52 64 /100 3/100 65 .3×fewer WM-AC (CROF raw, WM 280, A2C ep 800) 180 ,916 +217 .48 −178 .86 79 /100 2/100 65 .3×fewer WM-AC (CROF-A smooth, WM 315, A2C ep 800) 180 ,916 +178 .01 −203 .47 63 /100 1/100 65 .3×fewer MF-AC (peak @ ep 760) 11 ,820 ,726 +193 .04 −35 .55 54 /100 0/100 1×(baseline)
+
+Table 4: Real environment-step cost vs. deterministic-policy mean return (100 episodes per check-point). MPC and WM-AC use a 600-step cap matching MPC’s inference budget; MF-AC uses the standard 1000-step LunarLander-v3 horizon under which it was trained. All model-based methods reuse the same 872-episode offline dataset (180 ,916 env. steps). Perfect = return ≥+200 (“solved”); Catast. = return <−100. Each WM-AC row reports the BBM A2C checkpoint inside the corresponding CROF-selected WM (Table 3). The CROF raw pick ( WM 280) is the strongest model-based result, beating MF-AC’s peak by ∼24 .5 points at ∼65 × fewer real environment inter-actions; MF-AC is the only method with 0 /100 catastrophic but at two orders of magnitude higher data cost. 
+
+Analysis. The CROF raw WM-AC pick (WM 280, identified offline) reaches peak mean + 217 .48 
+
+and requires ∼65 .3× fewer real-environment interactions than MF-AC; CEM-MPC on the same 15 WM family already reaches + 166 .6 at n=100 with no policy training. At inference time, the trained A2C policy is ∼1000 × cheaper to execute than CEM-MPC, which runs 4 iterations of 384 rollouts 
+
+× 25 steps at every real timestep. This confirms substantially higher training-data efficiency for the world-model-based methods. 
+
+# 5 Conclusion 
+
+We presented a study of validation-time metrics for predicting the closed-loop performance of a learned latent world model, using LunarLander-v3 as the testbed and the Composite Reward Ob-servability Fraction (CROF) as a candidate single-number score for offline checkpoint selection. On this task CROF tracks both CEM-MPC and model-based A2C performance, while standard criteria (validation loss, multi-step RMSE, empirical sensitivities) instead pick deeply overfit checkpoints where MPC has poor closed-loop performance. The CROF raw pick (WM 280) yields a model-based A2C with peak mean return + 217 .5
+
+(79 /100 perfect landings) — ∼24 .5 points above the model-free A2C baseline (+193 .0) at ∼65 ×
+
+fewer real-environment interactions. The smoothed-MPC oracle (WM 310, identifiable only via the full MPC sweep) yields a comparable WM-AC peak of +209 .6, so on this task CROF matches an oracle pick at zero real-environment-selection cost. 
+
+Scope and limitations. All quantitative claims here are on a single environment (LunarLander-v3). The mechanistic argument for ROF leans on the specific structure of LunarLander’s reward (per-step shaping plus terminal events gated by simulator-internal flags), so we expect ROF to carry less signal on tasks whose reward is fully Markovian in ( ot, a t) — a Reacher control we report in Section 4.8 confirms this directionally (MLP R2 = 0 .9998, ROF Spearman ρs = +0 .143). We therefore present CROF as a metric that targets a specific, but practically common, structural condition where rewards are non-Markovian or shaped rather than as a domain-agnostic metric. 
+
+Future work. Natural extensions include cross-environment validation (continuous actions, higher-dimensional observations, varied reward structures), using a ROF-like term as an auxiliary training regularizer, and developing an analogous offline metric for A2C-policy checkpoint selection — an obvious gap in the current pipeline, where the final actor checkpoint still requires real-environment evaluation. 
+
+# References 
+
+[1] Rishabh Agarwal, Marlos C. Machado, Pablo Samuel Castro, and Marc G. Bellemare. Con-trastive behavioral similarity embeddings for generalization in reinforcement learning. In In-ternational Conference on Learning Representations (ICLR) , 2021. [2] Kurtland Chua, Roberto Calandra, Rowan McAllister, and Sergey Levine. Deep reinforcement learning in a handful of trials using probabilistic dynamics models. In Advances in Neural Information Processing Systems (NeurIPS) , volume 31, 2018. [3] Carles Gelada, Saurabh Kumar, Jacob Buckman, Ofir Nachum, and Marc G. Bellemare. Deep-MDP: Learning continuous latent space models for representation learning. In International Conference on Machine Learning (ICML) , pages 2170–2179. PMLR, 2019. 16 [4] Danijar Hafner, Timothy Lillicrap, Jimmy Ba, and Mohammad Norouzi. Dream to control: Learning behaviors by latent imagination. In International Conference on Learning Represen-tations (ICLR) , 2020. [5] Danijar Hafner, Timothy Lillicrap, Ian Fischer, Ruben Villegas, David Ha, Honglak Lee, and James Davidson. Learning latent dynamics for planning from pixels. In International Conference on Machine Learning (ICML) , pages 2555–2565. PMLR, 2019. [6] Danijar Hafner, Jurgis Pasukonis, Jimmy Ba, and Timothy Lillicrap. Mastering diverse do-mains through world models. arXiv preprint arXiv:2301.04104 , 2023. [7] Rudolf E. Kalman. Mathematical description of linear dynamical systems. Journal of the Society for Industrial and Applied Mathematics, Series A: Control , 1(2):152–192, 1963. [8] Nathan Lambert, Brandon Amos, Omry Yadan, and Roberto Calandra. Objective mismatch in model-based reinforcement learning. In Proceedings of the 2nd Conference on Learning for Dynamics and Control (L4DC) , pages 761–770. PMLR, 2020. [9] Bruce C. Moore. Principal component analysis in linear systems: Controllability, observability, and model reduction. IEEE Transactions on Automatic Control , 26(1):17–32, 1981. [10] Andrew Y. Ng, Daishi Harada, and Stuart Russell. Policy invariance under reward transfor-mations: Theory and application to reward shaping. In International Conference on Machine Learning (ICML) , pages 278–287, 1999. [11] Reuven Y. Rubinstein. The cross-entropy method for combinatorial and continuous optimiza-tion. Methodology and Computing in Applied Probability , 1(2):127–190, 1999. [12] John Schulman, Philipp Moritz, Sergey Levine, Michael I. Jordan, and Pieter Abbeel. High-dimensional continuous control using generalized advantage estimation. arXiv preprint arXiv:1506.02438 , 2015. [13] David Sussillo and Omri Barak. Opening the black box: Low-dimensional dynamics in high-dimensional recurrent neural networks. Neural Computation , 25(3):626–649, 2013. [14] Marvin Zhang, Sharad Vikram, Laura Smith, Pieter Abbeel, Matthew J. Johnson, and Sergey Levine. SOLAR: Deep structured representations for model-based reinforcement learning. In 
+
+International Conference on Machine Learning (ICML) , pages 7444–7453. PMLR, 2019. 17 A Supplementary Figures 
+
+Figure 6: Per-metric correlations with smoothed (MA-7) MPC mean return for all 40 metrics in the suite of Section 3.4. Bars show Spearman ρs; colours mark the strong ( |ρs| ≥ 0.30), moderate (0 .10 ≤ | ρs| < 0.30), and weak ( |ρs| < 0.10) bands used throughout the paper. The ROF/CROF family dominates the strong-correlation block, while all standard training and one-step-prediction metrics ( val loss , val recon , post * rmse , etc.) sit in the weak band. Numerical values for the most informative subset are listed in Table 1. 18 Figure 7: Metrics vs. MPC dashboard. Standard metrics (validation losses, open-loop RMSEs, empirical sensitivities, Jacobian spectral radius and ranks) are monotonic or flat through the late-training collapse; only the ROF family (third-row right panel) traces MPC’s rise–peak–collapse U-shape. Bottom row: scatter of the three core ROF sub-metrics against MA-7 MPC return with quadratic fits. 19
