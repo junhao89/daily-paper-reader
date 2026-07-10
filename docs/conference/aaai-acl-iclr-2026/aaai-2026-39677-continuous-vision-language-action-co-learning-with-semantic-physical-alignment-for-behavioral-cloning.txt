@@ -1,0 +1,653 @@
+Title: Continuous Vision-Language-Action Co-Learning with Semantic-Physical Alignment for Behavioral Cloning
+
+URL Source: https://ojs.aaai.org/index.php/AAAI/article/download/39677/43638
+
+Number of Pages: 9
+
+Markdown Content:
+# Continuous Vision-Language-Action Co-Learning with Semantic-Physical Alignment for Behavioral Cloning 
+
+## Xiuxiu Qi 1, 2 , Yu Yang 3, Jiannong Cao 2∗, Luyao Bai 2,Chongshan Fan 1, Chengtai Cao 4, Hongpeng Wang 1∗
+
+> 1
+
+The College of Artificial Intelligence & Shenzhen Research Institute, Nankai University, Tianjin, China. 
+
+> 2
+
+Department of Computing, The Hong Kong Polytechnic University, Hong Kong SAR, China. 
+
+> 3
+
+Centre for Learning, Teaching and Technology, The Education University of Hong Kong, Hong Kong SAR, China. 
+
+> 4
+
+Department of Computer Science, City University of Hong Kong, Hong Kong SAR, China. 
+
+Abstract 
+
+Language-Conditioned Manipulation (LCM) facilitates human-robot interaction via Behavioral Cloning (BC), which learns control policies from human demonstrations and serves as a cornerstone of embodied AI. Overcoming compounding errors in sequential action decisions remains a central chal-lenge to improving BC performance. Existing approaches mit-igate compounding errors through data augmentation, expres-sive representation, or temporal abstraction. However, they suffer from physical discontinuities and semantic-physical misalignment, leading to inaccurate action cloning and inter-mittent execution. In this paper, we present Continuous vision-language-action Co-Learning with Semantic-Physical Align-ment (CCoL), a novel BC framework that ensures tempo-rally consistent execution and fine-grained semantic ground-ing. It generates robust and smooth action execution trajecto-ries through continuous co-learning across vision, language, and proprioceptive inputs (i.e., robot internal states). Mean-while, we anchor language semantics to visuomotor represen-tations by a bidirectional cross-attention to learn contextual information for action generation, successfully overcoming the problem of semantic-physical misalignment. Extensive experiments show that CCoL achieves an average 8.0% rel-ative improvement across three simulation suites, with up to 19.2% relative gain in human-demonstrated bimanual inser-tion tasks. Real-world tests on a 7-DoF robot further confirm CCoL’s generalization under unseen and noisy object states. 
+
+## Introduction 
+
+Language-Conditioned Manipulation (LCM) is an emerging field of research in embodied AI and a stepping stone toward artificial general intelligence (Stepputtis et al. 2020; Karam-cheti et al. 2023; Pan et al. 2025). This domain seeks to develop an embodied agent to understand its surrounding environments and perform complex, goal-directed behav-iors based on human instructions. As an imitation learning paradigm, Behavioral Cloning (BC) bridges high-level task instructions with low-level robotic control (Li et al. 2024a; Kelly et al. 2019; Wang et al. 2024b). Traditional BC methods mimic expert demonstrations through state-action mappings, enabling significant robotic applications, from self-driving vehicles (Codevilla et al. 2019) to robot manipulation (Cui 
+
+> ∗
+
+Corresponding Authors. Copyright © 2026, Association for the Advancement of Artificial Intelligence (www.aaai.org). All rights reserved. 
+
+and Trinkle 2021). For LCM tasks, BC extends this paradigm by incorporating language as an additional modality, allow-ing robots to generalize executable actions via multimodal inputs. This integration is particularly critical in unstruc-tured environments where tasks demand precise alignment between semantic intent (e.g., object affordances) and phys-ical execution (e.g., end-effector trajectories). Despite its promise, BC suffers from compounding errors caused by sequential error propagation, resulting in a covari-ate shift (Ingram et al. 2023; Mehta et al. 2025). Semantic-physical misalignment between multimodal inputs amplifies these errors (e.g., misaligned object affordances or trajectory deviations), leading to catastrophic failures in long-horizon LCM tasks as even minor inaccuracies accumulate quadrat-ically over time (Block et al. 2023). To address this chal-lenge, prior works have explored three primary directions: (1) data augmentation techniques such as noise injection and synthetic data generation (Deshpande et al. 2024), which en-hance training diversity and improve error approximation, and interactive correction methods that iteratively collect expert feedback during rollout (Hoque et al. 2023); (2) ex-pressive representation spaces that aim to minimize single-step prediction errors by leveraging semantically fused multi-modal features (Ke, Gkanatsios, and Fragkiadaki 2025); (3) temporal abstraction methods that reduce decision-making horizon by treating long action sequences as single, high-level primitives (Shi et al. 2023; Lu et al. 2024). However, existing methods still face two key multimodal grounding challenges impacting action cloning and execution coherence. First, physical discontinuities arise from discrete action modeling paradigms, such as temporal abstraction (Fu, Zhao, and Finn 2024), which disrupt essential motion con-tinuity. For instance, abrupt dual-arm waypoint transitions during peg insertion tasks result in jerky trajectories with non-smooth acceleration profiles, ultimately causing failures in long-horizon tasks due to incoherent action execution. Second, semantic-physical misalignment occurs when high-level semantic goals fail to guide physical actions accurately. Static fusion methods like R3M (Nair et al. 2022) globally align language and vision but overlook stepwise semantic adaptation, resulting in inaccurate action cloning. For exam-ple, executing “place the cup on the shelf” requires the robot to dynamically shift attention from the cup during grasping to the shelf during placement. The Fortieth AAAI Conference on Artificial Intelligence (AAAI-26) 
+
+24900 To address these challenges, we present a novel BC frame-work, Continuous Vision-Language-Action Co -Learning with Semantic-Physical Alignment ( CCoL )1. CCoL intro-duces continuous co-learning across vision, language, and proprioceptive inputs to ensure temporally consistent latent trajectories, while stepwise anchoring language semantics to visuomotor representations to enable semantic-to-physical correspondence. Specifically, the multimodal continuous co-learning mechanism captures proprioceptive dynamics in la-tent space by Neural Ordinary Differential Equations (Neu-ralODEs) (Biloˇ s et al. 2021; Li et al. 2024b) and enables joint fusion across vision, language, and proprioceptive in-puts. Meanwhile, we design a cross-modal semantic-physical alignment mechanism that considers language as a flexible target specification and progressively anchors language se-mantics to visuomotor representations via a bidirectional cross-attention mechanism. Finally, a goal-conditioned de-coder generates action sequences from enriched fusion rep-resentations, with a hybrid loss jointly optimizing action ac-curacy and latent state smoothness for stable training and physically feasible outputs. Our contributions are as follows: 
+
+• We propose a multimodal continuous co-learning mech-anism integrating vision, language, and proprioception to model temporal dependencies in latent space, ensuring smooth and consistent transitions across action states. 
+
+• We introduce a cross-modal semantic-physical alignment module that anchors linguistic specifications to visuo-motor representations at each step, enabling fine-grained semantic adaptation during task execution. 
+
+• We conduct extensive experiments on three simulation suites, showing that CCoL achieves SOTA performance and proves real-world effectiveness with a 7-DoF robot. 
+
+## Preliminaries 
+
+LCM leverages BC methods to infer executable behaviors from heterogeneous inputs, enabling precise and generaliz-able motor control (Stepputtis et al. 2020; Karamcheti et al. 2023; Li et al. 2024c). Formally, we assume access to a dataset D = {𝑙, 𝜏 𝑖 }𝑁 𝑖 =1 of 𝑁 expert demonstrations, where each demonstration has a sequence of state-action pairs over horizon 𝐻 , 𝜏 = {( 𝑠 1, 𝑎 1), (𝑠 2, 𝑎 2), . . . , (𝑠 𝐻 , 𝑎 𝐻 )} , aligned with a task goal 𝑙 ∈ 𝐿 (e.g., “slide the red cube”). The states 
+
+𝑠 𝑡 = (𝑜 𝑡 , 𝑟 𝑡 ) ∈ 𝑆 integrate current visual observation 𝑜 𝑡 and robot proprioceptive data 𝑟 𝑡 , while actions 𝑎 𝑡 ∈ 𝐴 represent motor commands like end-effector positions or joint veloc-ities. Our goal is to learn a policy 𝜋 𝜃 : 𝑆 × 𝐿 → 𝐴 , which maps states 𝑆 and natural language instructions 𝐿 to actions 
+
+𝐴 . We optimize this policy 𝜋 𝜃 by minimizing the negative log-likelihood of the observed expert actions: 
+
+L𝜋 𝜃 = E  
+
+> (𝜏 𝑖 ,𝑙 )∼D
+
+" 𝐻 ∑︁ 
+
+> 𝑡 =1
+
+− log 𝜋 𝜃 (𝑎 𝑡 |𝑠 𝑡 , 𝑙 )
+
+#
+
+. (1) While LCM extends traditional BC with language guidance, it is still subject to critical compound error limitations. 
+
+> 1Project website is available at https://qhemu.github.io/CCoL/.
+
+Single-Step Error Propagation. Mismatched vision-action mappings induce stepwise prediction errors, causing a covariate shift. Let 𝑎 ′ 
+
+> 𝑡
+
+= 𝜋 𝜃 (𝑠 𝑡 , 𝑙 ) denote predicted action. Stepwise error 𝜖 = || 𝑎 ′ 
+
+> 𝑡
+
+− 𝑎 𝑡 || 2 propagates through the tran-sition dynamics. Since transitions are sequential, the cumu-lative error grows quadratically with 𝐻 rather than linearly: 
+
+𝐻𝜖 + ( 𝐻 − 1)𝜖 + · · · + 𝜖 ∼ 𝑂 (𝐻 2𝜖 ) (Xu, Li, and Yu 2020). 
+
+Discontinuous Action Sequences. Discretized action pre-dictions (e.g., time abstraction) induce higher-order physi-cal infeasibility through piecewise-constant control signals. These abrupt transitions violate differential continuity con-straints (e.g., non-smooth acceleration profiles, discontinu-ous contact forces (Righetti et al. 2013)). Our key observation is that physical feasibility requires continuous temporal co-herence beyond adjacent actions. We propose to regularize the action trajectory through dynamical consistency: 
+
+Edisc = ∫ 𝑡 +Δ𝑡 𝑡 𝜌 
+
+ 𝑑𝑎 𝑑𝑡 , 𝑑 2 𝑎 𝑑𝑡 2
+
+
+
+𝑑𝑡, (2) where 𝜌 (·) encodes physical constraints. To address both single-step inaccuracies and temporal discontinuity, we pro-pose a unified optimization framework: 
+
+L𝜋 𝜃 = E( 𝜏 𝑖 ,𝑙 )∼D 
+
+Í𝐻 𝑡 =1
+
+©«
+
+∥𝜋 𝜃 (𝑠 𝑡 , 𝑙 ) − 𝑎 𝑡 ∥22
+
+| {z }
+
+> Stepwise Loss
+
++ Edisc 
+
+|{z} 
+
+> Disc Penalty
+
+ª®®®¬
+
+, (3) where the stepwise loss ensures local alignment between learned and expert actions, and the discontinuity penalty regularizes action sequences to ensure physical feasibility. 
+
+## Methodology 
+
+As depicted in Fig. 1, CCoL primarily consists of two key components: Multimodal Continuous Co-Learning (MCC) and Cross-Modal Semantic-Physical Alignment (CSA). 
+
+Context-Aware Representation Learning 
+
+We first introduce context-aware representation learning to ensure that each modality is independently encoded while preserving its unique characteristics. 
+
+Vision Encoder. The vision encoder processes RGB-D video frames 𝑜 𝑡 ∈ R𝐻 ×𝑊 ×3 using a Vision Transformer (ViT) (Han et al. 2022). The encoder extracts spatially grounded features 
+
+𝑥 𝑡 = ViT (𝑜 𝑡 ), 𝑥 𝑡 ∈ R𝑑 𝑣 , capturing spatial cues critical for grounding language in the visual scene. 
+
+Text Encoder. To process language instructions, the text en-coder employs a RoBERTa model (Liu et al. 2019). Instruc-tional texts are tokenized and encoded into contextualized embeddings: ˆ 𝑙 𝑡 = RoBERTa (𝑙 ), where ˆ 𝑙 𝑡 ∈ R𝑑 𝑙 .
+
+Proprioceptive Encoder. The proprioceptive encoder pro-cesses robotic internal states, including position sequences 
+
+𝑟 𝑡 ∈ R𝑘 . Inspired by (Zhao et al. 2023), we implement a Conditional Variational Autoencoder (CVAE) to map these inputs into a latent motion pattern space. The inputs 𝑟 𝑡 are first processed through linear transformations and concate-nated with a [CLS] token. Sinusoidal positional encodings are added to incorporate sequential order information. The 24901 Temporally consistent representation Shared embedding space  <latexit sha1_base64="AvjpSmRY3wq5EUx1TbmVhoucwqc=">AAAB+XicbVDLSsNAFJ34rPUVdelmsAiuSiK+lkU3LivYB7QxTKa37dDJJMxMCmXIn7hxoYhb/8Sdf+O0zUJbD1w4nHMv994TpZwp7Xnfzsrq2vrGZmmrvL2zu7fvHhw2VZJJCg2a8ES2I6KAMwENzTSHdiqBxBGHVjS6m/qtMUjFEvGoJykEMRkI1meUaCuFrmtIHhqdP5luKlkMeehWvKo3A14mfkEqqEA9dL+6vYRmMQhNOVGq43upDgyRmlEOebmbKUgJHZEBdCwVJAYVmNnlOT61Sg/3E2lLaDxTf08YEis1iSPbGRM9VIveVPzP62S6fxMYJtJMg6DzRf2MY53gaQy4xyRQzSeWECqZvRXTIZGEahtW2YbgL768TJrnVf+qevlwUandFnGU0DE6QWfIR9eohu5RHTUQRWP0jF7Rm2OcF+fd+Zi3rjjFzBH6A+fzB5MXlEg=</latexit>  <latexit sha1_base64="e7akOYjHxviYtqgzxexSE1IBahY=">AAACAXicbVDJSgNBEO2JW4xb1IvgZTAIghBmxO0Y9OIxglkgGYeeTiVp0j0zdNcIYRgv/ooXD4p49S+8+Td2loMmPih4vFdFVb0gFlyj43xbuYXFpeWV/GphbX1jc6u4vVPXUaIY1FgkItUMqAbBQ6ghRwHNWAGVgYBGMLge+Y0HUJpH4R0OY/Ak7YW8yxlFI/nFvTZy0YGUZn6Kx252n7ZjxSVkfrHklJ0x7HniTkmJTFH1i1/tTsQSCSEyQbVuuU6MXkoVciYgK7QTDTFlA9qDlqEhlaC9dPxBZh8apWN3I2UqRHus/p5IqdR6KAPTKSn29aw3Ev/zWgl2L72Uh3GCELLJom4ibIzsURx2hytgKIaGUKa4udVmfaooQxNawYTgzr48T+onZfe8fHZ7WqpcTePIk31yQI6ISy5IhdyQKqkRRh7JM3klb9aT9WK9Wx+T1pw1ndklf2B9/gAxuZdi</latexit>  <latexit sha1_base64="W1q9EyzaFSxKjjWNbkrucvolUHI=">AAAB7HicbVDLSsNAFL2pr1pfVZduBovgqiTia1l047KCsYU2lMl00g6dTMLMjVBCv8GNC0Xc+kHu/BunbRbaemDgcM49zL0nTKUw6LrfTmlldW19o7xZ2dre2d2r7h88miTTjPsskYluh9RwKRT3UaDk7VRzGoeSt8LR7dRvPXFtRKIecJzyIKYDJSLBKFrJ7/YTNL1qza27M5Bl4hWkBgWaveqXzbEs5gqZpMZ0PDfFIKcaBZN8UulmhqeUjeiAdyxVNOYmyGfLTsiJVfokSrR9CslM/Z3IaWzMOA7tZExxaBa9qfif18kwug5yodIMuWLzj6JMEkzI9HLSF5ozlGNLKNPC7krYkGrK0PZTsSV4iycvk8ezundZv7g/rzVuijrKcATHcAoeXEED7qAJPjAQ8Ayv8OYo58V5dz7moyWnyBzCHzifP/Sojsw=</latexit> <latexit sha1_base64="W1q9EyzaFSxKjjWNbkrucvolUHI=">AAAB7HicbVDLSsNAFL2pr1pfVZduBovgqiTia1l047KCsYU2lMl00g6dTMLMjVBCv8GNC0Xc+kHu/BunbRbaemDgcM49zL0nTKUw6LrfTmlldW19o7xZ2dre2d2r7h88miTTjPsskYluh9RwKRT3UaDk7VRzGoeSt8LR7dRvPXFtRKIecJzyIKYDJSLBKFrJ7/YTNL1qza27M5Bl4hWkBgWaveqXzbEs5gqZpMZ0PDfFIKcaBZN8UulmhqeUjeiAdyxVNOYmyGfLTsiJVfokSrR9CslM/Z3IaWzMOA7tZExxaBa9qfif18kwug5yodIMuWLzj6JMEkzI9HLSF5ozlGNLKNPC7krYkGrK0PZTsSV4iycvk8ezundZv7g/rzVuijrKcATHcAoeXEED7qAJPjAQ8Ayv8OYo58V5dz7moyWnyBzCHzifP/Sojsw=</latexit> <latexit sha1_base64="bAbud2oN4EUm+7R5lJKvJPrcSJ8=">AAAB+3icbVDLSsNAFL3xWesr1qWbwSIIQknE17LoxmUF+4A2hsl00g6dScLMRCwhv+LGhSJu/RF3/o3TNgttPXDhcM693HtPkHCmtON8W0vLK6tr66WN8ubW9s6uvVdpqTiVhDZJzGPZCbCinEW0qZnmtJNIikXAaTsY3Uz89iOVisXRvR4n1BN4ELGQEayN5NuVDOd+pk9G+UPWSyQTNPftqlNzpkCLxC1IFQo0fPur149JKmikCcdKdV0n0V6GpWaE07zcSxVNMBnhAe0aGmFBlZdNb8/RkVH6KIylqUijqfp7IsNCqbEITKfAeqjmvYn4n9dNdXjlZSxKUk0jMlsUphzpGE2CQH0mKdF8bAgmkplbERliiYk2cZVNCO78y4ukdVpzL2rnd2fV+nURRwkO4BCOwYVLqMMtNKAJBJ7gGV7hzcqtF+vd+pi1LlnFzD78gfX5A8wXlPI=</latexit>  <latexit sha1_base64="dhDmguEat25pKMfqXCoghtSItoM=">AAACAnicdVDJSgNBEO1xjXEb9SReGoPgaZjRLB6DC3iMYBbIhNDT6SRNeha6a8QwDF78FS8eFPHqV3jzb+xJIqjog4LHe1VU1fMiwRXY9ocxN7+wuLScW8mvrq1vbJpb2w0VxpKyOg1FKFseUUzwgNWBg2CtSDLie4I1vdFZ5jdvmFQ8DK5hHLGOTwYB73NKQEtdc9f1CQwpEclF2k1cYLeQnHNF07RrFmyrXCnadgnblqNJqZiR4nGpXMGOZU9QQDPUuua72wtp7LMAqCBKtR07gk5CJHAqWJp3Y8UiQkdkwNqaBsRnqpNMXkjxgVZ6uB9KXQHgifp9IiG+UmPf053Zweq3l4l/ee0Y+iedhAdRDCyg00X9WGAIcZYH7nHJKIixJoRKrm/FdEgkoaBTy+sQvj7F/5PGkeWUrdJVsVA9ncWRQ3toHx0iB1VQFV2iGqojiu7QA3pCz8a98Wi8GK/T1jljNrODfsB4+wTF0Zha</latexit>  <latexit sha1_base64="GmYNZeX/pWvAIKpXYB+/JPl8x68=">AAACAHicdVC7SgNBFJ31GeNr1cLCZjAIVsuu5mEZksbCIoJ5QDaE2ckkGTL7YOauGJZt/BUbC0Vs/Qw7/8bZJIKKHrhwOOde7r3HiwRXYNsfxtLyyuraem4jv7m1vbNr7u23VBhLypo0FKHseEQxwQPWBA6CdSLJiO8J1vYm9cxv3zKpeBjcwDRiPZ+MAj7klICW+uah6xMYUyKSq7SfuMDuIKnV07RvFmyrXCnadgnblqNJqZiR4nmpXMGOZc9QQAs0+ua7Owhp7LMAqCBKdR07gl5CJHAqWJp3Y8UiQidkxLqaBsRnqpfMHkjxiVYGeBhKXQHgmfp9IiG+UlPf053Zueq3l4l/ed0Yhhe9hAdRDCyg80XDWGAIcZYGHnDJKIipJoRKrm/FdEwkoaAzy+sQvj7F/5PWmeWUrdJ1sVCtLeLIoSN0jE6Rgyqoii5RAzURRSl6QE/o2bg3Ho0X43XeumQsZg7QDxhvn/G1l08=</latexit>  <latexit sha1_base64="iOJKmUDOqSGlJT7HSw90z1ZoFkI=">AAACHXicbZDLSsNAFIYn3q23qks3wSK0UEoi9bIUL+BORVuFpoTJ9KQdOrkwc1KsIS/ixldx40IRF27Et3Fau9DqDwMf/zlnZs7vxYIrtKxPY2Jyanpmdm4+t7C4tLySX12rqyiRDGosEpG88agCwUOoIUcBN7EEGngCrr3u0aB+3QOpeBReYT+GZkDbIfc5o6gtN191EG4xPTs+uYxED7LinWuVfTctOrHipayMrl12WhEqTanTAoE0K7n5glWxhjL/gj2CAhnp3M2/6ztYEkCITFClGrYVYzOlEjkTkOWcREFMWZe2oaExpAGoZjrcLjO3tNMy/UjqE6I5dH9OpDRQqh94ujOg2FHjtYH5X62RoL/fTHkYJwgh+37IT4SJkTmIymxxCQxFXwNlkuu/mqxDJWWoA83pEOzxlf9Cfbti71Z2LqqFg8NRHHNkg2ySIrHJHjkgp+Sc1Agj9+SRPJMX48F4Ml6Nt+/WCWM0s05+yfj4AtBrocI=</latexit>   <latexit sha1_base64="yNndcDpHdNKb4Rs9mp6j9nlmKho=">AAAB8XicbVDLSgNBEJyNrxhfUY9eBoPgKewGX8egHjxGMA9MljA76SRDZmeXmV4hLPkLLx4U8erfePNvnCR70MSChqKqm+6uIJbCoOt+O7mV1bX1jfxmYWt7Z3evuH/QMFGiOdR5JCPdCpgBKRTUUaCEVqyBhYGEZjC6mfrNJ9BGROoBxzH4IRso0RecoZUeO7cgkVHsVrrFklt2Z6DLxMtIiWSodYtfnV7EkxAUcsmMaXtujH7KNAouYVLoJAZixkdsAG1LFQvB+Ons4gk9sUqP9iNtSyGdqb8nUhYaMw4D2xkyHJpFbyr+57UT7F/5qVBxgqD4fFE/kRQjOn2f9oQGjnJsCeNa2FspHzLNONqQCjYEb/HlZdKolL2L8vn9Wal6ncWRJ0fkmJwSj1ySKrkjNVInnCjyTF7Jm2OcF+fd+Zi35pxs5pD8gfP5A76BkFM=</latexit>  <latexit sha1_base64="iJQm934Xp+Qt/tFmqwrXIu995gM=">AAAB8XicbVDJSgNBEO2JW4xb1KOXxiB4CjPux6AePEYwCyZD6OnUJE16eobuGiEM+QsvHhTx6t9482/sLAdNfFDweK+KqnpBIoVB1/12ckvLK6tr+fXCxubW9k5xd69u4lRzqPFYxroZMANSKKihQAnNRAOLAgmNYHAz9htPoI2I1QMOE/Aj1lMiFJyhlR7btyCRUeycdoolt+xOQBeJNyMlMkO1U/xqd2OeRqCQS2ZMy3MT9DOmUXAJo0I7NZAwPmA9aFmqWATGzyYXj+iRVbo0jLUthXSi/p7IWGTMMApsZ8Swb+a9sfif10oxvPIzoZIUQfHpojCVFGM6fp92hQaOcmgJ41rYWynvM8042pAKNgRv/uVFUj8pexfl8/uzUuV6FkeeHJBDckw8ckkq5I5USY1wosgzeSVvjnFenHfnY9qac2Yz++QPnM8fwAWQVA==</latexit>  <latexit sha1_base64="PxNw2ggXWeXyqnpV/vLXVAjknoo=">AAAB8XicbVDLSgNBEJyNrxhfUY9eBoPgKexKfByDevAYwTwwWcLspJMMmZ1dZnqFsOQvvHhQxKt/482/cZLsQRMLGoqqbrq7glgKg6777eRWVtfWN/Kbha3tnd294v5Bw0SJ5lDnkYx0K2AGpFBQR4ESWrEGFgYSmsHoZuo3n0AbEakHHMfgh2ygRF9whlZ67NyCREaxW+kWS27ZnYEuEy8jJZKh1i1+dXoRT0JQyCUzpu25Mfop0yi4hEmhkxiIGR+xAbQtVSwE46eziyf0xCo92o+0LYV0pv6eSFlozDgMbGfIcGgWvan4n9dOsH/lp0LFCYLi80X9RFKM6PR92hMaOMqxJYxrYW+lfMg042hDKtgQvMWXl0njrOxdlM/vK6XqdRZHnhyRY3JKPHJJquSO1EidcKLIM3klb45xXpx352PemnOymUPyB87nD8GJkFU=</latexit>  <latexit sha1_base64="7yjiL3u9mKseJemFOfmyXTVTYGM=">AAAB8XicbVDLSgNBEOyNrxhfUY9eBoPgKeyKUY9BPXiMYB6YLGF2MkmGzM4uM71CWPIXXjwo4tW/8ebfOEn2oIkFDUVVN91dQSyFQdf9dnIrq2vrG/nNwtb2zu5ecf+gYaJEM15nkYx0K6CGS6F4HQVK3oo1p2EgeTMY3Uz95hPXRkTqAccx90M6UKIvGEUrPXZuuURKsFvpFktu2Z2BLBMvIyXIUOsWvzq9iCUhV8gkNabtuTH6KdUomOSTQicxPKZsRAe8bamiITd+Ort4Qk6s0iP9SNtSSGbq74mUhsaMw8B2hhSHZtGbiv957QT7V34qVJwgV2y+qJ9IghGZvk96QnOGcmwJZVrYWwkbUk0Z2pAKNgRv8eVl0jgrexflyv15qXqdxZGHIziGU/DgEqpwBzWoAwMFz/AKb45xXpx352PemnOymUP4A+fzB8MNkFY=</latexit>  <latexit sha1_base64="6r5nKkh/MUX7JNUhWrbEU9DYe80=">AAAB83icbVDLSgMxFL1TX7W+qi7dBIvgqsyIr2XRjcsK9gGdoWTSTBuaSYYkI9Shv+HGhSJu/Rl3/o2ZdhbaeiBwOOde7skJE860cd1vp7Syura+Ud6sbG3v7O5V9w/aWqaK0BaRXKpuiDXlTNCWYYbTbqIojkNOO+H4Nvc7j1RpJsWDmSQ0iPFQsIgRbKzk+zE2ozDKnqZ9t1+tuXV3BrRMvILUoECzX/3yB5KkMRWGcKx1z3MTE2RYGUY4nVb8VNMEkzEe0p6lAsdUB9ks8xSdWGWAIqnsEwbN1N8bGY61nsShncwz6kUvF//zeqmJroOMiSQ1VJD5oSjlyEiUF4AGTFFi+MQSTBSzWREZYYWJsTVVbAne4peXSfus7l3WL+7Pa42boo4yHMExnIIHV9CAO2hCCwgk8Ayv8Oakzovz7nzMR0tOsXMIf+B8/gAvKpHL</latexit>  <latexit sha1_base64="wsbG1Ff9kiUnCTW3HHeuQ+bjeEk=">AAAB83icbVDLSgMxFL1TX7W+qi7dBIvgqsyIr2XRjcsK9gGdoWTSTBuaSYYkI9Shv+HGhSJu/Rl3/o2ZdhbaeiBwOOde7skJE860cd1vp7Syura+Ud6sbG3v7O5V9w/aWqaK0BaRXKpuiDXlTNCWYYbTbqIojkNOO+H4Nvc7j1RpJsWDmSQ0iPFQsIgRbKzk+zE2ozDKnqZ9r1+tuXV3BrRMvILUoECzX/3yB5KkMRWGcKx1z3MTE2RYGUY4nVb8VNMEkzEe0p6lAsdUB9ks8xSdWGWAIqnsEwbN1N8bGY61nsShncwz6kUvF//zeqmJroOMiSQ1VJD5oSjlyEiUF4AGTFFi+MQSTBSzWREZYYWJsTVVbAne4peXSfus7l3WL+7Pa42boo4yHMExnIIHV9CAO2hCCwgk8Ayv8Oakzovz7nzMR0tOsXMIf+B8/gAwrpHM</latexit>  <latexit sha1_base64="9h3iq6Q2SxsqNIV4Gwec3kQSF1s=">AAAB83icbVDLSgMxFL1TX7W+qi7dBIvgqsz4XhbduKxgH9AZSibNtKFJZkgyQh36G25cKOLWn3Hn35hpZ6HVA4HDOfdyT06YcKaN6345paXlldW18nplY3Nre6e6u9fWcaoIbZGYx6obYk05k7RlmOG0myiKRchpJxzf5H7ngSrNYnlvJgkNBB5KFjGCjZV8X2AzCqPscdo/7Vdrbt2dAf0lXkFqUKDZr376g5ikgkpDONa657mJCTKsDCOcTit+qmmCyRgPac9SiQXVQTbLPEVHVhmgKFb2SYNm6s+NDAutJyK0k3lGvejl4n9eLzXRVZAxmaSGSjI/FKUcmRjlBaABU5QYPrEEE8VsVkRGWGFibE0VW4K3+OW/pH1S9y7q53dntcZ1UUcZDuAQjsGDS2jALTShBQQSeIIXeHVS59l5c97noyWn2NmHX3A+vgEztpHO</latexit>  <latexit sha1_base64="xzqznnSKdovJte9nYbVwUczETiE=">AAAB63icbVDLSgNBEOyNrxhfUY9eBoPgKeyKr2PQi8cIxgSSJcxOZpMh81hmZoWw5Be8eFDEqz/kzb9xNtmDJhY0FFXddHdFCWfG+v63V1pZXVvfKG9WtrZ3dveq+wePRqWa0BZRXOlOhA3lTNKWZZbTTqIpFhGn7Wh8m/vtJ6oNU/LBThIaCjyULGYE21zqGSb61Zpf92dAyyQoSA0KNPvVr95AkVRQaQnHxnQDP7FhhrVlhNNppZcammAyxkPadVRiQU2YzW6dohOnDFCstCtp0Uz9PZFhYcxERK5TYDsyi14u/ud1UxtfhxmTSWqpJPNFccqRVSh/HA2YpsTyiSOYaOZuRWSENSbWxVNxIQSLLy+Tx7N6cFm/uD+vNW6KOMpwBMdwCgFcQQPuoAktIDCCZ3iFN094L9679zFvLXnFzCH8gff5AyLvjlE=</latexit>  <latexit sha1_base64="Ue8FcBOLOIkg9M9v5yFkjKeiK9Y=">AAAB83icbVDLSgMxFL3js9ZX1aWbYBFclZnia1l047KCfUBnKJk004ZmkiHJCHXob7hxoYhbf8adf2OmnYW2HggczrmXe3LChDNtXPfbWVldW9/YLG2Vt3d29/YrB4dtLVNFaItILlU3xJpyJmjLMMNpN1EUxyGnnXB8m/udR6o0k+LBTBIaxHgoWMQINlby/RibURhlT9N+vV+pujV3BrRMvIJUoUCzX/nyB5KkMRWGcKx1z3MTE2RYGUY4nZb9VNMEkzEe0p6lAsdUB9ks8xSdWmWAIqnsEwbN1N8bGY61nsShncwz6kUvF//zeqmJroOMiSQ1VJD5oSjlyEiUF4AGTFFi+MQSTBSzWREZYYWJsTWVbQne4peXSbte8y5rF/fn1cZNUUcJjuEEzsCDK2jAHTShBQQSeIZXeHNS58V5dz7moytOsXMEf+B8/gAyMpHN</latexit>  <latexit sha1_base64="E6Ht6DyJl7Zoc2OVBS6rUyJ7dsQ=">AAAB83icbVDLSgMxFL1TX7W+qi7dBIvgqsyIr2XRjcsK1hY6pWTSTBuaZIY8hDL0N9y4UMStP+POvzHTzkJbDwQO59zLPTlRypk2vv/tlVZW19Y3ypuVre2d3b3q/sGjTqwitEUSnqhOhDXlTNKWYYbTTqooFhGn7Wh8m/vtJ6o0S+SDmaS0J/BQspgRbJwUhgKbURRnobDTfrXm1/0Z0DIJClKDAs1+9SscJMQKKg3hWOtu4Keml2FlGOF0WgmtpikmYzykXUclFlT3slnmKTpxygDFiXJPGjRTf29kWGg9EZGbzDPqRS8X//O61sTXvYzJ1BoqyfxQbDkyCcoLQAOmKDF84ggmirmsiIywwsS4miquhGDxy8vk8aweXNYv7s9rjZuijjIcwTGcQgBX0IA7aEILCKTwDK/w5lnvxXv3PuajJa/YOYQ/8D5/AH8akgA=</latexit>  <latexit sha1_base64="RVcLpJmGa+6B0Cevu4VTh1bKzJ4=">AAAB+HicbVDLSgMxFL3js9ZHR126CRbBVZkRX8uiG5cV7AM6Q8mkmTY0yQxJRqhDv8SNC0Xc+inu/BszbRfaeiBwOOde7smJUs608bxvZ2V1bX1js7RV3t7Z3au4+wctnWSK0CZJeKI6EdaUM0mbhhlOO6miWESctqPRbeG3H6nSLJEPZpzSUOCBZDEj2Fip51YCgc0wivNAs4HAk55b9WreFGiZ+HNShTkaPfcr6CckE1QawrHWXd9LTZhjZRjhdFIOMk1TTEZ4QLuWSiyoDvNp8Ak6sUofxYmyTxo0VX9v5FhoPRaRnSxi6kWvEP/zupmJr8OcyTQzVJLZoTjjyCSoaAH1maLE8LElmChmsyIyxAoTY7sq2xL8xS8vk9ZZzb+sXdyfV+s38zpKcATHcAo+XEEd7qABTSCQwTO8wpvz5Lw4787HbHTFme8cwh84nz9BH5N+</latexit>  <latexit sha1_base64="W1q9EyzaFSxKjjWNbkrucvolUHI=">AAAB7HicbVDLSsNAFL2pr1pfVZduBovgqiTia1l047KCsYU2lMl00g6dTMLMjVBCv8GNC0Xc+kHu/BunbRbaemDgcM49zL0nTKUw6LrfTmlldW19o7xZ2dre2d2r7h88miTTjPsskYluh9RwKRT3UaDk7VRzGoeSt8LR7dRvPXFtRKIecJzyIKYDJSLBKFrJ7/YTNL1qza27M5Bl4hWkBgWaveqXzbEs5gqZpMZ0PDfFIKcaBZN8UulmhqeUjeiAdyxVNOYmyGfLTsiJVfokSrR9CslM/Z3IaWzMOA7tZExxaBa9qfif18kwug5yodIMuWLzj6JMEkzI9HLSF5ozlGNLKNPC7krYkGrK0PZTsSV4iycvk8ezundZv7g/rzVuijrKcATHcAoeXEED7qAJPjAQ8Ayv8OYo58V5dz7moyWnyBzCHzifP/Sojsw=</latexit>  <latexit sha1_base64="2TyYox69prPZKG28G7NCoWz8v3M=">AAAB6HicbVDLSgNBEOz1GeMr6tHLYBA8hV3xdQx68ZiAeUCyhNnJbDJmdnaZ6RXCki/w4kERr36SN//GSbIHTSxoKKq66e4KEikMuu63s7K6tr6xWdgqbu/s7u2XDg6bJk414w0Wy1i3A2q4FIo3UKDk7URzGgWSt4LR3dRvPXFtRKwecJxwP6IDJULBKFqpjr1S2a24M5Bl4uWkDDlqvdJXtx+zNOIKmaTGdDw3QT+jGgWTfFLspoYnlI3ogHcsVTTixs9mh07IqVX6JIy1LYVkpv6eyGhkzDgKbGdEcWgWvan4n9dJMbzxM6GSFLli80VhKgnGZPo16QvNGcqxJZRpYW8lbEg1ZWizKdoQvMWXl0nzvOJdVS7rF+XqbR5HAY7hBM7Ag2uowj3UoAEMODzDK7w5j86L8+58zFtXnHzmCP7A+fwB42mNAg==</latexit> 
+
+> Expert trajectory
+> Cross-Modal Semantic-Physical Alignment
+> Contextual Action Generation
+> Goal-Conditioned Decoder Temporal Ensembling
+> a→
+> t
+> ˜a→
+> t+1
+> . . .
+> . . .
+> . . .
+> . . .
+> a→
+> t+k
+> EDisc
+> LBC
+> Softmax
+> Multimodal Continuous Co-Learning
+> ODESolve( z0, f (ω), t 1, . . . , t ε)
+>  t2
+>  t3
+>  t4
+>  t5
+> z0
+> z1
+> z3
+> ⇠
+> z2
+> μ
+>  
+> Posterior Approximation
+> Projection
+> Context-Aware Representation Learning
+> Robot proprioceptive data
+> . . .
+> t
+> Observations
+
+t <latexit sha1_base64="nWWBAEDa4kzQScFG16rs/7dJ9BI=">AAAB6nicbVDLSgNBEJyNrxhfUY9eBoPgKeyKr2PQi8eI5gHJEmYnvcmQ2dllplcISz7BiwdFvPpF3vwbJ8keNLGgoajqprsrSKQw6LrfTmFldW19o7hZ2tre2d0r7x80TZxqDg0ey1i3A2ZACgUNFCihnWhgUSChFYxup37rCbQRsXrEcQJ+xAZKhIIztNID9LBXrrhVdwa6TLycVEiOeq/81e3HPI1AIZfMmI7nJuhnTKPgEialbmogYXzEBtCxVLEIjJ/NTp3QE6v0aRhrWwrpTP09kbHImHEU2M6I4dAselPxP6+TYnjtZ0IlKYLi80VhKinGdPo37QsNHOXYEsa1sLdSPmSacbTplGwI3uLLy6R5VvUuqxf355XaTR5HkRyRY3JKPHJFauSO1EmDcDIgz+SVvDnSeXHenY95a8HJZw7JHzifP1eKjdo=</latexit> 
+
+> Task goal
+> [CLS] Joint positions
+> Proprioceptive Encoder
+> Attention Block PosEmb
+
+etProprioceptive embedding <latexit sha1_base64="o9UNsoOAgncWYzMvqd8qSmfUt0I=">AAAB6nicbVDLSgNBEOyNrxhfUY9eBoPgKeyKr2PQi8eI5gHJEmYns8mQ2dllplcMSz7BiwdFvPpF3vwbJ8keNFrQUFR1090VJFIYdN0vp7C0vLK6VlwvbWxube+Ud/eaJk414w0Wy1i3A2q4FIo3UKDk7URzGgWSt4LR9dRvPXBtRKzucZxwP6IDJULBKFrp7rGHvXLFrbozkL/Ey0kFctR75c9uP2ZpxBUySY3peG6CfkY1Cib5pNRNDU8oG9EB71iqaMSNn81OnZAjq/RJGGtbCslM/TmR0ciYcRTYzoji0Cx6U/E/r5NieOlnQiUpcsXmi8JUEozJ9G/SF5ozlGNLKNPC3krYkGrK0KZTsiF4iy//Jc2TqndePbs9rdSu8jiKcACHcAweXEANbqAODWAwgCd4gVdHOs/Om/M+by04+cw+/ILz8Q10fI3t</latexit> 
+
+xt <latexit sha1_base64="E/pwUxr5DxMtsDts+md9wIMBDTY=">AAAB8HicbVDLSgNBEOyNrxhfUY9eFoPgKeyKr2PQi8cI5iHJEmYns8mQmdllplcIS77CiwdFvPo53vwbJ8keNLGgoajqprsrTAQ36HnfTmFldW19o7hZ2tre2d0r7x80TZxqyho0FrFuh8QwwRVrIEfB2olmRIaCtcLR7dRvPTFteKwecJywQJKB4hGnBK302B0SzMSkh71yxat6M7jLxM9JBXLUe+Wvbj+mqWQKqSDGdHwvwSAjGjkVbFLqpoYlhI7IgHUsVUQyE2SzgyfuiVX6bhRrWwrdmfp7IiPSmLEMbackODSL3lT8z+ukGF0HGVdJikzR+aIoFS7G7vR7t881oyjGlhCqub3VpUOiCUWbUcmG4C++vEyaZ1X/snpxf16p3eRxFOEIjuEUfLiCGtxBHRpAQcIzvMKbo50X5935mLcWnHzmEP7A+fwBMWWQrg==</latexit>  <latexit sha1_base64="cFeSjbA0vdhiyygfunwooNeAQ7U=">AAAB8nicbVDLSsNAFJ3UV62vqks3g0VwVRLxtSy6cVnBPiANZTKZtEMnM2HmRiyhn+HGhSJu/Rp3/o3TNgttPXDhcM693HtPmApuwHW/ndLK6tr6RnmzsrW9s7tX3T9oG5VpylpUCaW7ITFMcMlawEGwbqoZSULBOuHodup3Hpk2XMkHGKcsSMhA8phTAlbye8BFxPKnSR/61Zpbd2fAy8QrSA0VaParX71I0SxhEqggxviem0KQEw2cCjap9DLDUkJHZMB8SyVJmAny2ckTfGKVCMdK25KAZ+rviZwkxoyT0HYmBIZm0ZuK/3l+BvF1kHOZZsAknS+KM4FB4en/OOKaURBjSwjV3N6K6ZBoQsGmVLEheIsvL5P2Wd27rF/cn9caN0UcZXSEjtEp8tAVaqA71EQtRJFCz+gVvTngvDjvzse8teQUM4foD5zPH9h9kaM=</latexit> 
+
+> Spatially grounded feature
+> ViT
+> Vision Encoder
+> Projection Contextualized embedding
+> RoBERTa
+> Text Encoder
+> ˆlt
+> Projection
+
+˜xt <latexit sha1_base64="gQpaK6zAy2pG/5A27ln3umIGeA4=">AAAB8nicbVBNS8NAEJ3Ur1q/qh69BIvgqSTi17HoxWMFawtpKJvNtl262Q27E6GE/gwvHhTx6q/x5r9x2+agrQ8GHu/NMDMvSgU36HnfTmlldW19o7xZ2dre2d2r7h88GpVpylpUCaU7ETFMcMlayFGwTqoZSSLB2tHoduq3n5g2XMkHHKcsTMhA8j6nBK0UdJGLmOVi0sNetebVvRncZeIXpAYFmr3qVzdWNEuYRCqIMYHvpRjmRCOngk0q3cywlNARGbDAUkkSZsJ8dvLEPbFK7PaVtiXRnam/J3KSGDNOItuZEByaRW8q/ucFGfavw5zLNEMm6XxRPxMuKnf6vxtzzSiKsSWEam5vdemQaELRplSxIfiLLy+Tx7O6f1m/uD+vNW6KOMpwBMdwCj5cQQPuoAktoKDgGV7hzUHnxXl3PuatJaeYOYQ/cD5/AMYpkZc=</latexit>  <latexit sha1_base64="gQpaK6zAy2pG/5A27ln3umIGeA4=">AAAB8nicbVBNS8NAEJ3Ur1q/qh69BIvgqSTi17HoxWMFawtpKJvNtl262Q27E6GE/gwvHhTx6q/x5r9x2+agrQ8GHu/NMDMvSgU36HnfTmlldW19o7xZ2dre2d2r7h88GpVpylpUCaU7ETFMcMlayFGwTqoZSSLB2tHoduq3n5g2XMkHHKcsTMhA8j6nBK0UdJGLmOVi0sNetebVvRncZeIXpAYFmr3qVzdWNEuYRCqIMYHvpRjmRCOngk0q3cywlNARGbDAUkkSZsJ8dvLEPbFK7PaVtiXRnam/J3KSGDNOItuZEByaRW8q/ucFGfavw5zLNEMm6XxRPxMuKnf6vxtzzSiKsSWEam5vdemQaELRplSxIfiLLy+Tx7O6f1m/uD+vNW6KOMpwBMdwCj5cQQPuoAktoKDgGV7hzUHnxXl3PuatJaeYOYQ/cD5/AMYpkZc=</latexit>  <latexit sha1_base64="jMBGFtrz8rVyqL4YFpopZfoOY10=">AAACD3icbZDLSsNAFIYn9VbrrerSTbAoFaQk4m0jFN24rGAv2IQwmUzaoZMLMydiCX0DN76KGxeKuHXrzrdx0mahrT8MfPznHOac3405k2AY31phbn5hcam4XFpZXVvfKG9utWSUCEKbJOKR6LhYUs5C2gQGnHZiQXHgctp2B1dZvX1PhWRReAvDmNoB7oXMZwSDspzyfseBi6oFjHs0fRg5cJizFWDou356N1LmgVOuGDVjLH0WzBwqKFfDKX9ZXkSSgIZAOJayaxox2CkWwAino5KVSBpjMsA92lUY4oBKOx3fM9L3lOPpfiTUC0Efu78nUhxIOQxc1ZltKadrmflfrZuAf26nLIwToCGZfOQnXIdIz8LRPSYoAT5UgIlgaled9LHABFSEJRWCOX3yLLSOauZp7eTmuFK/zOMooh20i6rIRGeojq5RAzURQY/oGb2iN+1Je9HetY9Ja0HLZ7bRH2mfP7uVnSA=</latexit>    <latexit sha1_base64="DkkRXRnfv7XgesNwO5twQPACC2E=">AAACDnicbZDJSgNBEIZ74hbjFvXopTEEIkiYEbdjUBCPEcwCSRh6OjVJk56F7hohDHkCL76KFw+KePXszbexsxw08YeGj7+qqK7fi6XQaNvfVmZpeWV1Lbue29jc2t7J7+7VdZQoDjUeyUg1PaZBihBqKFBCM1bAAk9Cwxtcj+uNB1BaROE9DmPoBKwXCl9whsZy88UbF9sSfCy1UcgupHLkpjg6pk3jK9Hr45EhN1+wy/ZEdBGcGRTITFU3/9XuRjwJIEQumdYtx46xkzKFgksY5dqJhpjxAetBy2DIAtCddHLOiBaN06V+pMwLkU7c3xMpC7QeBp7pDBj29XxtbP5XayXoX3ZSEcYJQsini/xEUozoOBvaFQo4yqEBxpUwf6W8zxTjaBLMmRCc+ZMXoX5Sds7LZ3enhcrVLI4sOSCHpEQcckEq5JZUSY1w8kieySt5s56sF+vd+pi2ZqzZzD75I+vzB1yJnFE=</latexit>  <latexit sha1_base64="8O/opCgdrqzYijD+rkjA7W80bBQ=">AAACFXicbZDJSgNBEIZ7XGPcoh69DAYhQggz4nYMCuIxglkgMww9nZqkSc9Cd40QhryEF1/FiwdFvArefBs7yyEm/tDw81UV1fX7ieAKLevHWFpeWV1bz23kN7e2d3YLe/sNFaeSQZ3FIpYtnyoQPII6chTQSiTQ0BfQ9Ps3o3rzEaTicfSAgwTckHYjHnBGUSOvUL710BEQYKnlZTgsO8hFBzIx1Fjybg9PZohXKFoVayxz0dhTUyRT1bzCt9OJWRpChExQpdq2laCbUYmcCRjmnVRBQlmfdqGtbURDUG42vmpoHmvSMYNY6hehOaazExkNlRqEvu4MKfbUfG0E/6u1Uwyu3IxHSYoQscmiIBUmxuYoIrPDJTAUA20ok1z/1WQ9KilDHWReh2DPn7xoGqcV+6Jyfn9WrF5P48iRQ3JESsQml6RK7kiN1AkjT+SFvJF349l4NT6Mz0nrkjGdOSB/ZHz9AuYYn/E=</latexit>    <latexit sha1_base64="7TgIMkDkHYmI3uTkar/sYCbZ0N8=">AAAB8nicbVDLSsNAFJ3UV62vqks3g0VwVRLxtSwK4rKCfUAaymQyaYdOZsLMjVBCP8ONC0Xc+jXu/BunbRbaeuDC4Zx7ufeeMBXcgOt+O6WV1bX1jfJmZWt7Z3evun/QNirTlLWoEkp3Q2KY4JK1gINg3VQzkoSCdcLR7dTvPDFtuJKPME5ZkJCB5DGnBKzk94CLiOV3kz70qzW37s6Al4lXkBoq0OxXv3qRolnCJFBBjPE9N4UgJxo4FWxS6WWGpYSOyID5lkqSMBPks5Mn+MQqEY6VtiUBz9TfEzlJjBknoe1MCAzNojcV//P8DOLrIOcyzYBJOl8UZwKDwtP/ccQ1oyDGlhCqub0V0yHRhIJNqWJD8BZfXibts7p3Wb94OK81boo4yugIHaNT5KEr1ED3qIlaiCKFntErenPAeXHenY95a8kpZg7RHzifP4wfkXE=</latexit>  <latexit sha1_base64="BR+zUWixbP7L1ndzUUOo/fs8fD0=">AAAB83icbVDLSgMxFL1TX7W+qi7dBIvgqsyIr2XRjcsK9gGdoWTSTBuaSYYkI9Shv+HGhSJu/Rl3/o2ZdhbaeiBwOOde7skJE860cd1vp7Syura+Ud6sbG3v7O5V9w/aWqaK0BaRXKpuiDXlTNCWYYbTbqIojkNOO+H4Nvc7j1RpJsWDmSQ0iPFQsIgRbKzk+zE2ozDKnqb983615tbdGdAy8QpSgwLNfvXLH0iSxlQYwrHWPc9NTJBhZRjhdFrxU00TTMZ4SHuWChxTHWSzzFN0YpUBiqSyTxg0U39vZDjWehKHdjLPqBe9XPzP66Umug4yJpLUUEHmh6KUIyNRXgAaMEWJ4RNLMFHMZkVkhBUmxtZUsSV4i19eJu2zundZv7g/rzVuijrKcATHcAoeXEED7qAJLSCQwDO8wpuTOi/Ou/MxHy05xc4h/IHz+QM1OpHP</latexit>   <latexit sha1_base64="5IUE46e5BtTHYA7CcJK5iP4SqU4=">AAAB/XicbVDLSsNAFJ3UV62v+Ni5CRbBVUnE17LoxmUF+8AmhMlk0g6dTMLMjVBD8FfcuFDErf/hzr9x0nah1QMDh3Pu5Z45QcqZAtv+MioLi0vLK9XV2tr6xuaWub3TUUkmCW2ThCeyF2BFORO0DQw47aWS4jjgtBuMrkq/e0+lYom4hXFKvRgPBIsYwaAl39xzYwzDIMpdYDyk+V3hQ+GbdbthT2D9Jc6M1NEMLd/8dMOEZDEVQDhWqu/YKXg5lsAIp0XNzRRNMRnhAe1rKnBMlZdP0hfWoVZCK0qkfgKsifpzI8exUuM40JNlVjXvleJ/Xj+D6MLLmUgzoIJMD0UZtyCxyiqskElKgI81wUQyndUiQywxAV1YTZfgzH/5L+kcN5yzxunNSb15OaujivbRATpCDjpHTXSNWqiNCHpAT+gFvRqPxrPxZrxPRyvGbGcX/YLx8Q1fs5XW</latexit>   <latexit sha1_base64="zMPjC2DXOmeXQtYQl+kfXmTLTsU=">AAACAnicbVDLSsNAFJ3UV62vqCtxEyxCRSiJ+MJV0Y3LCvYBbQiT6aQdOnk4cyPUGNz4K25cKOLWr3Dn3zhps9DqgQuHc+7l3nvciDMJpvmlFWZm5+YXioulpeWV1TV9faMpw1gQ2iAhD0XbxZJyFtAGMOC0HQmKfZfTlju8yPzWLRWShcE1jCJq+7gfMI8RDEpy9K2bStfHMHC95C69T3DqJHAG+8N0z9HLZtUcw/hLrJyUUY66o392eyGJfRoA4VjKjmVGYCdYACOcpqVuLGmEyRD3aUfRAPtU2sn4hdTYVUrP8EKhKgBjrP6cSLAv5ch3VWd2rpz2MvE/rxODd2onLIhioAGZLPJibkBoZHkYPSYoAT5SBBPB1K0GGWCBCajUSioEa/rlv6R5ULWOq0dXh+XaeR5HEW2jHVRBFjpBNXSJ6qiBCHpAT+gFvWqP2rP2pr1PWgtaPrOJfkH7+AaegZeV</latexit> 
+
+> ˜lt
+> ˜lt
+> Xt= (˜ xt,˜Zt)
+> Interpolation
+> PosEmb
+> Ft
+> (˜lt, X t
+> )
+> Xt
+> Ft
+> (
+> Xt,˜lt
+> )˜lt
+> ˜Ft
+> z4
+> Press the green circular button on the lamp with the closed gripper
+> ˜Zt
+> [Skill Primitives, Objects ,
+> Characteristics] Tokenization
+> q(z|at:t+k)
+
+Figure 1: Overview of the CCoL framework. MCC leverages dynamic proprioceptive modeling to capture temporal evolution and maps vision, language, and proprioception into a shared latent space ( purple frame ). CSA synchronizes stepwise semantic information across modalities ( red frame ) to enable the generation of contextually and physically feasible action sequences. concatenated sequence is then processed by a Transformer (Vaswani et al. 2017) or a Temporal Convolutional Network (TCN) (Lea et al. 2017), producing the proprioceptive em-bedding 𝑒 𝑡 = CVAE ([ CLS; 𝑟 𝑡 ]) , where 𝑒 𝑡 ∈ R𝑑 𝑎 .
+
+Multimodal Continuous Co-Learning 
+
+Conventional BC approaches often suffer from temporally fragmented action sequences, where decoupled per-step pre-dictions fail to account for underlying motion dynamics. Such limitations lead to jerky trajectories (e.g., high-jerk robotic arm movements) or kinematically invalid transitions (e.g., sudden end-effector orientation flips). Inspired by the notion of co-learning from (Liu, Chen, and Liu 2024), we intro-duce a novel Multimodal Continuous Co-learning (MCC) that uses NeuralODEs to capture the continuous evolution of proprioceptive embeddings. By integrating multimodal em-beddings, we construct a shared latent space that captures temporal coherence and task-specific adaptability. Specifi-cally, we project proprioceptive embedding at [CLS] token to predict the parameters of diagonal Gaussian distribution: 
+
+𝝁 = 𝑊 𝜇 𝑒 𝑡 [CLS ] + 𝑏 𝜇 ,
+
+log 𝝈 2 = 𝑊 𝜎 𝑒 𝑡 [CLS ] + 𝑏 𝜎 , (4) where 𝑊 𝜇 , 𝑊 𝜎 and 𝑏 𝜇 , 𝑏 𝜎 are learnable parameters. The la-tent state 𝑧 0 is initialized via a conditional variational encoder with the reparameterization trick: 
+
+𝑧 0 = 𝝁 + 𝜺 · exp 
+
+ 12 log 𝝈 2
+
+
+
+, 𝜺 ∼ N ( 0, 1), (5) where 𝜺 is a noise vector sampled from a standard normal distribution N ( 0, 1). The NeuralODEs models the continu-ous evolution of this latent state as the solution to an initial value problem defined by a differential equation: 
+
+𝑧 (𝑡 𝛿 ) = 𝑧 0 +
+
+∫ 𝑡 𝛿 
+
+> 0
+
+𝑓 (𝑧 (𝑡 ), 𝑡 ; 𝜓 ) 𝑑𝑡, (6) where 𝑡 𝛿 represents the elapsed integration time, and 
+
+𝑓 (𝑧 (𝑡 ), 𝑡 ; 𝜓 ) is a residual MLP that learns the derivatives of the latent state with respect to time. Parameters 𝜓 are trained to ensure that latent trajectories match the underlying proprioceptive dynamics. We solve this differential equation numerically using adaptive-step Dormand-Prince solvers via 
+
+odeint , which computes Zt = odeint ( 𝑓 , 𝑧 0, 𝑡 ) as the latent states over discrete time points 𝑡 . These latent trajec-tories replace stepwise proprioceptive features 𝑒 𝑡 , providing temporally consistent representations that mitigate fragmen-tation and discontinuities in conventional encoders. To enable joint reasoning across modalities, visual features 
+
+𝑥 𝑡 , language features ˆ 𝑙 𝑡 , and proprioceptive features Zt are projected into a shared embedding space: ˜𝑥 𝑡 = ReLU (𝑊 𝑣 𝑥 𝑡 + 𝑏 𝑣 ),
+
+˜𝑙 𝑡 = ReLU (𝑊 𝑙 ˆ𝑙 𝑡 + 𝑏 𝑙 ), (7) 
+
+˜Zt = ReLU (𝑊 𝑎 Z𝑡 + 𝑏 𝑎 ).
+
+Here, 𝑊 𝑣 ∈ R𝑑 𝑣 ×ℎ, 𝑊 𝑙 ∈ R𝑑 𝑙 ×ℎ and 𝑊 𝑎 ∈ R𝑑 𝑎 ×ℎ map original features to a higher dimension ℎ, while 𝑏 𝑣 , 𝑏 𝑙 , 𝑏 𝑎 ∈
+
+Rℎ are learnable biases. Moreover, language embeddings are upscaled to match the resolution of visual features via bilinear interpolation, enabling pixel-wise synchronization for fine-grained cross-modal fusion. 
+
+Cross-Modal Semantic-Physical Alignment 
+
+Traditional feature fusion methods fail to dynamically align linguistic instructions with visual observations and pro-prioceptive states, causing inconsistencies in cross-modal grounding. To this end, we design a Cross-Modal Semantic-Physical Alignment (CSA) that anchors linguistic concepts to visuomotor representations at each timestep. As shown in Fig. 2, the normalized attention scores directly decode lin-guistic grounding into physically constrained pixel/trajectory 24902  <latexit sha1_base64="sy5cXJb3gwvP0G6+5/0C5KuevLU=">AAAB63icbVDLSgNBEOyNrxhfUY9eBoPgKeyKr2PQi8cIxgSSJcxOZpMhM7PLPISw5Be8eFDEqz/kzb9xNtmDJhY0FFXddHdFKWfa+P63V1pZXVvfKG9WtrZ3dveq+wePOrGK0BZJeKI6EdaUM0lbhhlOO6miWESctqPxbe63n6jSLJEPZpLSUOChZDEj2ORST1vRr9b8uj8DWiZBQWpQoNmvfvUGCbGCSkM41rob+KkJM6wMI5xOKz2raYrJGA9p11GJBdVhNrt1ik6cMkBxolxJg2bq74kMC60nInKdApuRXvRy8T+va018HWZMptZQSeaLYsuRSVD+OBowRYnhE0cwUczdisgIK0yMi6fiQggWX14mj2f14LJ+cX9ea9wUcZThCI7hFAK4ggbcQRNaQGAEz/AKb57wXrx372PeWvKKmUP4A+/zBzUrjl0=</latexit>  <latexit sha1_base64="sy5cXJb3gwvP0G6+5/0C5KuevLU=">AAAB63icbVDLSgNBEOyNrxhfUY9eBoPgKeyKr2PQi8cIxgSSJcxOZpMhM7PLPISw5Be8eFDEqz/kzb9xNtmDJhY0FFXddHdFKWfa+P63V1pZXVvfKG9WtrZ3dveq+wePOrGK0BZJeKI6EdaUM0lbhhlOO6miWESctqPxbe63n6jSLJEPZpLSUOChZDEj2ORST1vRr9b8uj8DWiZBQWpQoNmvfvUGCbGCSkM41rob+KkJM6wMI5xOKz2raYrJGA9p11GJBdVhNrt1ik6cMkBxolxJg2bq74kMC60nInKdApuRXvRy8T+va018HWZMptZQSeaLYsuRSVD+OBowRYnhE0cwUczdisgIK0yMi6fiQggWX14mj2f14LJ+cX9ea9wUcZThCI7hFAK4ggbcQRNaQGAEz/AKb57wXrx372PeWvKKmUP4A+/zBzUrjl0=</latexit>     
+
+> ∑
+> Proprioceptive data Task goal
+> Tokenization
+> ∑
+> C
+> Observations
+> Summing heat maps across layers
+> ∑
+> Attentive attribution maps Press the green circular button
+> on the lamp …
+> Verb phrases Noun tokens
+
+Figure 2: Illustration of attentive attribution maps (e.g., noun grounding and verb-conditioned trajectory adjustment). attributions, ensuring semantic-to-physical correspondence. Specifically, we design an attentive attribution mapper that anchors lexical semantics to visuomotor representations at each timestep via bidirectional cross-attention. Formally, at each attention head 𝜄 ∈ [ 1, 𝑛 ], given text embedding ˜ 𝑙 𝑡 and joint vision-proprioceptive context 𝑋 𝑡 = ( ˜𝑥 𝑡 , ˜Z𝑡 ), the atten-tion score determines the token-wise relevance: 
+
+𝐹 (𝜄 )𝑡 
+
+  ˜𝑙 𝑡 , 𝑋 𝑡 
+
+ = softmax ©«
+
+𝑊 ( 𝜄 ) 
+
+> 𝑞
+
+˜𝑙 𝑡 
+
+  
+
+𝑊 ( 𝜄 ) 
+
+> 𝑘
+
+𝑋 𝑡 
+
+𝑇 
+
+√𝑑 𝑘 
+
+ª®®¬
+
+,𝐹 (𝜄 )𝑡 
+
+ 𝑋 𝑡 , ˜𝑙 𝑡 
+
+ = softmax ©«
+
+𝑊 ( 𝜄 ) 
+
+> 𝑞
+
+𝑋 𝑡 
+
+  
+
+𝑊 ( 𝜄 ) 
+
+> 𝑘
+
+˜𝑙 𝑡 
+
+𝑇 
+
+√𝑑 𝑘 
+
+ª®®¬
+
+, (8) where 𝑊 ( 𝜄 ) 
+
+> 𝑞
+
+, 𝑊 ( 𝜄 ) 
+
+> 𝑘
+
+∈ Rℎ×𝑑 𝑘 are learned projection matri-ces for queries and keys, 𝑑 𝑘 is the dimension of the key vectors. These attention scores determine the alignment be-tween linguistic tokens (e.g., verbs and nouns) and physical features, ensuring semantic-to-physical correspondence. The fused features ˜ 𝐹 𝑡 are calculated as follows: ˜𝐹 𝑡 =∑︁ 
+
+> 𝑛
+
+𝐹   ˜𝑙 𝑡 , 𝑋 𝑡 
+
+ 𝑋 𝑡 ,𝑛 + 𝐹  𝑋 𝑡 , ˜𝑙 𝑡 
+
+ ˜𝑙 𝑡 ,𝑛 , (9) where each term is broadcast across the sequence length and feature dimensions. To maintain temporal coherence, we incorporate positional encodings pos ∈ Rℎ into the self-attention mechanism. Specifically, the queries and keys are generated from these encodings through learned projections 
+
+𝑊 ( 𝜄 ) 
+
+> 𝑞
+
+and 𝑊 ( 𝜄 ) 
+
+> 𝑘
+
+to capture position-dependent relationships: 
+
+𝜉 𝑡 =∑︁ 
+
+> 𝑛
+
+softmax ©«
+
+𝑊 ( 𝜄 ) 
+
+> 𝑞
+
+pos 𝑡 
+
+  
+
+𝑊 ( 𝜄 ) 
+
+> 𝑘
+
+pos 𝑡 
+
+𝑇 
+
+√𝑑 𝑘 
+
+ª®®¬
+
+˜𝐹 𝑡 ,𝑛 . (10) Here, 𝜉 𝑡 represents the final multimodal representation at 𝑡 ,incorporating both semantic alignment and temporal coher-ence. CSA overcomes the limitations of static fusion methods by grounding linguistic instructions in visuomotor represen-tations via bidirectional cross-attention. Stepwise semantic anchoring aligns linguistic tokens (e.g., “button”, “press”) with visual regions and proprioceptive states, while posi-tional encodings ensure temporal coherence. 
+
+Contextual Action Generation 
+
+The goal-conditioned decoder predicts future joint positions over the next 𝑘 timesteps, ensuring contextual relevance and robustness to distributional shifts. Residual connections, layer normalization, and dropout are used to stabilize training and improve output quality. 
+
+𝑎 ′ 
+
+> 𝑡 :𝑡 +𝑘
+
+= LayerNorm ( ˜𝐹 𝑡 + Dropout (𝜉 𝑡 )) . (11) Each attention block is followed by a position-wise feed-forward network, and the processed features (dimension 
+
+𝑘 × 𝑑 𝑘 ) are down-projected through an MLP into 𝑘 × 𝑑 ,representing the predicted action sequences for the next 𝑘 
+
+timesteps. During training, the policy 𝜋 𝜃 is optimized via su-pervised learning on expert demonstrations, minimizing the discrepancy between predicted and expert actions. During inference, only the decoder is active, ensuring deterministic outputs for consistent evaluation. The decoder generates ac-tion sequences 𝑎 ′ by conditioning on real-time images and robot state 𝑠 ′ and task instructions 𝑙 ′, while it is executed un-der the environment dynamics (e.g., variations in position). 
+
+Posterior Approximation and Optimization 
+
+To model the complex posterior distribution of the latent variable 𝑧 , we follow the CVAE framework. The true poste-rior 𝑝 𝜓 (𝑧 |𝑎 𝑡 :𝑡 +𝑘 ) is approximated by 𝑞 𝜙 (𝑧 |𝑎 𝑡 :𝑡 +𝑘 ), parame-terized by a neural network. The optimization objective is to maximize the Evidence Lower Bound (ELBO), comprising reconstruction and KL divergence losses: log 𝑝 (𝑎 ′ 
+
+> 𝑡 :𝑡 +𝑘
+
+) ≥ E𝑞 (𝑧 | 𝑎 ′  
+
+> 𝑡 :𝑡 +𝑘 )
+
+[log 𝑝 (𝑎 ′ 
+
+> 𝑡 :𝑡 +𝑘
+
+|𝑧, 𝑠, 𝑙 )] 
+
+| {z }
+
+> Reconstruction Likelihood
+
+− KL (𝑞 (𝑧 |𝑎 ′ 
+
+> 𝑡 :𝑡 +𝑘
+
+)∥ 𝑝 (𝑧 )) 
+
+| {z }
+
+> Kullback-Leibler divergence
+
+, (12) where 𝑝 (𝑎 ′ 
+
+> 𝑡 :𝑡 +𝑘
+
+|𝑧, 𝑠, 𝑙 ) is the likelihood of the data given the latent variables, and 𝑝 (𝑧 ) is the prior distribution of the latent variables. By maximizing the ELBO, we effectively maximize the log probability of the data while ensuring that the variational distribution 𝑞 (𝑧 |𝑎 ′ 
+
+> 𝑡 :𝑡 +𝑘
+
+) is close to the true posterior. The reconstruction loss ensures that decoded tra-jectories align with expert demonstrations, while the KL divergence regularizes the latent encoding to conform to a standard Gaussian prior, LBC = Lrecon + L KL . However, the estimated posterior 𝑞 𝜙 (𝑧 |𝑎 ′ 
+
+> 𝑡 :𝑡 +𝑘
+
+) in vanilla CVAE is restricted to a normal distribution, which limits its ability to reflect the real trajectory characteristics. By employing NeuralODEs, we enhance the posterior’s adaptability by learning dynamic representations of latent trajectories, better reflecting real-world data dynamics. Additionally, a discontinuity penalty is introduced to ensure the smooth evolution of latent states: 
+
+Edisc =
+
+> 𝑡 +𝑘
+
+∑︁ 
+
+> 𝑡
+
+∫ 𝑡 𝛿 
+
+> 𝑡 0
+
+𝑑𝑧 (𝑡 )
+
+𝑑𝑡 − 𝑓 (𝑧 (𝑡 ), 𝑡 ; 𝜓 )
+
+> 22
+
+𝑑𝑡, (13) where 𝑑𝑧 (𝑡 ) 
+
+> 𝑑𝑡
+
+is the actual rate of change of latent states, and 
+
+𝑓 (𝑧 (𝑡 ), 𝑡 ; 𝜓 ) is the rate of change predicted by NeuralODE. The total loss combines the BC and a discontinuity penalty: 
+
+L = 1
+
+𝑁 
+
+> 𝑁
+
+∑︁ 
+
+LBC + E disc . (14) 24903 Related Work 
+
+Language-Conditioned Manipulation (LCM). LCM en-ables robots to perform tasks via natural language, mak-ing it a key paradigm in embodied AI by integrating vi-sion, language, and robotics (Guhur et al. 2023; Chen et al. 2024). A key approach to tackling LCM tasks is Behavioral Cloning (BC), which trains policies for sequential decision-making directly from expert demonstrations (Kober and Pe-ters 2009; Foster, Block, and Misra 2024). Recent work ex-plores vision-based representations and vision-language in-teraction to enhance policy learning. Voxel-based methods like PerAct (Shridhar, Manuelli, and Fox 2023) and large-scale models like RT-1 (Brohan et al. 2023) enable language grounding but suffer from high computational and parameter costs. Thus, we propose a lightweight framework that pre-dicts actions from RGB and robot states, while preserving fine-grained linguistic-physical alignment. 
+
+Compounding Errors in Behavioral Cloning. BC models an action distribution given the current state at each timestep (Wang et al. 2024a). However, BC suffers from compound-ing errors that lead to distributional drift and unrecoverable states over long horizons (Mehta et al. 2025). Prior works include interactive corrections require expert feedback dur-ing execution and are impractical for complex teleoperation (Hoque et al. 2023), while data augmentation (Lee et al. 2015; Deshpande et al. 2024) reduces supervision but strug-gles with fine manipulation. Temporal abstraction methods (Zhao et al. 2023; Lu et al. 2024) discretize actions into phases, but often induce jerky motions. R3M (Nair et al. 2022) attempts to align text with vision but lacks dynamic adaptation to evolving task contexts. In contrast, we jointly optimize stepwise semantic grounding and temporal conti-nuity, mitigating compounding errors and the rigidity in BC. 
+
+Neural Ordinary Differential Equations. Neural Ordinary Differential Equations (NeuralODEs) extend neural networks to model continuous-time dynamics, evolving from discrete ResNet (He et al. 2016) updates to continuous trajectories (Biloˇ s et al. 2021). ODE-RNNs (Rubanova, Chen, and Duve-naud 2019) are designed to model irregularly sampled time series, while TrajODE (Liang et al. 2021) focuses on en-hancing functionalities of recurrent neural networks. Stud-ies (Lin et al. 2021; Li et al. 2024b) show that learnable control in NeuralODEs approximates a nonlinear dynamics-inversion controller. Although NeuralODEs have been uti-lized in robotic controllers, we harness them for high-level decision-making, leveraging their continuous dynamics to handle the complexities of high-dimensional visual tasks. 
+
+## Experiments 
+
+We conduct comprehensive evaluations against state-of-the-art behavior cloning baselines and ablate key components of our method. We further examine how stepwise semantic anchoring improves visual-action alignment, and how Neu-ralODE solver parameters affect trajectory continuity. 
+
+Experimental Setup 
+
+Simulation Environments and Datasets. We evaluate CCoL on three widely used simulation suites: (1) We con-
+
+Method Cube Transfer Bimanual Insertion Scripted Human Avg. Scripted Human Avg. BCCNN 1.0 0.0 0.5 1.0 0.0 0.5 RT-1 2.0 0.0 1.0 1.0 0.0 0.5 VINN 3.0 0.0 1.5 1.0 0.0 0.5 BeT 27.0 1.0 14.0 3.0 0.0 1.5 DP 54.0 4.0 29.0 74.0 0.0 37.0 ACT 86.0 50.0 68.0 32.0 20.0 26.0 AWE 99.0 71.0 85.0 57.0 30.0 43.5 DIC 95.9 78.1 87.0 83.2 30.2 56.7 
+
+CCoL 99.0 82.0 90.5 87.0 36.0 61.5 
+
+Table 1: Success rate (%) on Aloha MuJoCo. 
+
+Method LampOn GrillMeat Phone OpenBottle Avg. BCCNN 4.0 0.0 0.0 0.0 1.0 ACT 76.0 70.3 22.0 42.7 52.8 AWE 85.7 74.3 34.7 46.3 60.3 
+
+CCoL 93.7 82.3 44.3 51.7 68.0 
+
+HDP 92.7 80.7 42.3 50.7 66.6 3DDiff 89.3 85.0 71.7 69.3 78.8 
+
+CCoL 3D 97.3 87.3 76.7 78.3 84.9 
+
+Table 2: Comparison on RLBench tasks (3 seeds). duct two bimanual collaborative tasks on Aloha MuJoCo (Zhao et al. 2023), using human and scripted demonstra-tions under varied object positions. (2) We employ RLBench (James et al. 2020) for multi-scenario evaluation. (3) Fol-lowing (Zeng et al. 2024), we evaluate CCoL on multi-stage Franka Kitchen tasks to assess long-horizon performance. 
+
+Baselines. We evaluate CCoL against representative BC methods across three categories. Temporal modeling base-lines include BCCNN (Jang et al. 2022), RT-1 (Brohan et al. 2023), BeT (Shafiullah et al. 2022), and VINN (Pari et al. 2022), mapping states to actions via CNN, transformers, non-parametric retrieval and weighted k-nearest neighbors. ACT (Zhao et al. 2023) and AWE (Shi et al. 2023) reduce plan-ning horizon via action chunking and waypoint abstraction. 
+
+Diffusion-based methods like DP (Chi et al. 2025) and DIC (Xu et al. 2025) model actions via conditional denoising diffusion. HDP (Ma et al. 2024) and 3DDiff (Ke, Gkanat-sios, and Fragkiadaki 2025) leverage 3D scene tokens to decompose policy into joint-level diffusion. Representation-enhanced policies like R3M (Nair et al. 2023), Voltron (Karamcheti et al. 2023), and MPI (Zeng et al. 2024) leverage visual representations to improve semantic grounding. 
+
+Metrics and Implementation Details. The success rate (%) measures task completion under defined conditions, such as transferring a red cube between grippers with 1cm clear-ance to avoid collisions. To ensure consistency, our model maintains the same settings as AWE (Shi et al. 2023; Ke, Gkanatsios, and Fragkiadaki 2025) for Aloha MuJoCo and RLBench, and aligns with MPI (Zeng et al. 2024) for the Franka Kitchen setup. The model employs the SGD opti-mizer, starting with a learning rate of 1e-5, momentum of 24904 Method Backbone Single-task Long-horizon task 
+
+> 1
+
+O Turn Knob 2O Open Door 3O Open Microwave Avg. 1O+ 2O 2O+ 3O 1O+ 2O+ 3O Avg. INSUP ResNet50 28.0 18.0 26.7 24.2 – – – –CLIP ResNet50 26.3 13.0 24.7 21.3 – – – –R3M ResNet50 53.3 50.7 59.3 54.4 25.1 29.6 15.5 23.4 Voltron ViT-S 71.7 45.3 40.3 52.4 34.6 22.6 13.0 23.4 MPI ViT-S 83.3 50.3 59.7 64.4 38.2 31.2 23.3 30.9 
+
+CCoL ViT-S 85.3 56.7 64.7 68.9 43.7 37.3 27.7 36.2 
+
+MPI ViT-B 89.0 57.7 54.0 66.9 41.7 34.7 26.3 34.2 
+
+CCoL ViT-B frozen 81.7 53.3 62.7 65.9 41.6 35.4 26.5 34.5 
+
+CCoL ViT-B 88.7 58.3 58.7 68.6 45.7 38.5 30.1 38.1 
+
+Table 3: Performance comparison on Franka Kitchen. Bold and underlined values mark the best and second-best performance. 
+
+Method Cube Transfer Bimanual Insertion Scripted Human Scripted Human 
+
+CCoL 99.0 82.0 87.0 36.0 
+
+⌟ w/o MCC 99.0 74.0 72.0 34.0 
+
+⌟ w/o CSA 99.0 73.0 74.0 35.0 
+
+⌟ w/o Edisc 99.0 78.0 76.0 32.0 
+
+⌟ w/ CSA no att 98.0 72.0 70.0 28.0 
+
+⌟ w/ TCN 96.0 72.0 74.0 36.0 
+
+⌟ w/ TCN no MCC 92.0 58.0 54.0 20.0 Table 4: Ablation study of MCC and CSA variants. w/o MCC: 0.026 CCoL: 0.018 <latexit sha1_base64="3NAtx3JFfbjVFplmSgV7Q22Hd2U=">AAAB8HicdVDLSgMxFM3UV62vqks3wSK4GjI607osunFZwT6kHUomzbShSWZIMkIp/Qo3LhRx6+e482/MtBVU9MCFwzn3cu89UcqZNgh9OIWV1bX1jeJmaWt7Z3evvH/Q0kmmCG2ShCeqE2FNOZO0aZjhtJMqikXEaTsaX+V++54qzRJ5ayYpDQUeShYzgo2V7npGMSyHnPbLFeRWaz5CAUSuZ0ng58Q/D6o16LlojgpYotEvv/cGCckElYZwrHXXQ6kJp1gZRjidlXqZpikmYzykXUslFlSH0/nBM3hilQGME2VLGjhXv09MsdB6IiLbKbAZ6d9eLv7ldTMTX4RTJtPMUEkWi+KMQ5PA/Hs4YIoSwyeWYKKYvRWSEVaYGJtRyYbw9Sn8n7TOXK/qBjd+pX65jKMIjsAxOAUeqIE6uAYN0AQECPAAnsCzo5xH58V5XbQWnOXMIfgB5+0TZ6GQ1Q==</latexit>   <latexit sha1_base64="3NAtx3JFfbjVFplmSgV7Q22Hd2U=">AAAB8HicdVDLSgMxFM3UV62vqks3wSK4GjI607osunFZwT6kHUomzbShSWZIMkIp/Qo3LhRx6+e482/MtBVU9MCFwzn3cu89UcqZNgh9OIWV1bX1jeJmaWt7Z3evvH/Q0kmmCG2ShCeqE2FNOZO0aZjhtJMqikXEaTsaX+V++54qzRJ5ayYpDQUeShYzgo2V7npGMSyHnPbLFeRWaz5CAUSuZ0ng58Q/D6o16LlojgpYotEvv/cGCckElYZwrHXXQ6kJp1gZRjidlXqZpikmYzykXUslFlSH0/nBM3hilQGME2VLGjhXv09MsdB6IiLbKbAZ6d9eLv7ldTMTX4RTJtPMUEkWi+KMQ5PA/Hs4YIoSwyeWYKKYvRWSEVaYGJtRyYbw9Sn8n7TOXK/qBjd+pX65jKMIjsAxOAUeqIE6uAYN0AQECPAAnsCzo5xH58V5XbQWnOXMIfgB5+0TZ6GQ1Q==</latexit>  
+
+> →30.77%
+> w/o MCC: 0.0052 CCoL: 0.0035
+> →32.70%
+> Velocity t
+> Acceleration tVelocity std.: Acceleration std.:
+
+Figure 3: Trajectory smoothness analysis for the shoulder joint during the bimanual insertion scripted task. 0.9, a chunking size of 𝑘 =50, and a batch size of 8. The ODEsolver evaluates solutions at two discrete time points. 
+
+Experiment Results 
+
+(1) As shown in Table 1, CCoL excels in bimanual coor-dination tasks, surpassing AWE by +11.8% (absolute) and DIC by +5.8% (relative) in average success rate. In partic-ular, it achieves +19.2% relative gain over DIC in human-demonstrated bimanual insertion, showing robustness to noisy supervision and task complexity. (2) On RLBench (Table 2), CCoL surpasses AWE by +7.7% in 2D setting, and CCoL 3D outperforms 3DDiff by +6.1%, highlighting the benefit of multimodal coordination in 3D spatial domains. For a fair comparison, CCoL 3D aligns its 3D representa-tion resolution with 3DDiff by leveraging RGB-D input, a CLIP-based ResNet-50 encoder, and shared 3D tokens with relative attention. (3) We evaluate CCoL with multiple vi-sion backbones (Table 3). Under ViT-S (22M), it improves over MPI by +6.9% and +17.2% on single-task and long-horizon settings, respectively. With ViT-B (86M), it achieves +11.4% improvement on the long-horizon setting, and no-tably reaches 34.5% even with a frozen encoder, showing strong performance without vision tuning. 
+
+Ablation Study 
+
+Quantitative Analysis. Table 4 reveals that w/o (i.e., with-out) MCC causes a 15.0% drop on bimanual insertion (scripted) due to disrupted continuity through latent propri-oceptive modeling, while w/o CSA leads to a 9.0% average drop on cube transfer (human), highlighting its importance in aligning linguistic with visuomotor context. Removing 
+
+Edisc from MCC degrades performance by weakening tem-poral smoothness. CSA no att replacing bidirectional attention with average pooling performed worse than completely w/o CSA. Replacing attention with TCN in the proprioceptive encoder reduces success by 13.0% in the bimanual inser-tion (scripted) task, while further removing MCC leads to a 16.0% drop on human demos, showing that both temporal modeling and attention are essential for coherent behavior. 
+
+Trajectory Smoothness Analysis. To assess CCoL’s physi-cal continuity, we compute velocity 𝑣 (𝑡 ) = 𝑑𝑎 ′ 
+
+> 𝑡
+> 𝑑𝑡
+
+≈ 𝑎 ′ 
+
+> 𝑡 +1
+
+− 𝑎 ′
+
+> 𝑡
+
+and acceleration 𝑐 (𝑡 ) = 𝑑 2 𝑎 ′ 
+
+> 𝑡
+> 𝑑𝑡 2
+
+≈ 𝑎 ′ 
+
+> 𝑡 +2
+
+−2𝑎 ′ 
+
+> 𝑡 +1
+
++𝑎 ′ 
+
+> 𝑡
+
+. As shown in Fig. 3, CCoL reduces high-frequency oscillations (e.g., peak acceleration) compared to baselines. This smoothness stems from MCC’s latent proprioceptive modeling via NeuralODEs (Eq. 6), which enables continuous transitions. Compared to CCoL w/o MCC , CCoL reduces velocity fluctuations by 30.8% and acceleration fluctuations by 32.7%. Remarkably, the min-imum acceleration improved 20.2%. These findings validate the ability of MCC to suppress high-frequency jitter and se-vere negative acceleration (sudden deceleration), resulting in smoother transitions. 
+
+Hyperparameter Analysis. Fig. 5 shows the effect of Neu-ralODE solver timesteps (2.0, 1.0, 0.5) on long-horizon task performance. Larger timesteps yield higher success rates and faster convergence, especially in cube transfer (scripted), sup-porting our design that coarse steps improve efficiency while preserving smooth dynamics. Notably, CCoL(2.0) shows sta-24905 (b) Visual semantics.                   
+
+> 4.6cm
+> Pick up golden-brown drumstick from pan and place it on grill
+> Task progress
+> 7-DoF robot
+> Object
+> Camera Parallel-jaw gripper
+> 12mm
+> Pen Lifting 4cm
+> Cubes Placement 3cm Cube Sliding
+> (b) CSA-driven visual attention shifts in RLBench tasks. (c) Real-world tasks with varied initial object positions (red lines).
+> Insert red peg into blue socket with human assistance
+> LG RG
+> Transfer red cube to the other arm with script control
+> LG RG
+> (a) Semantic-trajectory mapping on Aloha MuJoCo.
+> t-th Step Phase LG Cube RG 109 grasp 0.082 0.431 0.467
+> 275 transfer 0.293 0.502 0.245 339 hold 0.544 0.257 0.138
+
+Figure 4: Attentive attribution mapping via CSA and real-world task settings with varied initial object positions. 0 2500 5000 7500       
+
+> Epoch
+> 0.1
+> 0.2
+> 0.3
+> Success Rate
+> 02500 5000 7500
+> Epoch
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> Success Rate
+> CCoL(2.0) CCoL(1.0) CCoL(0.5) CCoL w TCN(2.0)
+
+Figure 5: Hyperparameter impact on insertion and transfer. ble monotonic improvement, whereas smaller steps (e.g., 0.5) lead to oscillations from sensitivity to transient noise. 
+
+Qualitative Analysis. We analyze how linguistic cues influ-ence visual attention and trajectory planning through CSA. Fig. 4(a) illustrates that CSA aligns nouns (e.g., “cube”, “socket”) to visual targets while verbs (e.g., “transfer”, “in-sert”) map to distinct trajectory patterns. We also evaluate CSA’s temporal grounding behavior by analyzing attention shifts across tasks. In cube transfer, quantitative attention scores show a clear progression from the right gripper (grasp) to the red cube (transfer) and then the left gripper (handover). A similar shift is observed in the RLBench grillmeat task (Fig. 4(b)). This phase-to-phase transition shows that CSA dynamically adjusts attention based on semantic cues, en-abling step-aware visuomotor alignment. 
+
+Real-World Experiments. To validate our framework in practical scenarios, we deploy it on a 7-DoF Franka Emika Panda robot equipped with an Intel RealSense D435i RGB-D camera and a parallel-jaw gripper (Fig. 4(c)). We design three manipulation tasks (pen lifting, cube sliding and cubes placement) to assess generalization under unseen (e.g., vary-ing pen diameters) or noisy states (e.g., vase, pen holder). For training, we collect 50 kinesthetic demonstrations per task with randomized initial conditions. At test time, each task is evaluated over 15 trials under shifted conditions. As shown in Fig. 6, CCoL consistently achieves high success rates (e.g., 86.7% in cubes placement), demonstrating strong real-world generalization. Since failures are mainly caused 0 20 40 60 80 100(%) Slide Cube (area size) Pickup Pen (12→10mm) Pickup Pen (12→8mm) Pick Cubes (noisy) Pick Cubes (area size) 66.7 13.3 6.7 13.3 53.3 6.7 13.3 13.3 13.3 53.3 6.7 20.0 6.7 13.3 73.3 6.7 13.3 6.7 86.7 6.7 6.7 Suc. FR Loc. FR Cont. FR Kine. FR Size 
+
+Figure 6: Real-world generalization under unseen states. Bars indicate success and four types of failure rates. by localization errors, contact (grasping) failures, kinematic inconsistencies, and size adaptation issues, we report the av-erage failure rate (FR) of each failure. We found that when picking cubes, placement errors occurred in small color ar-eas, despite successful localization and contact. When pick-ing up a pen, failures were caused by small diameters and insufficient lifting distances. When sliding a cube, failures stem from positioning deviations or incomplete sliding into the target area. Our model trains in 5.3 hours on an RTX 4090 GPU and runs at 0.015s ( ±0.003s) per action sequence, meeting real-time requirements ( ≈ 67Hz policy frequency). 
+
+## Conclusion 
+
+We present CCoL, a novel framework that synergizes multimodal continuous co-learning and stepwise semantic-physical alignment to mitigate compounding errors in BC. By integrating NeuralODEs for smooth latent trajectory learn-ing and bidirectional cross-attention for linguistic ground-ing, CCoL ensures both temporal coherence and semantic precision during task execution. Extensive simulation ex-periments, alongside real-world robustness, demonstrate its superiority, especially in bimanual collaborative and long-horizon manipulation tasks. Future work will extend CCoL to LLM-based methods and explore its integration with foun-dation models for open-world manipulation. 24906 Acknowledgments 
+
+This work was supported by National High Level Hos-pital Clinical Research Funding (Grant 2025-PUMCH-D-005), National Natural Science Foundation of China (Grant 62473213), Sustainable Development Science and Technology Special Project of Shenzhen (Grant KCXFZ20230731100900002), Shenzhen Science and Tech-nology Program (Grant KQTD20210811090143060), and Beijing Tianjin Hebei Basic Research Cooperation Special Project (Grant 24JCZXJC00060). We also acknowledge sup-port in part from HK RGC General Research Fund (No.: PolyU 15235424), “Research on Key Technologies for Sys-tematic Artificial Intelligence Agents” project under China Mobile Innovation and Research Institute (No.: R24114H7), and Research Institute for Artificial Intelligence of Things, The Hong Kong Polytechnic University. This work was par-tially conducted at the Robotics and Embodied Intelligence (REI) Lab, The Education University of Hong Kong. 
+
+## References 
+
+Biloˇ s, M.; Sommer, J.; Rangapuram, S. S.; Januschowski, T.; and G¨ unnemann, S. 2021. Neural flows: Efficient alternative to neural ODEs. Advances in neural information processing systems , 34: 21325–21337. Block, A.; Jadbabaie, A.; Pfrommer, D.; Simchowitz, M.; and Tedrake, R. 2023. Provable guarantees for generative behavior cloning: Bridging low-level stability and high-level behavior. Advances in Neural Information Processing Sys-tems , 36: 48534–48547. Brohan, A.; Brown, N.; Carbajal, J.; Chebotar, Y.; Dabis, J.; Finn, C.; Gopalakrishnan, K.; Hausman, K.; Herzog, A.; Hsu, J.; et al. 2023. RT-1: Robotics Transformer for Real-World Control at Scale. In Robotics: Science and Systems XIX, Daegu, Republic of Korea, July 10-14, 2023 .Chen, B.; Kang, J.; Zhong, P.; Liang, Y.; Sheng, Y.; and Wang, J. 2024. Embodied Contrastive Learning with Ge-ometric Consistency and Behavioral Awareness for Object Navigation. In Proceedings of the 32nd ACM International Conference on Multimedia , 4776–4785. Chi, C.; Xu, Z.; Feng, S.; Cousineau, E.; Du, Y.; Burchfiel, B.; Tedrake, R.; and Song, S. 2025. Diffusion policy: Visuo-motor policy learning via action diffusion. The International Journal of Robotics Research , 44(10-11): 1684–1704. Codevilla, F.; Santana, E.; L´ opez, A. M.; and Gaidon, A. 2019. Exploring the limitations of behavior cloning for au-tonomous driving. In Proceedings of the IEEE/CVF inter-national conference on computer vision , 9329–9338. Cui, J.; and Trinkle, J. 2021. Toward next-generation learned robot manipulation. Science robotics , 6(54): eabd9461. Deshpande, A.; Ke, L.; Pfeifer, Q.; Gupta, A.; and Srinivasa, S. S. 2024. Data efficient behavior cloning for fine manip-ulation via continuity-based corrective labels. In IEEE/RSJ International Conference on Intelligent Robots and Systems .Foster, D. J.; Block, A.; and Misra, D. 2024. Is behavior cloning all you need? understanding horizon in imitation learning. Advances in Neural Information Processing Sys-tems , 37: 120602–120666. Fu, Z.; Zhao, T. Z.; and Finn, C. 2024. Mobile ALOHA: Learning bimanual mobile manipulation using low-cost whole-body teleoperation. Conference on Robot Learning, 6-9 November 2024, Munich, Germany , 270: 4066–4083. Guhur, P.-L.; Chen, S.; Pinel, R. G.; Tapaswi, M.; Laptev, I.; and Schmid, C. 2023. Instruction-driven history-aware policies for robotic manipulations. In Conference on Robot Learning , 175–187. PMLR. Han, K.; Wang, Y.; Chen, H.; Chen, X.; Guo, J.; Liu, Z.; Tang, Y.; Xiao, A.; Xu, C.; Xu, Y.; et al. 2022. A survey on vision transformer. IEEE transactions on pattern analysis and machine intelligence , 45(1): 87–110. He, K.; Zhang, X.; Ren, S.; and Sun, J. 2016. Deep resid-ual learning for image recognition. In Proceedings of the IEEE conference on computer vision and pattern recogni-tion, CVPR 2016, Las Vegas, USA , 770–778. Hoque, R.; Chen, L. Y.; Sharma, S.; Dharmarajan, K.; Thananjeyan, B.; Abbeel, P.; and Goldberg, K. 2023. Fleet-dagger: Interactive robot fleet learning with scalable human supervision. In Conference on Robot Learning , 368–380. Ingram, B.; Van Alten, C.; Klein, R.; and Rosman, B. 2023. Creating diverse play-style-centric agents through be-havioural cloning. In Proceedings of the AAAI Conference on Artificial Intelligence and Interactive Digital Entertainment ,volume 19, 255–265. James, S.; Ma, Z.; Arrojo, D. R.; and Davison, A. J. 2020. Rlbench: The robot learning benchmark & learning environ-ment. IEEE Robotics and Automation Letters (RAL) , 5(2): 3019–3026. Jang, E.; Irpan, A.; Khansari, M.; Kappler, D.; Ebert, F.; Lynch, C.; Levine, S.; and Finn, C. 2022. Bc-z: Zero-shot task generalization with robotic imitation learning. In Conference on Robot Learning , 991–1002. PMLR. Karamcheti, S.; Nair, S.; Chen, A. S.; Kollar, T.; Finn, C.; Sadigh, D.; and Liang, P. 2023. Language-Driven Repre-sentation Learning for Robotics. In Robotics: Science and Systems XIX, Daegu, Republic of Korea, July 10-14, 2023 .Ke, T.-W.; Gkanatsios, N.; and Fragkiadaki, K. 2025. 3D Diffuser Actor: Policy Diffusion with 3D Scene Representa-tions. Conference on Robot Learning , 1949–1974. Kelly, M.; Sidrane, C.; Driggs-Campbell, K.; and Kochen-derfer, M. J. 2019. Hg-dagger: Interactive imitation learning with human experts. In 2019 International Conference on Robotics and Automation (ICRA) , 8077–8083. Kober, J.; and Peters, J. 2009. Learning motor primitives for robotics. In 2009 IEEE International Conference on Robotics and Automation , 2112–2118. Lea, C.; Flynn, M. D.; Vidal, R.; Reiter, A.; and Hager, G. D. 2017. Temporal convolutional networks for action segmentation and detection. In proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, Honolulu, HI, USA, July 21-26, 2017 , 1003–1012. Lee, A. X.; Lu, H.; Gupta, A.; Levine, S.; and Abbeel, P. 2015. Learning force-based manipulation of deformable objects from multiple demonstrations. In 2015 IEEE International Conference on Robotics and Automation (ICRA) , 177–184. 24907 Li, L.; Liang, S.; Zhu, Z.; Ding, C.; Zha, H.; and Wu, B. 2024a. Learning to optimize permutation flow shop schedul-ing via graph-based imitation learning. In Proceedings of the AAAI conference on artificial intelligence , volume 38, 20185–20193. Li, M.; Bian, W.; Chen, L.; and Liu, M. 2024b. HiDeS: a higher-order-derivative-supervised neural ordinary differen-tial equation for multi-robot systems and opinion dynamics. 
+
+Frontiers in Neurorobotics , 18: 1382305. Li, X.; Liu, M.; Zhang, H.; Yu, C.; Xu, J.; Wu, H.; Cheang, C.; Jing, Y.; Zhang, W.; Liu, H.; et al. 2024c. Vision-Language Foundation Models as Effective Robot Imitators. In Interna-tional Conference on Learning Representations .Liang, Y.; Ouyang, K.; Yan, H.; Wang, Y.; Tong, Z.; and Zim-mermann, R. 2021. Modeling Trajectories with Neural Ordi-nary Differential Equations. In Proceedings of International Joint Conference on Artificial Intelligence , 1498–1504. Lin, H.; Li, B.; Zhou, X.; Wang, J.; and Meng, M. Q.-H. 2021. No need for interactions: Robust model-based imita-tion learning using neural ode. In 2021 IEEE International Conference on Robotics and Automation (ICRA) , 11088– 11094. Liu, J.; Chen, C.; and Liu, M. 2024. Multi-modality co-learning for efficient skeleton-based action recognition. In 
+
+Proceedings of the 32nd ACM international conference on multimedia , 4909–4918. Liu, Y.; Ott, M.; Goyal, N.; Du, J.; Joshi, M.; Chen, D.; Levy, O.; Lewis, M.; Zettlemoyer, L.; and Stoyanov, V. 2019. RoBERTa: A Robustly Optimized BERT Pretraining Ap-proach. CoRR , abs/1907.11692. Lu, J.; Xia, W.; Wang, D.; Wang, Z.; Zhao, B.; Hu, D.; and Li, X. 2024. KOI: Accelerating Online Imitation Learning via Hybrid Key-state Guidance. In Conference on Robot Learning, 6-9 November 2024, Munich, Germany , volume 270, 3847–3865. PMLR. Ma, X.; Patidar, S.; Haughton, I.; and James, S. 2024. Hi-erarchical diffusion policy for kinematics-aware multi-task robotic manipulation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,18081–18090. Mehta, S. A.; Ciftci, Y. U.; Ramachandran, B.; Bansal, S.; and Losey, D. P. 2025. Stable-BC: Controlling covariate shift with stable behavior cloning. IEEE Robotics and Automation Letters , 10: 1952–1959. Nair, S.; Rajeswaran, A.; Kumar, V.; Finn, C.; and Gupta, A. 2022. R3M: A Universal Visual Representation for Robot Manipulation. In Conference on Robot Learning, CoRL 2022, 14-18 December 2022, Auckland, New Zealand , vol-ume 205, 892–909. PMLR. Pan, S.; Xu, Y.; Xu, R.; Zhou, Z.; Wu, S.; and Yu, Z. 2025. Self-Correcting Robot Manipulation via Gaussian-Splatted Foresight. In Proceedings of the AAAI Conference on Artifi-cial Intelligence , volume 39, 26642–26650. Pari, J.; Shafiullah, N. M.; Arunachalam, S. P.; and Pinto, L. 2022. The Surprising Effectiveness of Representation Learning for Visual Imitation. In Robotics: Science and Systems XVIII, New York City, USA, June 27 - July 1, 2022 .Righetti, L.; Buchli, J.; Mistry, M.; Kalakrishnan, M.; and Schaal, S. 2013. Optimal distribution of contact forces with inverse-dynamics control. The International Journal of Robotics Research , 32(3): 280–298. Rubanova, Y.; Chen, R. T.; and Duvenaud, D. K. 2019. Latent ordinary differential equations for irregularly-sampled time series. Advances in neural information processing systems .Shafiullah, N. M.; Cui, Z.; Altanzaya, A. A.; and Pinto, L. 2022. Behavior transformers: Cloning 𝑘 modes with one stone. Advances in neural information processing systems ,35: 22955–22968. Shi, L. X.; Sharma, A.; Zhao, T. Z.; and Finn, C. 2023. Waypoint-Based Imitation Learning for Robotic Manipula-tion. In Conference on Robot Learning , 2195–2209. PMLR. Shridhar, M.; Manuelli, L.; and Fox, D. 2023. Perceiver-actor: A multi-task transformer for robotic manipulation. In 
+
+Conference on Robot Learning , 785–799. PMLR. Stepputtis, S.; Campbell, J.; Phielipp, M.; Lee, S.; Baral, C.; and Ben Amor, H. 2020. Language-conditioned imitation learning for robot manipulation tasks. Advances in Neural Information Processing Systems , 33: 13139–13150. Vaswani, A.; Shazeer, N.; Parmar, N.; Uszkoreit, J.; Jones, L.; Gomez, A. N.; Kaiser, L.; and Polosukhin, I. 2017. Attention is all you need. Advances in neural information processing systems , 30. Wang, B.; Wu, G.; Pang, T.; Zhang, Y.; and Yin, Y. 2024a. Diffail: Diffusion adversarial imitation learning. In Pro-ceedings of the AAAI Conference on Artificial Intelligence ,volume 38, 15447–15455. Wang, Z.; Zhuang, H.; Li, L.; Zhang, Y.; Zhong, J.; Chen, J.; Yang, Y.; Tang, B.; and Wu, Z. 2024b. Explore 3d dance gen-eration via reward model from automatically-ranked demon-strations. In Proceedings of the AAAI Conference on Artifi-cial Intelligence , volume 38, 301–309. Xu, H.; Ding, J.; Xu, J.; Wang, R.; Chen, J.; Mai, J.; Fu, Y.; Ghanem, B.; Xu, F.; and Elhoseiny, M. 2025. Diffusion-based imaginative coordination for bimanual manipulation. 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , 11469–11479. Xu, T.; Li, Z.; and Yu, Y. 2020. Error bounds of imitating policies and environments. Advances in Neural Information Processing Systems , 33: 15737–15749. Zeng, J.; Bu, Q.; Wang, B.; Xia, W.; Chen, L.; Dong, H.; Song, H.; Wang, D.; Hu, D.; Luo, P.; et al. 2024. Learning Manipulation by Predicting Interaction. In Robotics: Science and Systems, The Netherlands, July 15-19, 2024 .Zhao, T.; Kumar, V.; Levine, S.; and Finn, C. 2023. Learning Fine-Grained Bimanual Manipulation with Low-Cost Hard-ware. In Robotics: Science and Systems XIX, Daegu, Repub-lic of Korea, July 10-14, 2023 .24908

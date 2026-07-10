@@ -1,0 +1,512 @@
+Title: WorldRFT: Latent World Model Planning with Reinforcement Fine-Tuning for Autonomous Driving
+
+URL Source: https://ojs.aaai.org/index.php/AAAI/article/download/38149/42111
+
+Number of Pages: 9
+
+Markdown Content:
+# WorldRFT: Latent World Model Planning with Reinforcement Fine-Tuning for Autonomous Driving 
+
+## Pengxuan Yang 1,2,4* , Ben Lu 4* , Zhongpu Xia 1†
+
+## , Chao Han 4, Yinfeng Gao 1, Teng Zhang 4, Kun Zhan 4, XianPeng Lang 4, Yupeng Zheng 1, Qichao Zhang 1,3 ‡ 
+
+> 1
+
+The State Key Laboratory of Multimodal Artificial Intelligence Systems, Institute of Automation, CAS  
+
+> 2
+
+School of Advanced Interdisciplinary Sciences, UCAS  
+
+> 3
+
+School of Artificial Intelligence, UCAS 
+
+> 4
+
+Li Auto 
+
+Abstract 
+
+Latent World Models enhance scene representation through temporal self-supervised learning, presenting a perception annotation-free paradigm for end-to-end autonomous driving. However, the reconstruction-oriented representation learning tangles perception with planning tasks, leading to subopti-mal optimization for planning. To address this challenge, we propose WorldRFT, a planning-oriented latent world model framework that aligns scene representation learning with planning via a hierarchical planning decomposition and local-aware interactive refinement mechanism, augmented by re-inforcement learning fine-tuning (RFT) to enhance safety-critical policy performance. Specifically, WorldRFT inte-grates a vision-geometry foundation model to improve 3D spatial awareness, employs hierarchical planning task decom-position to guide representation optimization, and utilizes local-aware iterative refinement to derive a planning-oriented driving policy. Furthermore, we introduce Group Relative Policy Optimization (GRPO), which applies trajectory Gaus-sianization and collision-aware rewards to fine-tune the driv-ing policy, yielding systematic improvements in safety. Worl-dRFT achieves state-of-the-art (SOTA) performance on both open-loop nuScenes and closed-loop NavSim benchmarks. On nuScenes, it reduces collision rates by 83% (0.30% →
+
+0.05%). On NavSim, using camera-only sensors input, it at-tains competitive performance with the LiDAR-based SOTA method DiffusionDrive (87.8 vs. 88.1 PDMS). 
+
+Code — https://github.com/pengxuanyang/WorldRFT 
+
+## Introduction 
+
+Traditional end-to-end autonomous driving methods (Chen et al. 2024a; Jia et al. 2025; Jiang et al. 2023; Sun et al. 2024) often rely on multi-task architectures incorporating auxiliary perception modules such as object detection, on-line mapping, and occupancy prediction to improve scene understanding. Recently, a new paradigm of constructing unified latent world model (WM) representations from raw 
+
+> *
+
+These authors contributed equally. 
+
+> †
+
+Corresponding author. 
+
+> ‡
+
+Corresponding author. Copyright © 2026, Association for the Advancement of Artificial Intelligence (www.aaai.org). All rights reserved. 
+
+Figure 1: Performance comparison of SOTA methods on open-loop nuScenes and closed-loop NavSim benchmarks. surround-view images (Zheng et al. 2025; Li, Fan et al. 2025) has enabled slight end-to-end autonomous driving through temporal self-supervised learning. Despite this progress, existing latent WM suffers from a critical misalignment between reconstruction-oriented rep-resentations and planning requirements, manifesting in three key challenges: (1) Lacking spatial awareness: current re-construction objectives produce generic representations with limited 3D spatial awareness, which is crucial for trajec-tory planning. Although World4Drive (Zheng et al. 2025) attempts to incorporate explicit 3D information (depth map) through monocular depth estimation models (Hu et al. 2024), this approach suffers from cross-view inconsisten-cies, limiting the model’s global comprehension of complex driving scenarios. (2) Inefficient planning interaction mech-anisms: existing models employ a single global planning query to generate trajectories from entire feature maps, inad-equately capturing local structures essential for fine-grained planning. This results in dispersed attention and inability to effectively comprehend and extract planning-relevant scene representations, as shown in Figure 5, leading to subopti-mal feature utilization for planning decisions. (3) Limited safety awareness: perception-based imitation learning ap-proaches, such as PARA-Drive (Weng et al. 2024), Diffu-sionDrive(Liao, Chen et al. 2025), focus on minimizing tra-The Fortieth AAAI Conference on Artificial Intelligence (AAAI-26) 
+
+11649 jectory deviations from expert demonstrations without in-corporating explicit safety objectives. This paradigm lacks active collision avoidance, merely treating all deviations from expert trajectories equally without understanding un-derlying safety principles or proactively identifying poten-tial risks in novel scenarios. To address these challenges, we propose WorldRFT , a planning-oriented latent world model framework that aligns representation learning with planning requirements. First, addressing the weak 3D spatial understanding, we design a 
+
+Spatial-aware World Encoder (SWE) that constructs 3D spatially-aware representations by incorporating the visual-geometric foundation model VGGT (Wang et al. 2025), es-tablishing a robust spatial understanding for planning tasks. Second, resolving the inefficiency of planning interaction mechanisms, we propose a Hierarchical Planning Refine-ment (HPR) module that decomposes complex end-to-end planning into three parallel subtasks which describe plan-ning in hierarchical dimension: target region localization, spatial path planning, and temporal trajectory prediction. Building upon this decomposition, we develop a local-aware iterative refinement module that dynamically sam-ples and fuses task-relevant local features from the latent space, ensuring both global consistency and local preci-sion. Third, to enhance safety-critical planning capabilities, we design a safety-aware Reinforcement learning Fine-Tuning (RFT) phase based on Group Relative Policy Op-timization (GRPO) (Shao et al. 2024) to optimize explicit safety objectives. By gaussianizing predicted trajectories and employing collision-aware rewards, our approach transi-tions from passive behavior cloning to active collision avoid-ance. Experiments demonstrate that WorldRFT achieves state-of-the-art (SOTA) performance on both open-loop nuScenes and closed-loop NavSim benchmarks, as shown in Figure 1. On the nuScenes dataset, compared to the baseline LAW (Li, Fan et al. 2025), average displacement error decreases by 
+
+21% (0.61 m → 0.48 m) and collision rate drops by 83% 
+
+(0.30% → 0.05% ). On the NavSim dataset, the PDMS met-ric improves by 3.2 points ( 84 .6 → 87.8 ), achieving the best performance among vision-only solutions and approaching the LiDAR-based SOTA method DiffusionDrive (88.1). Our main contributions are summarized as follows: • We propose the first planning-oriented latent world mod-eling paradigm that deeply aligns representation learning with planning tasks through the spatial geometric prior fusion and hierarchical planning interaction and local-aware refinement. • We introduce a reinforcement fine-tuning phase that en-hances safety planning via explicit safety rewards and GRPO method, transitioning from behavioral imitation to proactive collision avoidance. • Our method achieves SOTA performance on both nuScenes and NavSim benchmarks, with substantial im-provements in critical safety metrics. 
+
+## Related Works 
+
+End-to-End Autonomous Driving 
+
+End-to-end autonomous driving models utilize the imitation learning framework with perception annotations to directly map sensor inputs to trajectory outputs(Gao et al. 2024; Yang et al. 2025). For instance, UniAD and VAD (Hu et al. 2023b; Jiang et al. 2023) fuse multiple perception and plan-ning tasks within a cascaded BEV-based architecture, while PARA-Drive and ONE-Drive (Weng et al. 2024; Zheng et al. 2024b) leverage parallel architecture to enhance efficiency. Methods like SparseDrive (Sun et al. 2024) integrate detec-tion, tracking, and mapping through symmetric sparse per-ception modules. Despite their advantages, these approaches require high-precision 3D perception annotations, leading to higher development complexity and costs. 
+
+World Models for Autonomous Driving 
+
+World models predict future scene states to improve dy-namic environment understanding and support safer path planning. For instance, GAIA-1 (Hu et al. 2023a) creates realistic driving scenarios from multi-modal inputs and al-lows detailed control over vehicle behavior, while Drive-Dreamer4D (Zhao et al. 2025) generates novel trajectory videos from real driving data to enhance 4D reconstruction. Methods like DriveWorld and PreWorld (Min et al. 2024; Li et al. 2025; Gu et al. 2024; Jin et al. 2025) generate future occupancy and flow fields from BEV embeddings. In con-trast, self-supervised approaches like LAW (Li, Fan et al. 2025) and SSR (Li and Cui 2025) model future scene dy-namics without labeled data, but their relatively coarse plan-ning frameworks can limit planning effectiveness, indicating a need for more sophisticated architectural designs. 
+
+Reinforcement Learning for Autonomous Driving 
+
+Reinforcement learning (RL) is increasingly important in autonomous driving for complex decision-making. RAD (Gao et al. 2025) builds virtual environments with 3D Gaus-sian Splatting to facilitate exploration and policy learning in diverse scenarios. AlphaDrive (Jiang et al. 2025) introduces RL to enhance planning and training of vision-language models. Given RL’s advantage over imitation learning in handling causal confounding, we adopt RL for trajectory planning to improve safety and reduce collision risk in au-tonomous driving. 
+
+## Methodology 
+
+Overview 
+
+As illustrated in Figure 2, WorldRFT comprises three key modules that form a complete pipeline of “scene under-standing → planning decisions → safety optimization”: (1) SWE constructs spatial-rich latent world representations from RGB images; (2) HPR efficiently extracts critical in-formation strongly correlated with driving decisions; (3) RFT generates safer planning results through reinforcement learning optimization. These modules work synergistically to achieve safer end-to-end autonomous driving planning. 11650 It           
+
+> Grounded-SAM VGGT World Encoder (x,y)Spatial-aware World Encoder Hierarchical Planning Refinement Reinforcement Tuning
+> Lsem
+> latent
+> t
+> W…World Decoder …1latent
+> t
+> W
+> Lrec
+> Reward Modeling Gaussian &Sample Policy Opt Target Center Target Region Spatial Path Temporal Trajectory GT Trajectory
+> latent
+> t
+> W…
+> Target Path Traj
+> Projection Sample Fusion Decode Refinement K
+> target
+> t
+> Q
+> path
+> t
+> Q
+> traj
+> t
+> Q
+
+Figure 2: WorldRFT consists of three key modules: 1) Spatial-aware World Encoder (yellow) that extracts geometry-rich latent world representations from RGB images; 2) Hierarchical Planning Refinement Module (green) that efficiently captures critical information highly correlated with driving decisions through a refined planning task design; 3) Safety-aware Reinforcement Learning Fine-tuning phase (blue) that generates safer planning outcomes via reinforcement learning optimization. These mod-ules work synergistically to deliver high-quality end-to-end autonomous driving planning. 
+
+Spatial-aware World Encoder 
+
+The spatial-aware world encoder constructs 3D spatially-aware latent world representations serving planning tasks from surround-view inputs through the geometric founda-tion model VGGT (Wang et al. 2025). 
+
+Basic Visual Feature Encoding. Given multi-view im-ages It ∈ RM ×H×W ×3 at time t, we first extract features 
+
+Ft ∈ RM ×h×w×D through the image backbone. Follow-ing World4Drive (Zheng et al. 2025), we then utilize the vision-language foundation model Grounded-SAM for se-mantic supervised learning through the loss function Lsem .
+
+3D Spatial Encoding. Spatial understanding capability is crucial for planning tasks. VGGT, benefiting from its di-verse training data and elegant feed-forward architecture, provides multi-view consistent geometric-rich prior from 2D surround images It. We leveraging VGGT’s structural pri-ors to enhance spatial awareness. Specifically, to maintain generic 3D aware capacity, we employ a frozen VGGT as a 3D spatial encoder and extract 3D tokens from its final layer: 
+
+εl(It) = {tc, t r , t 3D } (1) where l denotes the layer index, and tc, tr , and t3D repre-sent camera, register, and 3D tokens, respectively. We sub-sequently incorporate the 3D tokens t3D into the image fea-tures Ft to construct spatial-aware latent world representa-tions. Specifically, we propose a lightweight fusion mod-ule that integrates ResNet and VGGT features via a single cross-attention layer, where the 2D visual features Ft act as queries and the VGGT-derived 3D features t3D are used as keys and values. This process ultimately yields the unified latent space visual representation W t
+
+> latent
+
+, enabling effective spatial understanding without requiring explicit 3D inputs: 
+
+W t 
+
+> latent
+
+= C-A (Ft, t 3D ) (2) where C-A denotes Cross-Attention layers. 
+
+Hierarchical Planning Refinement 
+
+In this section, we decompose end-to-end planning into three parallel subtasks that extract hierarchical features with distinct supervision: target region localization, spatial path planning, and temporal trajectory prediction. These tasks capture complementary aspects of planning and are unified through a query interaction framework and refined via local-aware iterative refinement. 
+
+Unified Query Interaction Framework. To facilitate co-ordination among parallel subtasks while maintaining their unique functionalities, we design a unified query interac-tion framework. Specifically, each subtask is initialized with dedicated queries: Qtarget , Qpath , and Qtraj , which then inde-pendently aggregate hierarchical planning-relevant features from the latent world representation: 
+
+[Q′
+
+> target
+
+, Q ′
+
+> path
+
+, Q ′
+
+> traj
+
+] = C-A ([ Qtarget , Q path , Q traj ], W t
+
+> latent
+
+)
+
+(3) To facilitate inter-task communication, these queries un-dergo concatenation and self-attention, enabling mutual awareness of planning intentions: 
+
+[Q′′ 
+
+> target
+
+, Q ′′ 
+
+> path
+
+, Q ′′ 
+
+> traj
+
+] = S-A (Concat [Q′
+
+> target
+
+, Q ′
+
+> path
+
+, Q ′
+
+> traj
+
+]) 
+
+(4) 
+
+Target Region Localization. Predicting a deterministic target point for navigation (Xing et al. 2025) is an ill-posed problem due to the inherent uncertainty of valid target points in planning scenarios. Therefore, rather than predicting de-terministic target points, we model targets as probabilistic regions using Laplace distributions. In detail, we parameter-ize the target region as: 
+
+(μ, b ) = MLP (Q′′ 
+
+> target
+
+) (5) where μ ∈ R2 denotes the region center and b ∈ R2 rep-resents the scale parameters, quantifying the spatial extent of the target region. This formulation enables the model to learn target region distributions rather than fitting to a single deterministic point. Moreover, the probabilistic representa-tion naturally captures scene complexity, thereby providing adaptive information that can be leveraged by the iterative refinement module to guide feature fusion. 11651 The probabilistic representation is trained using the nega-tive log-likelihood loss: 
+
+LLaplace-NLL = log(2 b) + ∥y − μ∥1
+
+b (6) Here, the scale parameter b naturally reflects scene com-plexity, with larger values corresponding to more challeng-ing scenarios that demand cautious planning. As a condition-ing signal, b modulates feature fusion within the uncertainty-aware local adaptation module, thereby enabling adaptive planning in accordance with scene uncertainty. 
+
+Spatial Path Planning. This module generates a spatial path connecting the current position to the target region. To ensure spatial consistency, we construct the spatial path ground truth by uniformly sampling future trajectory points at fixed spatial intervals, rather than temporal intervals (Li, Fan et al. 2025; Li and Cui 2025; Zheng et al. 2025; Jiang et al. 2023). Furthermore, we decode N spatial path points through an MLP network: 
+
+Tpath = MLP (Q′′ 
+
+> path
+
+) (7) where Tpath ∈ RN ×2 denotes path points sampled at 2-meter intervals, with each point denoting coordinates (x, y ).
+
+Temporal Trajectory Prediction. In this module, we de-code future temporal trajectories for T timesteps through a trajectory decoder: 
+
+Ttraj = MLP (Q′′ 
+
+> traj
+
+) (8) where Ttraj ∈ RT ×2 represents trajectory points at fixed tem-poral intervals (0.5 seconds), with each point containing co-ordinates (x, y ).
+
+Local-aware Iterative Refinement. This module itera-tively refines the initial planning outputs by integrating lo-cal scene information. It takes the preliminary results (μ, b ),
+
+Tpath , and Ttraj as inputs, and refines the outputs of all three subtasks over K iterations. Using temporal trajectory refine-ment as an example, each iteration involves the following key steps as shown in Figure 3: First, we encode current planning information (μ, b ),
+
+Tpath , and Ttraj into a unified state representation Fs:
+
+Fs = MLP (Concat [( μ(k), b (k)), T (k)
+
+> path
+
+, T (k) 
+
+> traj
+
+]) (9) Subsequently, the trajectory points are projected onto the latent space feature map using the camera parameters, yield-ing corresponding positions Pproj . Deformable convolution is then applied to adaptively sample the local features Flocal 
+
+at these positions: 
+
+Pproj = CameraProject (T (k) 
+
+> traj
+
+) (10) 
+
+Flocal = DeformConv (W t
+
+> latent
+
+, P proj ) (11) Next, local and global features are fused, guided by the scale parameter b obtained from target region modeling, which acts as a conditioning signal: 
+
+Fb = MLP (b(k)) (12) 
+
+Ffusion = MLP (Concat [Flocal , Q ′′ 
+
+> traj
+
+, F s, F b]) (13) 
+
+Figure 3: Architecture of the Local-aware Iterative Refine-ment module. The module refines preliminary planning re-sults (μ, b ), T path , T traj through K iterations. Using Ttraj as an example, each iteration: (1) encodes global planning states, (2) projects trajectory points via camera parameters, (3) samples local features using deformable convolution, and (4) fuses them with global information and uncertainty rep-resentation. Residual connections enable incremental up-dates for adaptive local adjustment. where Q′′  
+
+> traj
+
+represents the global planning intention. Finally, independent prediction heads generate the corre-sponding trajectory offsets ∆T (k) 
+
+> traj
+
+, which are then used to incrementally update the trajectory via residual connections: 
+
+∆T (k) 
+
+> traj
+
+= MLP (Ffusion ) (14) 
+
+T (k+1)  
+
+> traj
+
+= T (k) 
+
+> traj
+
++ α∆T (k) 
+
+> traj
+
+(15) where α = 0 .1 is the update step size. 
+
+Training Loss. We pretrain our model guided by the la-tent world modeling, which enables self-supervised learning without requiring perception annotations by leveraging tem-poral consistency in future world prediction. Following (Li, Fan et al. 2025), we use a world decoder to predict future latent world representations cW t+1  
+
+> latent
+
+from the current latent representation W t 
+
+> latent
+
+and the temporal trajectory Ttraj . We self-supervise world prediction through the MSE loss: 
+
+Lrec = MSE (cW t+1 
+
+> latent
+
+, W t+1 
+
+> latent
+
+) (16) Additionally, we employ L1 loss Ltraj to align both the spatial path Tpath and temporal trajectory Ttraj with expert demonstrations. The final training objective combines mul-tiple loss terms: 
+
+LTotal = αLsem + βLrec + γLtarget + ηLtraj (17) where α, β, γ and η are hyper-parameters. 
+
+Reinforcement Learning Fine-tuning 
+
+In this phase, the module introduces collision-aware re-wards, extends trajectories to probability distributions for exploration, and applies GRPO to improve safety while maintaining planning accuracy. 
+
+Collision-aware Reward Design. Our RL framework tar-gets collision risks between the ego vehicle and surrounding 11652 agents. The collision-aware reward is based on the distance between the ego vehicle’s bounding box and those of nearby agents along the trajectory: negative distances (collisions) incur penalties, while non-collisions yield zero reward: 
+
+r =
+
+−1 if collision happens 
+
+0 if no collision happens (18) 
+
+Gaussianized-Trajectory Modeling. Since the above trajectory prediction is formulated as a regression task, ef-fective application of RL requires recasting it as a proba-bilistic, distribution-based problem. To this end, we model trajectories using Gaussian distributions, where the pre-dicted trajectory serve as the means μθ , and an auxiliary variance network adaptively estimates the trajectory vari-ances Σθ .
+
+Policy Optimization. Based on the world model struc-ture, we optimize generated trajectories using GRPO (Shao et al. 2024). Following the GRPO framework, we estimate advantage functions based on relative rewards within sam-ple groups. Specifically, a group of G trajectories is sampled using the previously described latent world model, which serves as the policy πθ :
+
+n
+
+Ttraj 0 , T traj 1 , ..., T traj G−1
+
+o
+
+. For each point along these trajectories, the relative reward is defined as the normalized per-point reward value: 
+
+˜rTtraj i 
+
+> j
+
+= rTtraj i 
+
+> j
+
+− mean ( rj )std ( rj ) (19) where rTtraj i 
+
+> j
+
+denotes the value of the original reward func-tion, and rj =
+
+n
+
+rTtraj 0 
+
+> j
+
+, r Ttraj 1 
+
+> j
+
+, ..., r Ttraj G−1
+
+> j
+
+o
+
+denotes the val-ues of the group-based reward function. Given that the predicted trajectories are represented as time-differential increments, each increment at the current time step influences both the current and all subsequent points, leading to potential error accumulation. Accordingly, the relative advantage function for the j-th trajectory point is defined as: 
+
+Adv Ttraj i 
+
+> j
+
+= X
+
+> t≥j
+
+˜rTtraj i 
+
+> t
+
+(20) The policy optimization objective function becomes: 
+
+J (θ) = 1
+
+G
+
+X
+
+> i
+
+X
+
+> j
+
+min [ f1, f 2] − βD KL 
+
+ πθ || πθref 
+
+
+
+(21) where: 
+
+f1 =
+
+ πθ
+
+πθold 
+
+
+
+Adv Ttraj i 
+
+> j
+
+(22) 
+
+f2 = clip 
+
+ πθ
+
+πθold 
+
+, 1 − ε, 1 + ε
+
+
+
+Adv Ttraj i 
+
+> j
+
+(23) where ε limits the update step size of the policy function to ensure algorithmic stability, and β is the coefficient for the Kullback-Leibler (KL) divergence. πθold denotes the old policy, and πθref represents the reference policy, which is the pre-trained model. As mentioned above, we model the output of the trajectory as a Gaussian distribution with mean vector μθ and covariance matrix Σθ . The reference model provides a deterministic result μref = Ttraj ref , which is used to compute the negative log-likelihood (NLL) loss under the Gaussian distribution. Thus, the KL divergence is defined as: 
+
+DKL = 12
+
+ log |Σθ | + ( μref − μθ )T Σ−1 
+
+> θ
+
+(μref − μθ )+2 log(2 π)
+
+
+
+(24) 
+
+RFT Training Loss. We fine-tune the model using the GRPO objective function and KL loss. Therefore, the loss for reinforcement learning can be written as: 
+
+LRL = −J (θ) + λD KL (25) 
+
+## Experiment 
+
+Overview 
+
+This section presents the experimental results of the pro-posed method, including ablation studies for each compo-nent. For completeness, detailed descriptions of the dataset, experimental setup, evaluation metrics, hyperparameter set-tings, scalability analysis, and additional visualizations are provided in the supplementary material. 
+
+Benchmark 
+
+We comprehensively evaluate our method on the open-loop nuScenes benchmark (Caesar et al. 2020) and the closed-loop NavSim benchmark (Dauner et al. 2024). On nuScenes, we report displacement error (L2) and collision rate (CR) for trajectory prediction. For NavSim, we adopt the PDM Score (PDMS), which combines performance across five dimen-sions: no at-fault collision (NC), drivable area compliance (DAC), time-to-collision (TTC), ride comfort (Comf.), and ego progress (EP). 
+
+Main Results 
+
+As demonstrated in Table 1, we compare our frame-work with several SOTA methods. Specifically, WorldRFT achieves SOTA performance among perception annotation-free approaches, demonstrating a 21% reduction in L2 er-ror (0.61 m → 0.48 m) and an impressive 83% reduction in collision rate (0.30% → 0.05%) compared to the strong baseline LAW. Moreover, WorldRFT achieves the lowest collision rate among all evaluated methods, even surpassing perception-based approaches, which underscores the supe-rior safety performance of our planning-oriented design. We also provide results incorporating the ego status, with spe-cific descriptions detailed in the supplementary materials. In addition, as demonstrated in Table 2, WorldRFT also achieves SOTA performance in closed-loop evaluation with PDMS of 87.8 using only camera inputs. Compared to the baseline LAW (84.6), our approach demonstrates signifi-cant improvements across all safety-critical metrics: NC (No At-fault Collision) (96.4 → 97.8), TTC (Time-to-Collision) (88.7 → 94.0), and particularly DAC (Drivable Area Com-pliance) (95.4 → 96.8). The exceptional DAC score of 96.8, which is the highest among all methods including LiDAR-based approaches, demonstrates that incorporating VGGT 11653 Method Training Approach L2 (m) ↓ Collision Rate (%) ↓
+
+1s 2s 3s Avg. 1s 2s 3s Avg. ST-P3 (Hu et al. 2022) P-IL 1.33 2.11 2.90 2.11 0.23 0.62 1.27 0.71 OccNet (Tong et al. 2023) P-IL 1.29 2.13 2.99 2.13 0.21 0.59 1.37 0.72 UniAD (Hu et al. 2023b) P-IL 0.48 0.96 1.65 1.03 0.05 0.17 0.71 0.31 VAD (Jiang et al. 2023) P-IL 0.41 0.70 1.05 0.72 0.07 0.18 0.43 0.23 UncAD (Yang et al. 2025) P-IL 0.33 0.59 0.94 0.62 0.10 0.14 0.28 0.17 PPAD (Chen et al. 2024b) P-IL 0.31 0.56 0.87 0.58 0.08 0.12 0.38 0.19 PARA-Drive (Weng et al. 2024) P-IL 0.25 0.46 0.74 0.48 0.14 0.23 0.39 0.25 GenAD (Zheng et al. 2024a) P-IL 0.28 0.49 0.78 0.52 0.08 0.14 0.34 0.19 LAW (Li, Fan et al. 2025) (Perception-based) P-IL 0.24 0.46 0.76 0.49 0.08 0.10 0.39 0.19 DiffusionDrive (Liao, Chen et al. 2025) P-IL 0.27 0.54 0.90 0.57 0.03 0.05 0.16 0.08 Epona (Zhang et al. 2025) SS-L 0.61 1.17 1.98 1.25 0.01 0.22 0.85 0.36 LAW (Li, Fan et al. 2025) (Perception-free) SS-L 0.26 0.57 1.01 0.61 0.14 0.21 0.54 0.30 World4Drive (Zheng et al. 2025) SS-L 0.23 0.47 0.81 0.50 0.02 0.12 0.33 0.16 Ours (without RFT) SS-L 0.21 0.44 0.76 0.47 0.10 0.11 0.23 0.15 Ours (with RFT) SS-L & RL 0.22 0.44 0.77 0.48 0.00 0.00 0.16 0.05 
+
+SSR† (Li and Cui 2025) SS-L 0.19 0.36 0.62 0.39 0.00 0.10 0.20 0.13 Ours (with RFT)† SS-L & RL 0.15 0.30 0.56 0.33 0.00 0.00 0.12 0.04 P-IL: Perception-based Imitation Learning; SS-L: Self-Supervised Learning; RL: Reinforcement Learning. † Represents methods incorporating ego status. 
+
+Table 1: End-to-end planning results on nuScenes benchmark (Caesar et al. 2020)                                                                                                                       
+
+> Method Training Approach Input NC ↑DAC ↑TTC ↑Comf. ↑EP ↑PDMS ↑
+> UniAD (Hu et al. 2023b) P-IL C97.8 91.9 92.9 100.0 78.8 83.4 PARA-Drive (Weng et al. 2024) P-IL C97.9 92.4 93.0 99.8 79.3 84.0 LTF (Prakash, Chitta, and Geiger 2021) P-IL C97.4 92.8 92.4 100.0 79.0 83.8 Transfuser (Prakash, Chitta, and Geiger 2021) P-IL C & L 97.7 92.8 92.8 100.0 79.2 84.0 VADv2 (Chen et al. 2024a) P-IL C & L 97.2 89.1 91.6 100.0 76.0 80.9 Hydra-MDP (Li et al. 2024) P-IL C & L 97.9 91.7 92.9 100.0 77.6 83.0 DiffusionDrive (Liao, Chen et al. 2025) P-IL C & L 98.2 96.2 94.7 100.0 82.2 88.1
+> Epona (Zhang et al. 2025) SS-L C97.9 95.1 93.8 99.9 80.4 86.2 LAW (Perception-free) (Li, Fan et al. 2025) SS-L C96.4 95.4 88.7 99.9 81.7 84.6 DriveX (Shi et al. 2025) SS-L C97.5 94.0 93.0 100.0 79.7 84.5 World4Drive (Zheng et al. 2025) SS-L C97.4 94.3 92.8 100.0 79.9 85.1 Ours (without RFT) SS-L C97.5 96.0 94.0 100.0 80.9 87.0 Ours (with RFT) SS-L & RL C97.8 96.8 94.0 100.0 81.7 87.8 P-IL: Perception-based Imitation Learning; SS-L: Self-Supervised Learning; RL: Reinforcement Learning. C: Camera modality; L: LiDAR modality.
+
+Table 2: End-to-end planning results on NavSim benchmark (Dauner et al. 2024) geometric priors substantially enhances the model’s 3D spa-tial understanding without explicit depth supervision. Notably, our closed-loop performance exceeds that of most methods relying on LiDAR inputs, trailing Diffu-sionDrive (88.1) by only 0.3 points. This result demon-strates that our planning-oriented latent world modeling, combined with safety-oriented reinforcement fine-tuning, achieves outstanding performance and holds strong poten-tial for real-world deployment. 
+
+Ablation Study 
+
+In this section, we conduct comprehensive ablation studies to investigate the effectiveness of each component in our proposed WorldRFT framework. All ablation experiments incorporate our safety-oriented reinforcement fine-tuning by default to ensure consistent safety-aware evaluation. All of the ablation experiments are conducted on the nuScenes and NavSim benchmark. For clarity, we present detailed results on nuScenes here, while NavSim results are provided in the supplementary material. 
+
+Effectiveness of VGGT Spatial Encoding. As demon-strated in Table 3, incorporating VGGT geometric priors shows consistent improvements across different configura-tions. Comparing ID 4 with ID 8, adding VGGT reduces L2 error by 7.7% (0.52 → 0.48) and collision rate by 37.5% (0.08 → 0.05). The performance gains remain substantial even with partial task designs (ID 5-6), demonstrating that VGGT-enhanced spatial understanding benefits planning re-11654 Front 
+
+> Back
+> Front_Right
+> Back_Right
+> Pred Traj
+> Pred-RFT Traj
+> GT Traj
+
+Figure 4: Visualization of planning trajectories, where the red line is the ground truth, the blue line is the pretrained-only trajectory, and the green line shows the RFT-trajectory. Obviously, the pre-trained trajectory dangerously approaches obstacles, risking collisions. In contrast, the RFT-trajectory proactively adjusts to maintain safe distances, avoiding collisions. 
+
+ID Latent Encoder Planning Task Refine -ment L2 CR VGGT Target Path 1 0.59 0.16 2 ✓ ✓ 0.56 0.10 3 ✓ ✓ 0.54 0.11 4 ✓ ✓ ✓ 0.52 0.08 5 ✓ ✓ ✓ 0.51 0.08 6 ✓ ✓ ✓ 0.49 0.09 7 ✓ ✓ ✓ 0.50 0.06 8 ✓ ✓ ✓ ✓ 0.48 0.05 
+
+Table 3: Ablation study of each proposed component gardless of the specific task configuration. 
+
+Impact of Hierarchical Planning Tasks. Starting from the baseline (ID 1 in Table 3), introducing target region lo-calization and spatial path planning with refinement (ID 4) reduces L2 error by 11.9% (0.59 → 0.52) and collision rate by 50.0% (0.16 → 0.08). This validates our hypothesis that decomposing the complex planning task into hierarchical subtasks enables more effective feature extraction from la-tent representations, thereby enhancing overall planning per-formance. 
+
+Local-aware Iterative Refinement. As shown in Table 3, comparing ID 7 (without refinement) and ID 8 (with re-finement), the refinement module reduces L2 error by 4.0% (0.50 → 0.48) and collision rate by 16.7% (0.06 → 0.05). This demonstrates that incorporating local features based on initial trajectories enables fine-grained trajectory adjust-ments that improve both trajectory accuracy and safety. 
+
+Safety-Oriented Reinforcement Fine-tuning. As shown in Table 1, comparing our method without RFT (Ours with-out RFT) and with RFT (Ours with RFT), the RL module significantly reduces collision rate by 66.7% (0.15 → 0.05) while L2 error slightly increases from 0.47 to 0.48. This selective improvement in safety metrics validates that our collision-aware reward design guides the model from behav-ior imitation toward understanding safety principles. 
+
+Qualitative Results In this section, we quantitatively evaluate WorldRFT on nuScenes. Figure 4 shows predicted trajectories: ground truth (red), without RFT (blue), and with Front_Left  Front  Front_Right   
+
+> Front_Left Front Front_Right
+> Front_Right Front Front_Left
+
+Figure 5: Visualization of the original image (top), along with attention maps for the baseline (middle) and WorldRFT (bottom), where blue represents weak attention and red in-dicates strong attention. The maps reveal that WorldRFT fo-cuses on surrounding planning-critical agents such as vehi-cles, which are largely overlooked by the baseline method. RFT (green). The without-RFT model approaches surround-ing vehicles too closely, while the with-RFT model main-tains safer distances and better matches the ground truth. As shown in Figure 5, attention maps (LAW middle, Worl-dRFT below) demonstrate that WorldRFT focuses more pre-cisely on critical regions like surrounding vehicles, improv-ing perception-planning integration and yielding more ro-bust, human-like behavior. 
+
+## Conclusion 
+
+We present WorldRFT, a planning-oriented latent world framework for end-to-end autonomous driving. Our key insight is that existing latent world models suffer from misalignment between reconstruction-oriented learning and planning requirements. To bridge this gap, we introduced three innovations: (1) SWE with VGGT for spatial-aware representations; (2) HPR combining hierarchical task de-composition with iterative refinement for planning-relevant features; and (3) RFT enabling active collision avoidance beyond passive imitation. Experiments on nuScenes and NavSim demonstrate that our planning-oriented design with geometric priors and safety optimization effectively enables slight end-to-end autonomous driving. 11655 Acknowledgments 
+
+This work is supported by the National Key Re-search and Development Program of China under Grant 2022YFA1004000, Beijing Natural Science Foundation-Xiaomi Innovation Joint Fund L253007, Beijing Natural Science Foundation under Grant 4242052, and the National Natural Science Foundation of China (NSFC) under Grant 62173325. 
+
+## References 
+
+Caesar, H.; Bankiti, V.; Lang, A. H.; Vora, S.; Liong, V. E.; Xu, Q.; Krishnan, A.; Pan, Y.; Baldan, G.; and Beijbom, O. 2020. nuScenes: A Multimodal dataset for autonomous driv-ing. In Proceedings of the IEEE/CVF Conference on Com-puter Vision and Pattern Recognition , 11621–11631. Chen, S.; Jiang, B.; Gao, H.; Liao, B.; Xu, Q.; Zhang, Q.; Huang, C.; Liu, W.; and Wang, X. 2024a. Vadv2: End-to-end vectorized autonomous driving via probabilistic plan-ning. arXiv preprint arXiv:2402.13243 .Chen, Z.; Ye, M.; Xu, S.; Cao, T.; and Chen, Q. 2024b. Ppad: Iterative interactions of prediction and planning for end-to-end autonomous driving. In Proceedings of the European Conference on Computer Vision , 239–256. Springer. Dauner, D.; Hallgarten, M.; Li, T.; Weng, X.; Huang, Z.; Yang, Z.; Li, H.; Gilitschenski, I.; Ivanovic, B.; Pavone, M.; Geiger, A.; and Chitta, K. 2024. NAVSIM: Data-driven non-reactive autonomous vehicle simulation and benchmarking. 
+
+arXiv preprint arXiv:2406.15349 .Gao, H.; Chen, S.; Jiang, B.; Liao, B.; Shi, Y.; Guo, X.; Pu, Y.; Yin, H.; Li, X.; Zhang, X.; Zhang, Y.; Liu, W.; Zhang, Q.; and Wang, X. 2025. Rad: Training an end-to-end driv-ing policy via large-scale 3dgs-based reinforcement learn-ing. arXiv preprint arXiv:2502.13144 .Gao, Y.; Zhang, Q.; Ding, D.-W.; and Zhao, D. 2024. Dream to Drive With Predictive Individual World Model. IEEE Transactions on Intelligent Vehicles , 9(12): 8224–8238. Gu, S.; Yin, W.; Jin, B.; Guo, X.; Wang, J.; Li, H.; Zhang, Q.; and Long, X. 2024. Dome: Taming diffusion model into high-fidelity controllable occupancy world model. arXiv preprint arXiv:2410.10429 .Hu, A.; Russell, L.; Yeo, H.; Murez, Z.; Fedoseev, G.; Kendall, A.; Shotton, J.; and Corrado, G. 2023a. Gaia-1: A generative world model for autonomous driving. arXiv preprint arXiv:2309.17080 .Hu, M.; Yin, W.; Zhang, C.; Cai, Z.; Long, X.; Chen, H.; Wang, K.; Yu, G.; Shen, C.; and Shen, S. 2024. Metric3d v2: A versatile monocular geometric foundation model for zero-shot metric depth and surface normal estimation. IEEE Transactions on Pattern Analysis and Machine Intelligence .Hu, S.; Chen, L.; Wu, P.; Li, H.; Yan, J.; and Tao, D. 2022. St-p3: End-to-end vision-based autonomous driv-ing via spatial-temporal feature learning. In Proceedings of the European Conference on Computer Vision , 533–549. Springer. Hu, Y.; Yang, J.; Chen, L.; Li, K.; Sima, C.; Zhu, X.; Chai, S.; Du, S.; Lin, T.; Wang, W.; Lu, L.; Jia, X.; Liu, Q.; Dai, J.; Qiao, Y.; and Li, H. 2023b. Planning-oriented autonomous driving. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 17853–17862. Jia, X.; You, J.; Zhang, Z.; and Yan, J. 2025. Drive-transformer: Unified transformer for scalable end-to-end au-tonomous driving. In Proceedings of the International Con-ference on Learning Representations .Jiang, B.; Chen, S.; Xu, Q.; Liao, B.; Chen, J.; Zhou, H.; Zhang, Q.; Liu, W.; Huang, C.; and Wang, X. 2023. VAD: Vectorized scene representation for efficient autonomous driving. Proceedings of the IEEE/CVF International Con-ference on Computer Vision .Jiang, B.; Chen, S.; Zhang, Q.; Liu, W.; and Wang, X. 2025. AlphaDrive: Unleashing the power of VLMs in autonomous driving via reinforcement learning and reasoning. arXiv preprint arXiv:2503.07608 .Jin, B.; Gu, S.; Hu, X.; Zheng, Y.; Guo, X.; Zhang, Q.; Long, X.; and Yin, W. 2025. OccTENS: 3D Occupancy World Model via Temporal Next-Scale Prediction. arXiv preprint arXiv:2509.03887 .Li, P.; and Cui, D. 2025. Navigation-guided sparse scene representation for end-to-end autonomous driving. In Pro-ceedings of the International Conference on Learning Rep-resentations , 15522–15533. Li, X.; Li, P.; Zheng, Y.; Sun, W.; Wang, Y.; and Chen, Y. 2025. Semi-supervised vision-centric 3d occupancy world model for autonomous driving. arXiv preprint arXiv:2502.07309 .Li, Y.; Fan, L.; et al. 2025. Enhancing end-to-end au-tonomous driving with latent world model. Proceedings of the International Conference on Learning Representations .Li, Z.; Li, K.; Wang, S.; Lan, S.; Yu, Z.; Ji, Y.; Li, Z.; Zhu, Z.; Kautz, J.; Wu, Z.; Jiang, Y.; and Alvarez, J. M. 2024. Hydra-mdp: End-to-end multimodal planning with multi-target hydra-distillation. arXiv preprint arXiv:2406.06978 .Liao, B.; Chen, S.; et al. 2025. Diffusiondrive: Truncated diffusion model for end-to-end autonomous driving. Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition .Min, C.; Zhao, D.; Xiao, L.; Zhao, J.; Xu, X.; Zhu, Z.; Jin, L.; Li, J.; Guo, Y.; Xing, J.; Jing, L.; Nie, Y.; and Dai, B. 2024. Driveworld: 4D pre-trained scene understanding via world models for autonomous driving. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 15522–15533. Prakash, A.; Chitta, K.; and Geiger, A. 2021. Multi-modal fusion transformer for end-to-end autonomous driving. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition .Shao, Z.; Wang, P.; Zhu, Q.; Xu, R.; Song, J.; Bi, X.; Zhang, H.; Zhang, M.; Li, Y., Y.K.and Wu; and Guo, D. 2024. DeepSeekMath: Pushing the limits of mathemat-ical reasoning in open language models. arXiv preprint arXiv:2402.03300 .Shi, C.; Shi, S.; Sheng, K.; Zhang, B.; and Jiang, L. 2025. DriveX: Omni scene modeling for learning generalizable 11656 world knowledge in autonomous driving. arXiv preprint arXiv:2505.19239 .Sun, W.; Lin, X.; Shi, Y.; Zhang, C.; Wu, H.; and Zheng, S. 2024. Sparsedrive: End-to-end autonomous driving via sparse scene representation. arXiv preprint arXiv:2405.19620 .Tong, W.; Sima, C.; Wang, T.; Chen, L.; Wu, S.; Deng, H.; Gu, Y.; Lu, L.; Luo, P.; Lin, D.; and H., L. 2023. Scene as occupancy. In Proceedings of the IEEE/CVF International Conference on Computer Vision , 8406–8415. Wang, J.; Chen, M.; Karaev, N.; Vedaldi, A.; Rupprecht, C.; and Novotny, D. 2025. Vggt: Visual geometry grounded transformer. In Proceedings of the Computer Vision and Pat-tern Recognition Conference , 5294–5306. Weng, X.; Ivanovic, B.; Wang, Y.; Wang, Y.; and Pavone, M. 2024. PARA-Drive: Parallelized architecture for real-time autonomous driving. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,15449–15458. Xing, Z.; Zhang, X.; Hu, Y.; Jiang, B.; He, T.; Zhang, Q.; Long, X.; and Yin, W. 2025. Goalflow: Goal-driven flow matching for multimodal trajectories generation in end-to-end autonomous driving. In Proceedings of the Computer Vision and Pattern Recognition Conference , 1602–1611. Yang, P.; Zheng, Y.; Zhang, Q.; Zhu, K.; Xing, Z.; Lin, Q.; Liu, Y.-F.; Su, Z.; and Zhao, D. 2025. UncAD: Towards Safe End-to-end Autonomous Driving via Online Map Un-certainty. arXiv preprint arXiv:2504.12826 .Zhang, K.; Tang, Z.; Hu, X.; Pan, X.; Guo, X.; Liu, Y.; Huang, J.; Yuan, L.; Zhang, Q.; Long, X.; Cao, X.; and Yin, W. 2025. Epona: Autoregressive diffusion world model for autonomous driving. arXiv preprint arXiv:2506.24113 .Zhao, G.; Ni, C.; Wang, X.; Zhu, Z.; Zhang, X.; Wang, Y.; Huang, G.; Chen, X.; Wang, B.; Zhang, Y.; Mei, W.; and Wang, X. 2025. DriveDreamer4D: World models are effec-tive data machines for 4d driving scene representation. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition , 12015–12026. Zheng, W.; Song, R.; Guo, X.; Zhang, C.; and Chen, L. 2024a. Genad: Generative end-to-end autonomous driv-ing. In European Conference on Computer Vision , 87–104. Springer. Zheng, Y.; Xia, Z.; Zhang, Q.; Zhang, T.; Lu, B.; Huo, X.; Han, C.; Li, Y.; Yu, M.; Jin, B.; et al. 2024b. Pre-liminary investigation into data scaling laws for imita-tion learning-based end-to-end autonomous driving. arXiv preprint arXiv:2412.02689 .Zheng, Y.; Yang, P.; Xing, Z.; Zhang, Q.; Zheng, Y.; Gao, Y.; Li, P.; Zhang, T.; Xia, Z.; Jia, P.; and Zhao, D. 2025. World4drive: End-to-end autonomous driving via intention-aware physical latent world model. arXiv preprint arXiv:2507.00603 .11657
