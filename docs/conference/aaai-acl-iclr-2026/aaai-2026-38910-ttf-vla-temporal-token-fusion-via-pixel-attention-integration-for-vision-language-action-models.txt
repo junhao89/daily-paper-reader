@@ -1,0 +1,482 @@
+Title: TTF-VLA: Temporal Token Fusion via Pixel-Attention Integration for Vision-Language-Action Models
+
+URL Source: https://ojs.aaai.org/index.php/AAAI/article/download/38910/42872
+
+Number of Pages: 8
+
+Markdown Content:
+# TTF-VLA: Temporal Token Fusion via Pixel-Attention Integration for Vision-Language-Action Models 
+
+# Chenghao Liu 1* , Jiachen Zhang 1* , Chengxuan Li 1* , Zhimu Zhou 1, Shixin Wu 1,Songfang Huang 1† , Huiling Duan 1† 
+
+> 1
+
+School of Advanced Manufacturing and Robotics, Peking University chliu@stu.pku.edu.cn, z89498323286@gmail.com, lichengxuan0904@gmail.com, z18082717992@gmail.com, wushixin@stu.pku.edu.cn, hsf@pku.edu.cn, hlduan@pku.edu.cn 
+
+Abstract 
+
+Vision-Language-Action (VLA) models process visual inputs independently at each timestep, discarding valuable tempo-ral information inherent in robotic manipulation tasks. This frame-by-frame processing makes models vulnerable to vi-sual noise while ignoring the substantial coherence between consecutive frames in manipulation sequences. We propose Temporal Token Fusion (TTF), a training-free approach that intelligently integrates historical and current visual represen-tations to enhance VLA inference quality. Our method em-ploys dual-dimension detection combining efficient grayscale pixel difference analysis with attention-based semantic rel-evance assessment, enabling selective temporal token fu-sion through hard fusion strategies and keyframe anchoring to prevent error accumulation. Comprehensive experiments across LIBERO, SimplerEnv, and real robot tasks demon-strate consistent improvements: 4.0 percentage points average on LIBERO (72.4% vs 68.4% baseline), cross-environment validation on SimplerEnv (4.8% relative improvement), and 8.7% relative improvement on real robot tasks. Our ap-proach proves model-agnostic, working across OpenVLA and VLA-Cache architectures. Notably, TTF reveals that se-lective Query matrix reuse in attention mechanisms enhances rather than compromises performance, suggesting promis-ing directions for direct KQV matrix reuse strategies that achieve computational acceleration while improving task suc-cess rates. 
+
+Code — https://github.com/PKU-XLab/TTF-VLA 
+
+# 1 Introduction 
+
+Vision-Language-Action (VLA) models have emerged as a transformative paradigm in robotic manipulation, seam-lessly integrating visual perception, natural language under-standing, and action generation within unified neural archi-tectures. Building upon the success of large-scale vision-language transformers, recent VLA systems (Brohan et al. 2022, 2023; Octo Model Team et al. 2024; Kim et al. 2024; Kim, Finn, and Liang 2025; Black et al. 2024, 2025) have demonstrated unprecedented capabilities in executing 
+
+> *
+
+Equal contribution. 
+
+> †
+
+Corresponding authors. Copyright © 2026, Association for the Advancement of Artificial Intelligence (www.aaai.org). All rights reserved. 
+
+complex manipulation instructions across diverse environ-ments. These models fundamentally reshape robotic control by treating action prediction as a multimodal sequence gen-eration task, where visual observations and natural language instructions are jointly processed to produce discrete action tokens that guide continuous robot behavior. However, despite their remarkable achievements, current VLA models suffer from a critical limitation: they process visual inputs in temporal isolation, treating each frame in-dependently without leveraging the substantial temporal co-herence inherent in robotic manipulation sequences. This frame-by-frame processing systematically recomputes all visual tokens from scratch at each timestep, discarding valu-able temporal information even when the majority of visual content remains consistent across adjacent frames. More-over, this approach makes models vulnerable to visual noise including lighting fluctuations, motion blur, and sensor ar-tifacts that are common in robotic manipulation environ-ments. This temporal myopia creates a fundamental challenge: while naive historical token integration risks overlooking critical changes in object poses or environmental conditions, completely ignoring temporal context misses opportunities to leverage the structured patterns inherent in robotic manip-ulation. Specifically, visual changes typically concentrate in localized, task-relevant regions while background areas re-main static. This observation suggests that effective tempo-ral integration requires distinguishing between spatial dy-namics from physical movements and semantic relevance 
+
+shifts reflecting task-specific importance. Motivated by these insights, we propose a training-free temporal token fusion framework that intelligently inte-grates historical and current visual representations to en-hance VLA inference quality. Our approach introduces a dual-dimension detection mechanism that combines com-putationally efficient grayscale pixel difference analysis with attention-guided semantic relevance assessment, en-abling informed decisions about temporal token integra-tion. Through hard fusion strategies coupled with adaptive keyframe mechanisms, our method effectively balances tem-poral coherence with responsiveness to task-critical changes while preventing long-term error accumulation. Our key contributions are: • A novel temporal token fusion framework featuring dual-The Fortieth AAAI Conference on Artificial Intelligence (AAAI-26) 
+
+18452 dimension detection that combines efficient grayscale pixel difference analysis with attention-guided semantic relevance assessment for intelligent integration of histor-ical and current visual representations. • An adaptive fusion strategy employing hard token se-lection with keyframe anchoring mechanisms that bal-ances temporal coherence with responsiveness to task-critical changes, applicable across diverse VLA architec-tures without requiring model retraining. • Comprehensive experimental validation: 4.0 percent-age points average improvement on LIBERO (Liu et al. 2023), cross-environment generalization on Sim-plerEnv (Li et al. 2024), and 8.7% relative improvement on real robot tasks, with model-agnostic applicability across OpenVLA (Kim et al. 2024) and VLA-Cache (Xu et al. 2025) architectures. • Discovery of beneficial Query matrix reuse through tem-poral token fusion, revealing promising “free lunch” di-rections for direct KQV matrix reuse that achieve compu-tational acceleration while improving task performance. Our approach provides a principled solution to the funda-mental tension between leveraging temporal coherence and maintaining sensitivity to dynamic changes in VLA models. 
+
+# 2 Related Work 
+
+Vision-Language-Action Models Vision-Language-Action (VLA) models have emerged as a unified framework for robotic manipulation, integrating visual perception, lan-guage understanding, and action prediction. Early works like RT-1 and RT-2 tokenized actions with visual and lin-guistic inputs for end-to-end policy learning (Brohan et al. 2022, 2023). Recent advancements include Octo and Open-VLA for open-source implementations (Octo Model Team et al. 2024; Kim et al. 2024; Kim, Finn, and Liang 2025), and Pi-0/Pi-0.5 for flow-based architectures (Black et al. 2024, 2025). However, current models exhibit limitations in handling temporal dynamics and visual artifacts (Chi et al. 2023; Wen et al. 2024; Collaboration et al. 2023; Huang et al. 2024), often processing frames independently while ignoring temporal coherence. 
+
+Token Processing Techniques Efficient token processing has become crucial for transformer deployment. In vision transformers, attention-guided methods such as Dynam-icViT, AdaViT, and EViT progressively prune redundant tokens (Rao et al. 2021; Meng et al. 2022; Liang et al. 2022), while ToMe optimizes efficiency through strategic to-ken consolidation (Bolya et al. 2023). For vision-language models, recent approaches like FastV and SparseVLM fo-cus on visual token sparsification using text-guided selec-tion strategies (Chen et al. 2024; Zhang et al. 2024). VLA-Cache specifically targets robotic scenarios through KV-cache reuse mechanisms (Xu et al. 2025). However, these methods primarily address spatial redundancy within indi-vidual frames. Unlike these spatial compression approaches, our work targets temporal redundancy across sequential frames, proposing a dual-dimension strategy that leverages historical information to enhance VLA inference quality. 
+
+# 3 Methodology 
+
+In robotic manipulation tasks, consecutive frames often ex-hibit substantial visual redundancy, yet subtle but critical changes in object poses, lighting conditions, or environmen-tal context can significantly impact action prediction quality. Our approach leverages temporal token fusion to enhance VLA inference quality through intelligent integration of his-torical and current visual representations. Figure 1 provides an overview of our complete framework. 
+
+3.1 Problem Formulation 
+
+Vision-Language-Action models process sequential inputs of the form {I𝑡 , L𝑡 } → A𝑡 , where I𝑡 ∈ R𝐻 ×𝑊 ×𝐶 represents the visual observation, L𝑡 denotes the language task instruc-tion, and A𝑡 ∈ R7 represents the predicted 7-DoF robotic ac-tion at timestep 𝑡 .Current VLA models typically employ vision-language transformer architectures that process visual observations through patch-based encoders. The vision encoder extracts patch tokens T𝑡 = {t(𝑖 ) 
+
+> 𝑡
+
+}𝑁 𝑖 =1 from input images, which are then projected to the language model’s embedding space and integrated with tokenized task instructions before being pro-cessed by the transformer backbone. 
+
+Temporal Token Fusion Given a sequence of visual ob-servations {I1, I2, . . . , I𝑡 } and corresponding patch tokens 
+
+{T1, T2, . . . , T𝑡 }, our goal is to learn a fusion function F that intelligently integrates temporal information: 
+
+˜T𝑡 = F ( T𝑡 , T𝑡 −1, I𝑡 , I𝑡 −1, L𝑡 ) (1) where ˜T𝑡 represents the temporally-fused patch tokens that maintain critical current information while leveraging relevant historical context. The fusion function must bal-ance temporal coherence with responsiveness to important changes in the visual scene. 
+
+3.2 Temporal Token Fusion Framework 
+
+Hard Fusion Strategy Our temporal fusion framework operates through a systematic process that evaluates each patch for intelligent temporal integration, as detailed in Fig-ure 2. The framework employs a hard fusion strategy that makes binary selection decisions for each patch, choos-ing between current and historical tokens based on dual-dimension detection: 
+
+˜t(𝑖 ) 
+
+> 𝑡
+
+=
+
+(
+
+t(𝑖 ) 
+
+> 𝑡
+
+if 𝑚 fusion  
+
+> 𝑖
+
+= 1
+
+t(𝑖 )  
+
+> 𝑡 −1
+
+if 𝑚 fusion  
+
+> 𝑖
+
+= 0 (2) where 𝑚 fusion  
+
+> 𝑖
+
+∈ { 0, 1} is the binary fusion mask that deter-mines temporal integration decisions for patch 𝑖 , computed through our dual-dimension detection combining grayscale pixel difference detection and attention-based semantic rel-evance detection (detailed in Section 3.3). This strategy pro-vides clear temporal context selection, aligning with the dis-crete nature of robotic manipulation tasks, where impor-tant patches (mask=1) use current frame tokens and others (mask=0) reuse previous frame tokens. 18453 LLM  Backbone 
+
+> Tokenizer
+> Vision
+> Encoder
+> Action De -
+> Tokenizer
+> Patch Selection
+> &
+> TFF Module
+> Vision
+> Encoder
+> Tokens t-1
+> Tokens t
+> “Pick up the
+> alphabet soup
+> and place it in
+> the basket”
+> Language Instruction
+> Observation t-1
+> Observation t
+> Fused Tokens t
+> Text Tokens
+> MLP
+
+Figure 1: Overall Framework of Temporal Token Fusion for VLA Models. The framework illustrates the end-to-end process, where the Vision Encoder extracts tokens from current (Observation 𝑡 ) and previous (Observation 𝑡 −1) frames. These are then processed by the Patch Selection module and TTF module for patch selection and token fusion. The fused tokens are subse-quently fed into the LLM Backbone, combined with language instruction, to generate 7-DoF robotic actions via the Action Detokenizer. 
+
+Keyframe Mechanism To prevent long-term error accu-mulation, we introduce periodic keyframes where all patches are unconditionally recomputed: IsKeyframe (𝑡 ) = (𝑡 mod 𝐾 = 0) ∨ ( T𝑡 −1 = ∅) (3) The keyframe interval 𝐾 balances temporal context with stability, preventing long-term error accumulation while pre-serving temporal coherence benefits. The final fusion decision integrates both dimensions through carefully designed combination rules. The fusion mask 𝑚 fusion  
+
+> 𝑖
+
+∈ { 0, 1} determines the final temporal integra-tion decision for patch 𝑖 , where 1 indicates using current to-kens for important patches and 0 indicates reusing historical tokens for others, as guided by the dual-dimension detection in Figure 2(a). We use logical OR to ensure patches are up-dated when exhibiting either type of change: 
+
+𝑚 fusion  
+
+> 𝑖
+
+= 𝑚 pixel  
+
+> 𝑖
+
+∨ 𝑚 attention  
+
+> 𝑖
+
+(4) This OR operation ensures that patches use current frame tokens when either dimension indicates importance, pro-viding conservative fusion that prioritizes inference quality through comprehensive temporal context integration. 
+
+3.3 Dual-Dimension Detection 
+
+Our fusion framework integrates two complementary ana-lytical dimensions to identify important patches, as shown in Figure 2(a). This dual-constraint approach ensures com-prehensive coverage of both low-level visual dynamics and high-level semantic relevance. 
+
+Grayscale Pixel Difference Detection The pixel-level di-mension captures fine-grained spatial changes through ef-ficient grayscale-based analysis (Fasola and Veloso 2006), contributing to the identification of important patches as part of the dual-dimension detection in Figure 2(a). Our approach offers several advantages over token-space similarity met-rics commonly used in caching systems. We convert RGB frames to grayscale using standard lumi-nance weights to focus on brightness changes while main-taining computational simplicity: 
+
+G𝑡 = 0.299 · I𝑅 𝑡 + 0.587 · I𝐺 𝑡 + 0.114 · I𝐵 𝑡 (5) This conversion is motivated by robotic manipulation scenarios where meaningful changes (object movements, shadow variations, lighting shifts) are primarily reflected in luminance rather than chromatic information.(Yang, Tan, and Ahuja 2012; Smeulders et al. 2014; Secci and Ceccarelli 2023) For each patch 𝑖 spanning spatial region (𝑢 𝑖 , 𝑣 𝑖 ) to (𝑢 𝑖 +
+
+13 , 𝑣 𝑖 + 13 ) in the 14 × 14 pixel patches, we compute the av-erage absolute difference: 
+
+𝑑 pixel  
+
+> 𝑖
+
+= 1196 ∑︁ (𝑢,𝑣 ) ∈ patch 𝑖 
+
+|G𝑡 (𝑢, 𝑣 ) − G𝑡 −1 (𝑢, 𝑣 )| (6) Compared to cosine similarity on high-dimensional patch tokens, our pixel-based approach offers: (1) O( 1) complex-ity per patch vs. O( 𝑑 ) for 𝑑 -dimensional tokens, (2) direct interpretability of change magnitude, and (3) sensitivity to 18454 Text/Action  Attention  Selection    
+
+> Grayscale Pixel -Diff Selection
+> a)
+> Observation t-1:t Patch Selection
+> Tokens t-1
+> Tokens t
+> Tokens t-1
+> Tokens tFused Tokens t
+> Patch Selection Guides
+> Token Selection
+> b)
+> Selected
+> Selected
+
+Figure 2: The Details of Patch Selection and Temporal To-ken Fusion. The process includes (a) Grayscale Pixel Dif-ference Detection and Attention-Based Semantic Relevance Detection for identifying important patches, and (b) fusion of selected Tokens 𝑡 with Tokens 𝑡 −1 into Fused Tokens 𝑡 ,where important patches use current frame tokens and oth-ers use previous frame tokens. subtle manipulator movements that may be lost in token compression. The grayscale pixel difference mask 𝑚 pixel  
+
+> 𝑖
+
+∈ { 0, 1} indi-cates whether patch 𝑖 exhibits significant spatial changes, where 1 denotes using current frame tokens. The binary mask is computed as: 𝑚 pixel  
+
+> 𝑖
+
+= I
+
+h
+
+𝑑 pixel  
+
+> 𝑖
+
+> 𝜏 pixel 
+
+i
+
+, where the pixel threshold 𝜏 pixel is set based on scene statistics. 
+
+Attention-Based Semantic Relevance Detection The at-tention dimension identifies semantically important patches using transformer attention patterns. Building upon token selection methods in vision-language models (Chen et al. 2024; Zhang et al. 2024) and attention-guided approaches in vision transformers (Rao et al. 2021; Meng et al. 2022; Liang et al. 2022; Bolya et al. 2023; Xu et al. 2025), our ap-proach introduces dual attention sources specifically adapted for temporal fusion in robotic manipulation tasks. We extract attention weights A(𝑙 )  
+
+> 𝑡 −1
+
+from a selected trans-former layer and compute patch relevance through two com-plementary attention sources: 
+
+Text-to-Vision Attention: Captures semantic relevance based on task instruction by aggregating attention weights from text tokens to vision patches: 
+
+S(𝑙 ) 
+
+> text
+
+= 1
+
+𝑁 ℎ𝑁 ℎ∑︁ 
+
+> ℎ=1
+
+1
+
+𝑁 text ∑︁ 𝑗 ∈text tokens 
+
+ A(𝑙 ) 
+
+> 𝑡 −1
+
+  
+
+> ℎ, 𝑗, vision
+
+(7) 
+
+Action-to-Vision Attention: Leverages attention from Algorithm 1: Temporal Token Fusion 
+
+Input: Current frame I𝑡 , previous frame I𝑡 −1, previous tokens T𝑡 −1, previous attention A𝑡 −1
+
+Output: Fused tokens ˜T𝑡 
+
+if IsKeyframe( 𝑡 ) then 
+
+˜T𝑡 ← VisionEncoder (I𝑡 )
+
+else 
+
+T𝑡 , A𝑡 ← VisionEncoder (I𝑡 ) {Extract tokens and atten-tion weights }
+
+for 𝑖 = 1 to 𝑁 do 
+
+𝑚 pixel  
+
+> 𝑖
+
+← GrayscalePixelDiff (I𝑡 , I𝑡 −1,𝑖 )
+
+𝑚 attention  
+
+> 𝑖
+
+← AttentionRelevance (A𝑡 −1,𝑖 )
+
+𝑚 fusion  
+
+> 𝑖
+
+← 𝑚 pixel  
+
+> 𝑖
+
+∨ 𝑚 attention 
+
+> 𝑖
+
+˜t(𝑖 ) 
+
+> 𝑡
+
+← TemporalFuse (t(𝑖 ) 
+
+> 𝑡
+
+, t(𝑖 ) 
+
+> 𝑡 −1
+
+, 𝑚 fusion  
+
+> 𝑖
+
+)
+
+end for end if 
+
+the first action token, which encodes high-level manipula-tion strategy and spatial relevance for end-effector position-ing: 
+
+S(𝑙 ) 
+
+> action
+
+= 1
+
+𝑁 ℎ𝑁 ℎ∑︁ 
+
+> ℎ=1
+
+ A(𝑙 ) 
+
+> 𝑡 −1
+
+    
+
+> ℎ, action 1,vision
+
+(8) For the selected layer 𝑙 , we obtain the final task-relevance attention scores by selecting either text-to-vision or action-to-vision mode: 
+
+𝑆 task  
+
+> 𝑖
+
+= S(𝑙 ) 
+
+> mode
+
+[𝑖 ] (9) To avoid computational overhead during inference, we utilize attention weights from the previous timestep A𝑡 −1,motivated by the temporal stability of task-relevant regions in robotic manipulation. The attention mask 𝑚 attention  
+
+> 𝑖
+
+∈{0, 1} is determined via top-k selection: 𝑚 attention  
+
+> 𝑖
+
+= I[𝑖 ∈
+
+TopK (𝑆 task , 𝑘 )] , where patches with high attention scores (mask=1) use current frame tokens while others (mask=0) reuse historical tokens. 
+
+# 4 Experiments 
+
+4.1 Experimental Setup 
+
+Baseline Models We evaluate our temporal token fusion approach across multiple VLA architectures to demonstrate its model-agnostic applicability: • OpenVLA: For LIBERO experiments, we employ officially released task-specific fine-tuned checkpoints (openvla-7b-finetuned-libero-{object, spatial, goal, long }), each optimized for the corresponding task suite. For SimplerEnv, we use the base OpenVLA-7B model without task-specific fine-tuning to evaluate cross-environment generalization. For real robot ex-periments, we fine-tune OpenVLA-7B on task-specific demonstration data. • VLA-Cache: We incorporate this recent architecture to demonstrate TTF’s cross-model generalizability across different VLA paradigms. Notably, VLA-Cache’s ex-isting Key-Value matrix reuse mechanism provides an 18455 ideal testbed for exploring TTF’s impact on Query ma-trix reuse, revealing promising directions for direct KQV matrix reuse strategies that could achieve computational acceleration while improving task performance. 
+
+Evaluation Benchmarks Our comprehensive evaluation spans both simulation and real-world environments: • LIBERO: Simulation evaluation across four task suites: (1) Object - manipulation of diverse objects (e.g., vary-ing shapes, sizes) through single-object interactions; (2) 
+
+Spatial - tasks requiring precise spatial reasoning and ob-ject placement relative to landmarks; (3) Goal - complex goal-conditioned tasks with multi-step reasoning for spe-cific configurations; (4) Long - long-horizon tasks test-ing temporal consistency over sequential manipulations. Each suite contains 10 distinct tasks with 20 evaluation episodes per task (200 total episodes per suite). • SimplerEnv: Simulation benchmark for evaluating real-world robot manipulation policies across diverse scenar-ios. We evaluate three representative tasks: Move Near Object (240 episodes), Pick Coke Can with multiple ori-entations (300 episodes), and Drawer Operations (216 episodes), providing comprehensive validation across varying manipulation complexities and interaction types. • Real Robot Tasks: Physical validation using a Franka Research 3 robot across three manipulation tasks span-ning different complexities: single-object pick-and-place (put the garlic on the plate ), multi-object sequential ma-nipulation ( put the pepper and corn on the plate ), and contact-rich manipulation ( close the drawer ). We collect 80 demonstration episodes per task using Gello teleop-eration at 5 Hz, and fine-tune OpenVLA-7B for 20,000 steps with a batch size of 8. During evaluation, the fine-tuned models are deployed at 5 Hz and tested with 20 episodes for each task. 
+
+4.2 Main Results 
+
+LIBERO Experiments Table 1 presents our core exper-imental results across four task suites using two represen-tative VLA architectures, demonstrating the effectiveness and model-agnostic applicability of our temporal token fu-sion approach. Our analysis reveals several key insights: 
+
+Model-agnostic effectiveness : Both OpenVLA and VLA-Cache demonstrate consistent improvements (4.0 and 2.7 percentage points average respectively), validating the gen-eralizability of our approach across different VLA archi-tectures. Task-specific patterns : Long-horizon tasks bene-fit most significantly from temporal fusion (+11.5% rela-tive improvement for OpenVLA), suggesting that extended manipulation sequences particularly benefit from temporal context integration, while object manipulation shows strong absolute gains (+6.0 percentage points for OpenVLA). Fu-sion efficiency : The fusion rates (42.8% average for Open-VLA) indicate substantial feature reuse while maintaining performance gains, demonstrating that our dual-dimension detection successfully identifies stable regions for temporal integration without compromising inference quality. Tem-poral progression analysis : Figure 3 illustrates representa-tive failure-to-success cases where baseline methods fail but TTF succeeds, highlighting the critical role of temporal co-herence in successful robotic manipulation task completion. TTF introduces less than 2% additional runtime overhead, confirming its efficiency and suitability for real-time robotic inference. 
+
+Implicit Query Reuse and Noise Robustness: A par-ticularly revealing insight emerges from VLA-Cache+TTF results. VLA-Cache (Xu et al. 2025) accelerates inference by reusing Key-Value matrices ( K(𝑙 ) 
+
+> 𝑡 −1
+
+, V(𝑙 ) 
+
+> 𝑡 −1
+
+) for static visual patches while always recomputing Query matrices ( Q(𝑙 ) 
+
+> 𝑡
+
+)to maintain contextual sensitivity. However, when TTF is applied to VLA-Cache, an important mechanism emerges: TTF’s token-level fusion ( ˜t(𝑖 ) 
+
+> 𝑡
+
+= t(𝑖 )  
+
+> 𝑡 −1
+
+for selected patches) means that the corresponding Query matrix portions are ap-proximately and implicitly reused since Q(𝑙 ) 
+
+> 𝑡
+
+= W(𝑙 ) 
+
+> 𝑞
+
+· ˜T𝑡 .Thus, VLA-Cache+TTF effectively nearly reuses all three attention matrices (K, V, and Q) for static patches, going beyond VLA-Cache’s original KV-only reuse strategy. Con-trary to conventional wisdom that Query reuse degrades per-formance due to contextual sensitivity, our results show sig-nificant improvements, particularly for long-horizon tasks (+3.0 points: 55.0% →58.0%). This performance improve-ment demonstrates that our dual-dimension detection pro-vides stabilized contextual representations that enhance ro-bustness against visual observation noise—including light-ing fluctuations, motion blur, and sensor artifacts common in robotic manipulation. The selective Query reuse validates TTF’s core hypothesis: temporal coherence in stable regions enhances rather than compromises inference quality. This finding reveals a promising “free lunch” future direction worth exploring: direct KQV matrix reuse for static patches could achieve computational acceleration while simultane-ously improving task success rates. 
+
+Configuration Strategy: Parameter selection demon-strates TTF’s robustness. OpenVLA employs consistent pa-rameters: keyframe interval K=3, attention top-k=70, pixel threshold=0.03, and text-to-vision attention. VLA-Cache re-quires minimal adaptation with task-adaptive fusion rates (30% for Object/Spatial/Long, 50% for Goal tasks). Since VLA-Cache uses patch importance scoring, we directly uti-lize its scores for patch selection, avoiding redundant com-putation. Neither model requires task-specific hyperparame-ter tuning. 
+
+SimplerEnv Cross-Environment Validation To validate cross-environment generalization, we evaluate TTF on Sim-plerEnv using identical parameters as our LIBERO experi-ments. The experimental results in Table 2 demonstrate con-sistent improvements across all three tasks, with an average improvement of 1.6 percentage points (4.8% relative). TTF shows particularly strong gains in Pick Coke Can (+10.0% relative), indicating that complex grasping tasks with multi-ple orientations benefit from temporal coherence. These results validate TTF’s environment-agnostic effec-tiveness, confirming that temporal coherence benefits extend across different simulation platforms without requiring pa-rameter re-tuning. 18456 Base Model Object Spatial Goal Long Average OpenVLA 66.5 82.0 77.0 48.0 68.4 OpenVLA + TTF 72.5 84.5 79.0 53.5 72.4 
+
+Fusion Rates 44.6 41.2 43.5 42.0 42.8 Improvement +6.0 (+9.0%) +2.5 (+3.0%) +2.0 (+2.6%) +5.5 (+11.5%) +4.0 (+5.8%) VLA-Cache 69.0 84.0 77.0 55.0 71.3 VLA-Cache + TTF 73.0 84.0 81.0 58.0 74.0 
+
+Improvement +4.0 (+5.8%) +0.0 (+0.0%) +4.0 (+5.2%) +3.0 (+5.5%) +2.7 (+3.8%) 
+
+Table 1: Task success rates (%) and temporal fusion rates (%) on the LIBERO benchmark using OpenVLA models fine-tuned for each task suite. Success rates denote the percentage of successful task completions across 200 episodes per task suite (10 tasks × 20 episodes each). The fusion rates represent the proportion of vision tokens reused from the previous frame in the fused representation. Phase 1  Phase 7  Phase 8        
+
+> SUCCE SS
+> Phase 1 Phase 2 Phase 3 Phase 4 Phase 5 Phase 6 Phase 7 Phase 8
+
+Temporal Token Fusion Enables Successful Task Completion 
+
+> OpenVLA Baseline
+> OpenVLA + TTF
+
+Temporal Progression    
+
+> Phase 3 Phase 4 Phase 5 Phase 6
+> FAILED
+> Phase 2
+
+Figure 3: Temporal progression analysis illustrating a failure-to-success transition for the task instruction “pick up the butter and place it in the basket.” Eight key phases showing OpenVLA baseline (failed) vs. OpenVLA + TTF (successful), demonstrating the critical role of temporal consistency in successful manipulation. 
+
+Task Success Rate (%) Improvement OpenVLA TTF Absolute Relative Move Near 49.4 52.1 +2.7 +5.5% Pick Coke 17.0 18.7 +1.7 +10.0% Drawer 33.3 33.8 +0.5 +1.5% 
+
+Average 33.2 34.9 +1.6 +4.8% 
+
+Table 2: Cross-environment validation on SimplerEnv benchmark using the base OpenVLA-7B model (without task-specific fine-tuning) with identical TTF parameters as LIBERO experiments. Results demonstrate consistent gen-eralization across simulation platforms and manipulation complexities. 
+
+Real Robot Experiments For real robot experiments, we employ more sensitive parameter settings to handle visual noise: pixel threshold=0.01 and attention top-k=100, while maintaining other configurations consistent with LIBERO experiments. Real-world environments provide an ideal testbed for TTF’s noise robustness due to dynamic lighting, sensor noise, motion blur, and other visual artifacts absent in simulation. The experimental results in Table 4 demonstrate TTF’s effectiveness in real-world scenarios, achieving an average (a) 
+
+> "put the garlic on the plate "
+> (b)
+> "put the pepper and corn on the plate "
+> (c)
+> "close the drawer "
+
+Figure 4: Real robot manipulation tasks used for physi-cal validation of TTF: (a) single-object pick-and-place, (b) multi-object sequential manipulation, and (c) contact-rich drawer closing. improvement of 3.3 percentage points (8.7% relative). Both pick-and-place tasks (Garlic, Pepper & Corn) show substan-tial gains from temporal coherence (+5.0 points each, 12.5% and 16.7% relative), demonstrating TTF’s particular strength in visual tracking and object manipulation tasks. These re-sults validate TTF’s practical applicability in real-world de-ployment, especially for manipulation scenarios involving object interaction and spatial reasoning. 
+
+4.3 Ablation Studies 
+
+We conduct comprehensive ablation studies to validate the necessity of each component in our dual-dimension tempo-18457 Method Object Spatial Goal Long Average Fusion Rates OpenVLA 66.5 82.0 77.0 48.0 68.4 –Pixel-only TTF 72.0 80.5 76.5 52.5 70.4 61.1/57.8/59.9/59.8 +5.5 (+8.3%) -1.5 (-1.8%) -0.5 (-0.6%) +4.5 (+9.4%) +2.0 (+2.9%) Attention-only TTF 68.0 83.0 77.5 56.5 71.3 48.3/48.2/48.3/48.4 +1.5 (+2.3%) +1.0 (+1.2%) +0.5 (+0.6%) +8.5 (+17.7%) +2.9 (+4.2%) 
+
+Pixel-Attention TTF 72.5 84.5 79.0 53.5 72.4 44.6/41.2/43.5/42.0 
+
++6.0 (+9.0%) +2.5 (+3.0%) +2.0 (+2.6%) +5.5 (+11.5%) +4.0 (+5.8%) 
+
+Table 3: Task success rates (%) and fusion rates (%) in analysis dimension ablation study across LIBERO task suites using OpenVLA task-specific fine-tuned checkpoints. Success rates denote the percentage of successful completions across 200 episodes per task suite (10 tasks × 20 episodes each). Fusion rates represent the proportion of vision tokens from the previous frame retained in the fused representation. 
+
+Task Success Rate (%) Improvement OpenVLA TTF Absolute Relative Garlic 40.0 45.0 +5.0 +12.5% Pepper & Corn 30.0 35.0 +5.0 +16.7% Drawer 45.0 45.0 +0.0 +0.0% 
+
+Average 38.3 41.7 +3.3 +8.7% 
+
+Table 4: Real robot manipulation success rates (%) across 20 episodes per task using OpenVLA-7B fine-tuned on task-specific data. Results demonstrate TTF’s effectiveness in noisy real-world environments with enhanced temporal sta-bility benefits. ral fusion approach. 
+
+Analysis Dimension Validation Table 3 validates the ne-cessity of our dual-dimension detection approach. Pixel-based analysis excels in detecting spatial changes, while attention-based analysis better captures task-relevant seman-tics. Our hybrid method delivers the best average perfor-mance (72.4%) by adaptively integrating both dimensions. Notably, its conservative OR-based fusion logic results in the lowest fusion rates (42.8%), prioritizing inference qual-ity and confirming the complementary nature of pixel and attention-based detection. 
+
+Keyframe Mechanism Analysis Figure 5 presents keyframe interval analysis across 14 configurations (K=2 to K=200), revealing three distinct regimes: Stable Range 
+
+(K ≤15) with optimal performance at K=3, Degradation Onset (K=20-30) where error accumulation begins, and 
+
+Error Accumulation (K ≥30) with performance plateau. Long-horizon tasks show higher sensitivity to temporal drift. Fusion rates increase monotonically with keyframe interval (from 35% to 70%), highlighting the efficiency-performance trade-off and validating our conservative dual-dimension approach. 
+
+# 5 Conclusion 
+
+We present Temporal Token Fusion (TTF), a training-free approach that addresses the fundamental limitation of cur-rent VLA models in leveraging temporal coherence during robotic manipulation. Our dual-dimension detection frame-work combines pixel-level spatial dynamics with attention-based semantic relevance assessment to intelligently inte-10 210 1       
+
+> 50
+> 45
+> 40
+> 55
+> 60
+> 70
+> 65
+> 75
+> Success Rate (%)
+> Error Accumulation
+> Begins
+> Performance vs Keyframe Interval
+> Object Tasks
+> Long -horizon Tasks
+> Stable Range
+> Degradation Onset
+> Error Accumulation
+> 10 210 1
+> Keyframe Interval (K)
+> 40
+> Fusion Rate (%)
+> Fusion Rate Paradox:
+> High fusion, low performance
+> Keyframe Interval (K) Fusion Rate vs Keyframe Interval
+> Object Tasks
+> Long-horizon Tasks
+> 60
+
+Figure 5: Keyframe interval analysis across Object and Long task suites. Top: Performance vs. Keyframe Interval show-ing error accumulation beyond K=30. Bottom: Fusion Rates vs. Keyframe Interval revealing the efficiency-performance trade-off. The analysis demonstrates three distinct regimes: stable performance (K ≤15), degradation onset (K=20–30), and error accumulation (K ≥30). grate historical and current visual representations. Compre-hensive evaluation demonstrates consistent improvements across LIBERO (4.0 percentage points average), Sim-plerEnv (cross-environment generalization), and real robot tasks (8.7% relative improvement), with model-agnostic ap-plicability across OpenVLA and VLA-Cache architectures. Beyond performance gains, our work reveals the unexpected benefits of selective Query matrix reuse in attention mecha-nisms, suggesting promising directions for direct KQV ma-trix strategies that achieve computational acceleration while improving task success rates. 18458 References 
+
+Black, K.; Brown, N.; Darpinian, J.; Dhabalia, K.; Driess, D.; Esmail, A.; Equi, M.; Finn, C.; Fusai, N.; Galliker, M. Y.; et al. 2025. 𝜋 0.5: A vision-language-action model with open-world generalization. arXiv preprint arXiv:2504.16054. Black, K.; Brown, N.; Driess, D.; Esmail, A.; Equi, M.; Finn, C.; Fusai, N.; Groom, L.; Hausman, K.; Ichter, B.; et al. 2024. 𝜋 0: A vision-language-action flow model for general robot control. arXiv preprint arXiv:2410.24164 .Bolya, D.; Fu, C.-Y.; Dai, X.; Zhang, P.; Feichtenhofer, C.; and Hoffman, J. 2023. Token Merging: Your ViT but Faster. In International Conference on Learning Representations .Brohan, A.; Brown, N.; Carbajal, J.; Chebotar, Y.; Chen, X.; Choromanski, K.; Ding, T.; Driess, D.; Dubey, A.; Finn, C.; et al. 2023. Rt-2: Vision-language-action models transfer web knowledge to robotic control. arXiv preprint arXiv:2307.15818 .Brohan, A.; Brown, N.; Carbajal, J.; Chebotar, Y.; Dabis, J.; Finn, C.; Gopalakrishnan, K.; Hausman, K.; Herzog, A.; Hsu, J.; et al. 2022. Rt-1: Robotics transformer for real-world control at scale. arXiv preprint arXiv:2212.06817 .Chen, L.; Zhao, H.; Liu, T.; Bai, S.; Lin, J.; Zhou, C.; and Chang, B. 2024. An Image is Worth 1/2 Tokens After Layer 2: Plug-and-Play Inference Acceleration for Large Vision-Language Models. In Computer Vision – ECCV 2024 .Chi, C.; Xu, Z.; Feng, S.; Cousineau, E.; Du, Y.; Burchfiel, B.; Tedrake, R.; and Song, S. 2023. Diffusion Policy: Vi-suomotor Policy Learning via Action Diffusion. The Inter-national Journal of Robotics Research .Collaboration, O. X.-E.; O’Neill, A.; Rehman, A.; Gupta, A.; Maddukuri, A.; et al. 2023. Open X-Embodiment: Robotic Learning Datasets and RT-X Models. arXiv preprint arXiv:2310.08864 .Fasola, J.; and Veloso, M. M. 2006. Real-time object detec-tion using segmented and grayscale images. In Proceedings 2006 IEEE International Conference on Robotics and Au-tomation, 2006. ICRA 2006. , 4088–4093. IEEE. Huang, S.; Chang, H.; Liu, Y.; Zhu, Y.; Dong, H.; et al. 2024. A3VLM: Actionable Articulation-Aware Vision Language Model. arXiv preprint arXiv:2406.07549 .Kim, M. J.; Finn, C.; and Liang, P. 2025. Fine-Tuning Vision-Language-Action Models: Optimizing Speed and Success. arXiv preprint arXiv:2502.19645 . Accepted to Robotics: Science and Systems (RSS) 2025. Kim, M. J.; Pertsch, K.; Karamcheti, S.; Xiao, T.; Balakr-ishna, A.; Nair, S.; Rafailov, R.; Foster, E.; Lam, G.; Sanketi, P.; et al. 2024. OpenVLA: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 .Li, X.; Hsu, K.; Gu, J.; Pertsch, K.; Mees, O.; Walke, H. R.; Fu, C.; Lunawat, I.; Sieh, I.; Kirmani, S.; Levine, S.; Wu, J.; Finn, C.; Su, H.; Vuong, Q.; and Xiao, T. 2024. Evaluat-ing Real-World Robot Manipulation Policies in Simulation. 
+
+arXiv preprint arXiv:2405.05941 .Liang, Y.; Ge, C.; Tong, Z.; Song, Y.; Wang, J.; and Xie, P. 2022. EViT: Expediting Vision Transformers via Token Reorganizations. In International Conference on Learning Representations .Liu, B.; Zhu, Y.; Gao, C.; Feng, Y.; Liu, Q.; Zhu, Y.; and Stone, P. 2023. LIBERO: Benchmarking Knowledge Transfer for Lifelong Robot Learning. arXiv preprint arXiv:2306.03310 .Meng, L.; Li, H.; Chen, B.-C.; Lan, S.; Wu, Z.; Jiang, Y.-G.; and Lim, S.-N. 2022. AdaViT: Adaptive Vision Trans-formers for Efficient Image Recognition. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 12309–12318. Octo Model Team; Ghosh, D.; Walke, H.; Pertsch, K.; Black, K.; et al. 2024. Octo: An Open-Source Generalist Robot Policy. In Proceedings of Robotics: Science and Systems (RSS) .Rao, Y.; Zhao, W.; Liu, B.; Lu, J.; Zhou, J.; and Hsieh, C.-J. 2021. DynamicViT: Efficient Vision Transformers with Dynamic Token Sparsification. In Advances in Neural In-formation Processing Systems , 13937–13949. Secci, F.; and Ceccarelli, A. 2023. RGB Cameras Fail-ures and Their Effects in Autonomous Driving Applications. 
+
+IEEE Transactions on Dependable and Secure Computing ,20(4): 2731–2745. Smeulders, A. W. M.; Chu, D. M.; Cucchiara, R.; Calderara, S.; Dehghan, A.; and Shah, M. 2014. Visual Tracking: An Experimental Survey. IEEE Transactions on Pattern Analy-sis and Machine Intelligence , 36(7): 1442–1468. Wen, J.; Zhu, M.; Zhu, Y.; Tang, Z.; Li, J.; et al. 2024. Diffusion-VLA: Scaling Robot Foundation Models via Unified Diffusion and Autoregression. arXiv preprint arXiv:2412.03293 . Initial version (v1). Xu, S.; Wang, Y.; Xia, C.; Zhu, D.; Huang, T.; and Xu, C. 2025. VLA-Cache: Towards Efficient Vision-Language-Action Model via Adaptive Token Caching in Robotic Ma-nipulation. arXiv preprint arXiv:2502.02175 .Yang, Q.; Tan, K.-H.; and Ahuja, N. 2012. Shadow Removal Using Bilateral Filtering. IEEE Transactions on Image Pro-cessing , 21(10): 4361–4368. Zhang, Y.; Fan, C.-K.; Ma, J.; Zheng, W.; Huang, T.; Cheng, K.; Gudovskiy, D.; Okuno, T.; Nakata, Y.; Keutzer, K.; et al. 2024. Sparsevlm: Visual token sparsification for ef-ficient vision-language model inference. arXiv preprint arXiv:2410.04417 .18459
