@@ -6,140 +6,85 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-01 ~ 2026-07-10
-- 运行时间：2026-07-10 09:20:30 UTC
+- 最新运行日期：2026-07-12
+- 运行时间：2026-07-12 21:40:17 UTC
 - 运行状态：成功
-- 本次总论文数：40
-- 精读区：28
-- 速读区：12
+- 本次总论文数：21
+- 精读区：8
+- 速读区：13
 
 ### 今日简报（AI）
-本期推荐40篇论文，聚焦世界模型向世界行动模型的演进与机器人操作技术，其中2篇精读获高分。最值得深入阅读的分别是实现移动与操作统一的《ABot-M0.5》和提出价值扩散世界模型的《Valdi》。建议普通读者从《From World Models to World Action Models》教程入手，再跟进精读论文中的具体方法。
-- 详情：[/20260701-20260710/README](/20260701-20260710/README)
+今日共推荐21篇论文，精选精读8篇，重点聚焦轻量级机器人控制与世界模型领域。  
+最值得关注的是 XS-VLA 利用粗粒度蒸馏与潜流匹配实现轻量机器人控制（10分），以及 Look Before You Leap 通过树搜索蒸馏用于冻结VLA模型的动作评估（9分）。  
+建议优先精读这两篇高分论文，并留意速读中关于世界模型的 SiamJEPA 和 Mask2Real-WM，探索模型压缩与 Sim-to-Real 迁移的实用技巧。
+- 详情：[/202607/12/README](/202607/12/README)
 
 ### 精读区论文标签
-1. [ABot-M0.5: Unified Mobility-and-Manipulation World Action Model](/20260701-20260710/2607.00678v2-abot-m05-unified-mobility-and-manipulation-world-action-model)  
-   标签：评分：10.0/10、query:wam-vla
-   evidence：统一移动操作世界动作模型
-2. [Valdi: Value Diffusion World Models](/20260701-20260710/2607.00917v1-valdi-value-diffusion-world-models)  
+1. [XS-VLA: Coupling Coarse-grained Spatial Distillation with Latent Flow Matching for Lightweight Robotic Control](/202607/12/2607.04171v1-xs-vla-coupling-coarse-grained-spatial-distillation-with-latent-flow-matching-for-lightweight-robotic-control)  
+   标签：评分：10.0/10、query:latent-vla
+   evidence：潜在流匹配用于轻量级VLA机器人控制
+2. [Look Before You Leap: Distilling Tree Search into Action Evaluation for Frozen VLA Models](/202607/12/2607.03751v1-look-before-you-leap-distilling-tree-search-into-action-evaluation-for-frozen-vla-models)  
+   标签：评分：9.0/10、query:latent-vla
+   evidence：通过将树搜索蒸馏到动作评估中提升冻结VLA模型
+3. [High-Fidelity One-Step Generative Visuomotor Policy via Recursive Correction, Frequency Consistency, and Contrastive Flow Matching](/202607/12/2607.03865v1-high-fidelity-one-step-generative-visuomotor-policy-via-recursive-correction-frequency-consistency-and-contrastive-flow-matching)  
+   标签：评分：9.0/10、query:gen2embodied
+   evidence：用于机器人控制的一步流匹配视觉运动策略
+4. [Worldscape-MoE: A Unified Mixture-of-Experts World Model for Scalable Heterogeneous Action Control](/202607/12/2607.03964v1-worldscape-moe-a-unified-mixture-of-experts-world-model-for-scalable-heterogeneous-action-control)  
    标签：评分：9.0/10、query:wam-vla
-   evidence：用于模型预测控制的潜在扩散世界模型，支持端到端在线训练
-3. [Structured 4D Latent Predictive Model for Robot Planning](/20260701-20260710/2607.01166v1-structured-4d-latent-predictive-model-for-robot-planning)  
+   evidence：提出统一的混合专家世界模型，支持异构动作控制
+5. [Optimal Transport Q-Learning for Flow Policy Steering and Acceleration](/202607/12/2607.06262v1-optimal-transport-q-learning-for-flow-policy-steering-and-acceleration)  
+   标签：评分：9.0/10、query:gen2embodied
+   evidence：使用强化学习微调流策略，直接相关于流匹配和VLA模型
+6. [Lift3D-VLA: Lifting VLA Models to 3D Geometry and Dynamics-Aware Manipulation](/202607/12/2607.06564v1-lift3d-vla-lifting-vla-models-to-3d-geometry-and-dynamics-aware-manipulation)  
    标签：评分：9.0/10、query:latent-vla
-   evidence：面向机器人规划的结构化4D潜在预测模型
-4. [VLAFlow: A Unified Training Framework for Vision-Language-Action Models via Co-training and Future Latent Alignment](/20260701-20260710/2607.01586v1-vlaflow-a-unified-training-framework-for-vision-language-action-models-via-co-training-and-future-latent-alignment)  
+   evidence：用于操作的3D点云推理VLA
+7. [Pelican-VLA 0.5: Attending Before Acting Benefits Generalization](/202607/12/2607.06655v2-pelican-vla-05-attending-before-acting-benefits-generalization)  
    标签：评分：9.0/10、query:latent-vla
-   evidence：VLA模型训练中的未来潜变量对齐
-5. [Bridge-WA: Predicting Where and How the World Changes for Robotic Action](/20260701-20260710/2607.02195v1-bridge-wa-predicting-where-and-how-the-world-changes-for-robotic-action)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：轻量级世界动作框架，蒸馏未来变化先验
-6. [The Moving Eye: Enhancing VLA Spatial Generalization via Hybrid Dynamic Data Collection](/20260701-20260710/2607.02322v1-the-moving-eye-enhancing-vla-spatial-generalization-via-hybrid-dynamic-data-collection)  
+   evidence：统一VLA模型，融合视觉语言理解、未来帧生成和动作预测
+8. [WCog-VLA: A Dual-Level World-Cognitive Vision-Language-Action Model for End-to-End Autonomous Driving](/202607/12/2607.08375v1-wcog-vla-a-dual-level-world-cognitive-vision-language-action-model-for-end-to-end-autonomous-driving)  
    标签：评分：9.0/10、query:latent-vla
-   evidence：增强VLA空间泛化
-7. [DynaWM: A Base-VLA-Guided World Foundation Model for Moving-Object Manipulation](/20260701-20260710/2607.02604v1-dynawm-a-base-vla-guided-world-foundation-model-for-moving-object-manipulation)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：基于VLA的世界基础模型
-8. [TACO: TActile World Model as a Self-COrrector forScalable VLA Post-Training](/20260701-20260710/2607.02840v1-taco-tactile-world-model-as-a-self-corrector-forscalable-vla-post-training)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：触觉感知世界模型与VLA策略结合用于接触丰富操作
-9. [DREAMSTEER: Latent World Models Can Steer VLA Policies During Deployment Without Any Finetuning](/20260701-20260710/2607.02865v1-dreamsteer-latent-world-models-can-steer-vla-policies-during-deployment-without-any-finetuning)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：潜在世界模型引导VLA策略无需微调
-10. [WorldBagel: Uncovering the Power of Unified Multimodal Models for Vision-Language-Action-World Modeling](/20260701-20260710/2607.03461v1-worldbagel-uncovering-the-power-of-unified-multimodal-models-for-vision-language-action-world-modeling)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：统一VLA与世界模型的VLAW框架
-11. [CoRE-VLA: Towards Scalable and Robust Vision-Language-Action Modeling via Conditional Routing of Experts](/20260701-20260710/2607.03693v1-core-vla-towards-scalable-and-robust-vision-language-action-modeling-via-conditional-routing-of-experts)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：直接面向VLA模型，采用条件专家路由
-12. [WSA$_1$: a 3D-Centric World-Spatial-Action Model for Generalizable Robot Control](/20260701-20260710/2607.03941v1-wsa1-a-3d-centric-world-spatial-action-model-for-generalizable-robot-control)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：以3D为中心的世界-空间-动作模型用于具身AI预测、规划与控制
-13. [HALO-WA: Hybrid-Attention Latent-Guided Online Reinforcement Learning for World-Action Models](/20260701-20260710/2607.04265v1-halo-wa-hybrid-attention-latent-guided-online-reinforcement-learning-for-world-action-models)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：基于潜在引导在线强化学习的世界动作模型
-14. [Simple-to-Complex Structured Demonstrations for Vision-Language-Action Learning](/20260701-20260710/2607.04591v1-simple-to-complex-structured-demonstrations-for-vision-language-action-learning)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：通过结构化演示组织VLA学习
-15. [Geometry-Aware Motion Latents for Learning Robust Manipulation Policies](/20260701-20260710/2607.04714v1-geometry-aware-motion-latents-for-learning-robust-manipulation-policies)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：离散运动潜在编码用于操作策略
-16. [CAC-VLA: Context-Gated Action Conditioning for Vision-Language-Action Models](/20260701-20260710/2607.04816v1-cac-vla-context-gated-action-conditioning-for-vision-language-action-models)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：VLA模型内的潜在动作接口
-17. [DSWAM: A Dual-System World Action Foundation Model for Fine-Grained Robot Manipulation](/20260701-20260710/2607.04927v1-dswam-a-dual-system-world-action-foundation-model-for-fine-grained-robot-manipulation)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：双系统世界动作模型
-18. [Qantara: Bridge-Flow Training for Multi-Paradigm JEPA Control](/20260701-20260710/2607.04978v1-qantara-bridge-flow-training-for-multi-paradigm-jepa-control)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：用于视觉和动作表征的联合嵌入预测架构
-19. [InternVLA-A1.5: Unifying Understanding, Latent Foresight, and Action for Compositional Generalization](/20260701-20260710/2607.04988v1-internvla-a15-unifying-understanding-latent-foresight-and-action-for-compositional-generalization)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：通过可学习潜在查询实现未来感知的VLA潜在预见
-20. [Learning 4D Geometric Priors for Inference-Efficient World Action Models](/20260701-20260710/2607.05468v1-learning-4d-geometric-priors-for-inference-efficient-world-action-models)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：用于具身AI预测、规划和控制的世界动作模型
-21. [RynnWorld-4D: 4D Embodied World Models for Robotic Manipulation](/20260701-20260710/2607.06559v1-rynnworld-4d-4d-embodied-world-models-for-robotic-manipulation)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：基于视频的世界模型生成未来RGB、深度和光流用于机器人想象
-22. [WAM-TTT: Steering World-Action Models by Watching Human Play at Test Time](/20260701-20260710/2607.06988v1-wam-ttt-steering-world-action-models-by-watching-human-play-at-test-time)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：用于具身AI预测、规划和控制的世界动作模型
-23. [Dual Latent Memory in Vision-Language-Action Models for Robotic Manipulation](/20260701-20260710/2607.07608v1-dual-latent-memory-in-vision-language-action-models-for-robotic-manipulation)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：潜在记忆标记与VLA推理交织
-24. [LEEVLA: Seeing What Matters in Latent Environment Evolution for Vision-Language-Action](/20260701-20260710/2607.08182v1-leevla-seeing-what-matters-in-latent-environment-evolution-for-vision-language-action)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：面向VLA的潜在环境演化
-25. [EgoWAM: World Action Models Beyond Pixels with In-the-Wild Egocentric Human Data](/20260701-20260710/2607.08436v1-egowam-world-action-models-beyond-pixels-with-in-the-wild-egocentric-human-data)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：用于人机迁移的世界动作模型
-26. [FabriVLA: A Lightweight Vision-Language-Action Model for Precise Multi-Task Manipulation](/20260701-20260710/2607.08575v1-fabrivla-a-lightweight-vision-language-action-model-for-precise-multi-task-manipulation)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：轻量级VLA模型，使用流匹配动作头进行多任务操作
-27. [Native Video-Action Pretraining for Generalizable Robot Control](/20260701-20260710/2607.08639v1-native-video-action-pretraining-for-generalizable-robot-control)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：语义视觉-动作分词器，离散潜在动作
-28. [Latent Memory Palace: Reasoning for Control as Autoregressive Variational Inference](/20260701-20260710/2607.08724v1-latent-memory-palace-reasoning-for-control-as-autoregressive-variational-inference)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：自回归潜在空间用于具身智能体的推理和控制
+   evidence：提出WCog-VLA，一种具有双层次世界认知的视觉-语言-动作模型用于自动驾驶
 
 ### 速读区论文标签
-1. [From World Models to World Action Models: A Concise Tutorial for Robotics](/20260701-20260710/2607.00836v3-from-world-models-to-world-action-models-a-concise-tutorial-for-robotics)  
+1. [SiamJEPA: On the Role of Siamese Student Encoders in JEPA](/202607/12/2607.04044v1-siamjepa-on-the-role-of-siamese-student-encoders-in-jepa)  
+   标签：评分：8.0/10、query:latent-vla
+   evidence：研究JEPA中的孪生编码器，直接相关于联合嵌入预测架构
+2. [Learning Task-Sufficient World Models by Synergizing Agentic Exploration and Structured Modeling](/202607/12/2607.04409v1-learning-task-sufficient-world-models-by-synergizing-agentic-exploration-and-structured-modeling)  
    标签：评分：8.0/10、query:wam-vla
-   evidence：关于机器人世界模型和世界动作模型的综合教程
-2. [PhysMani: Physics-principled 3D World Model for Dynamic Object Manipulation](/20260701-20260710/2607.01938v1-physmani-physics-principled-3d-world-model-for-dynamic-object-manipulation)  
+   evidence：学习任务充分的潜在世界模型用于决策
+3. [Mask2Real-WM: Segmentation Masks as a Sim-to-Real Bridge for Controllable Dexterous World Models](/202607/12/2607.04546v1-mask2real-wm-segmentation-masks-as-a-sim-to-real-bridge-for-controllable-dexterous-world-models)  
    标签：评分：8.0/10、query:wam-vla
-   evidence：物理原理的3D高斯世界模型，用于动态操作，带有未来感知策略
-3. [Guided Action Flow: Q-Guided Inference for Flow-Matching Vision-Language-Action Policies](/20260701-20260710/2607.02092v2-guided-action-flow-q-guided-inference-for-flow-matching-vision-language-action-policies)  
-   标签：评分：8.0/10、query:gen2embodied
-   evidence：流匹配生成模型用于VLA策略的测试时引导
-4. [ACID: Action Consistency via Inverse Dynamics for Planning with World Models](/20260701-20260710/2607.02403v1-acid-action-consistency-via-inverse-dynamics-for-planning-with-world-models)  
+   evidence：使用分割掩码和视频扩散的动作条件世界模型用于灵巧操作
+4. [KAM-WM: Kinematic Affordance Maps from Latent World Models for Robot Manipulation](/202607/12/2607.04652v1-kam-wm-kinematic-affordance-maps-from-latent-world-models-for-robot-manipulation)  
+   标签：评分：8.0/10、query:latent-vla
+   evidence：潜在世界模型用于运动学可操作图提取
+5. [UNIVERSE: Unified Video Action Models for Autonomous Driving with Flexible Mask-Modulated Modality Generation](/202607/12/2607.05133v1-universe-unified-video-action-models-for-autonomous-driving-with-flexible-mask-modulated-modality-generation)  
    标签：评分：8.0/10、query:wam-vla
-   evidence：利用逆动力学的循环动作一致性进行世界模型规划
-5. [RetailSMV: Exocentric vs. Egocentric Adaptation of Foundation Video World Models in Retail](/20260701-20260710/2607.00310v1-retailsmv-exocentric-vs-egocentric-adaptation-of-foundation-video-world-models-in-retail)  
+   evidence：提出统一视频-动作模型作为自动驾驶世界动作模型
+6. [DynaVieW: Schema-Guided World Modeling for Understanding Hierarchical Visual Dynamics](/202607/12/2607.04112v1-dynaview-schema-guided-world-modeling-for-understanding-hierarchical-visual-dynamics)  
    标签：评分：7.0/10、query:wam-vla
-   evidence：将视频世界模型适应零售场景
-6. [Multi-scale Mixture of World Models for Embodied Agents in Evolving Environments](/20260701-20260710/2607.00457v1-multi-scale-mixture-of-world-models-for-embodied-agents-in-evolving-environments)  
-   标签：评分：7.0/10、query:wam-vla
-   evidence：扩展世界模型以支持通用型具身智能体
-7. [RoboWorld: Fast and Reliable Neural Simulators for Generalist Robot Policy Evaluation](/20260701-20260710/2607.01060v1-roboworld-fast-and-reliable-neural-simulators-for-generalist-robot-policy-evaluation)  
-   标签：评分：7.0/10、query:wam-vla
-   evidence：快速自回归视频世界模型用于策略评估，结合VLM评分
-8. [FurnitureVLA: Learning Long-Horizon Bimanual Furniture Assembly with Vision-Language-Action Model](/20260701-20260710/2607.01212v1-furniturevla-learning-long-horizon-bimanual-furniture-assembly-with-vision-language-action-model)  
+   evidence：模式引导的世界模型用于视觉动态，与基于视频的世界模型相关
+7. [Spatial Attention: Adapting Execution Horizons for Diffusion Policies via Observation Sensitivity](/202607/12/2607.04739v1-spatial-attention-adapting-execution-horizons-for-diffusion-policies-via-observation-sensitivity)  
+   标签：评分：7.0/10、query:gen2embodied
+   evidence：利用观测敏感性自适应调整扩散策略的执行视野
+8. [PRISM: Personalized Robotic Dataset Generation via Image-based Scene and Motion Synthesis](/202607/12/2607.04880v1-prism-personalized-robotic-dataset-generation-via-image-based-scene-and-motion-synthesis)  
    标签：评分：7.0/10、query:latent-vla
-   evidence：用于双人家具组装的VLA模型
-9. [Unleashing More Actions via Action Compositional Training for VLA Models](/20260701-20260710/2607.00351v1-unleashing-more-actions-via-action-compositional-training-for-vla-models)  
+   evidence：为VLA策略生成个性化数据集
+9. [Cortex: A Bidirectionally Aligned Embodied Agent Framework for Long-horizon Manipulation](/202607/12/2607.05377v1-cortex-a-bidirectionally-aligned-embodied-agent-framework-for-long-horizon-manipulation)  
+   标签：评分：7.0/10、query:latent-vla
+   evidence：结合层次化规划和技能原语的VLA框架
+10. [Mask-based Predictive Representations for Reinforcement Learning](/202607/12/2607.04153v1-mask-based-predictive-representations-for-reinforcement-learning)  
    标签：评分：6.0/10、query:latent-vla
-   evidence：通过动作分解训练提升VLA模型的组合泛化能力
-10. [Path Planning in Physically Viable World Models](/20260701-20260710/2607.00673v1-path-planning-in-physically-viable-world-models)  
+   evidence：基于掩码预测的自监督学习用于控制任务的表示学习
+11. [Aura: Consistent Multi-Subject Video Generation via VLM-Grounded Semantic Alignment](/202607/12/2607.04311v1-aura-consistent-multi-subject-video-generation-via-vlm-grounded-semantic-alignment)  
+   标签：评分：6.0/10、query:gen2embodied
+   evidence：使用VLM的一致多主体视频生成框架
+12. [Last-Meter Precision Navigation for UAVs: A Diffusion-Refined Aerial Visual Servoing Approach](/202607/12/2607.04352v1-last-meter-precision-navigation-for-uavs-a-diffusion-refined-aerial-visual-servoing-approach)  
+   标签：评分：6.0/10、query:gen2embodied
+   evidence：基于扩散模型的视觉伺服精化方法，适用于机器人控制
+13. [RoboDojo: A Unified Sim-and-Real Benchmark for Comprehensive Evaluation of Generalist Robot Manipulation Policies](/202607/12/2607.04434v1-robodojo-a-unified-sim-and-real-benchmark-for-comprehensive-evaluation-of-generalist-robot-manipulation-policies)  
    标签：评分：6.0/10、query:wam-vla
-   evidence：物理可行世界模型用于导航规划
-11. [CoFL-S: Spatially Queryable Sector Flow Fields for Local Language-Conditioned Navigation](/20260701-20260710/2607.02222v1-cofl-s-spatially-queryable-sector-flow-fields-for-local-language-conditioned-navigation)  
-   标签：评分：6.0/10、query:latent-vla
-   evidence：用于导航的低层VLA框架，带有语言条件流场
-12. [SEAM: Smooth Execution of Action-Chunked Motion for Vision-Language-Action Policies](/20260701-20260710/2607.04609v1-seam-smooth-execution-of-action-chunked-motion-for-vision-language-action-policies)  
-   标签：评分：6.0/10、query:latent-vla
-   evidence：通过推理时方法改进VLA策略平滑性
+   evidence：统一的仿真-实机基准，用于评估包括VLA和WAM的通用机器人操作策略
 
 
 <div class="dpr-home-promo-card">
