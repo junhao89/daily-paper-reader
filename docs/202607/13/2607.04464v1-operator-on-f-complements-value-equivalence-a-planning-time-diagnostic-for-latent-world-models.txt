@@ -1,0 +1,257 @@
+Title: Operator-on-F complements value-equivalence: a planning-time diagnostic for latent world models
+
+URL Source: https://arxiv.org/pdf/2607.04464v1
+
+Published Time: Tue, 07 Jul 2026 02:22:39 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Operator-on-F complements value-equivalence: aplanning-time diagnostic for latent world models 
+
+## Donna Vakalis 1,2 
+
+donna.vakalis@olympian.org 
+
+> 1
+
+Mila – Quebec AI Institute 
+
+> 2
+
+Université de Montréal 
+
+## Abstract 
+
+World-model evaluation for model-based reinforcement learning typically asks whether the learned model predicts reward and value well, which can leave planning-relevant errors in the model’s latent rollouts unmeasured. We introduce a complementary diag-nostic, operator-on-F , that compares a model’s k-step latent pushforward to the envi-ronment’s on an observable subset F , using the model’s own predictor. On a TD-MPC2 size sweep over cheetah-run , reward-prediction error stays within [0 .028 , 0.091] for every model size — only ∼ 3× variation — so an unnormalized reward-fit check has narrow resolution to distinguish them; the (unnormalized) Bellman residual and reward error themselves have weak relationships with return (Spearman −0.10 and −0.30 ). Operator error spans 0.28 to 2.62 over the same sizes. At 317 M the operator error is 
+
+2.62 — an order of magnitude above the 0.28 –0.36 cluster — and the planning return collapses to 0.9, while reward-prediction error ( 0.091 ) is the highest of the five but stays within the same small [0 .028 , 0.091] range as the rest of the sweep. The rank correlation between operator error and return loss is −0.90 (anchor-bootstrap 95% CI 
+
+[−0.90 , −0.70] at n = 5 sizes; leave-one-out removal of any single size leaves it at 
+
+−0.80 or stronger). The operator also returns informative, architecture-discriminating estimates in a cross-architecture comparison between TD-MPC2 and a pure-SSL la-tent world model. The operator diagnostic complements value-equivalence rather than replacing it. 
+
+## 1 Introduction 
+
+World-model evaluation in model-based reinforcement learning often treats two questions as equiv-alent: does the learned model predict reward and value well, and does it model the task’s dynamics well? Value-equivalence (Grimm et al., 2020; 2021; Silver et al., 2017) argues that for planning, what a model gets right about reward and value is what matters. When the answers to the two ques-tions agree, training a model to predict reward is enough. When they disagree, a reward-prediction check can be silent at the failure mode that matters for planning. This paper proposes a complementary diagnostic, operator-on-F , that compares the model’s k-step latent rollout against the environment’s at the level of an observable subset F rather than at the reward head. We then report results on released TD-MPC2 (Hansen et al., 2024) checkpoints in which the two metrics disagree at the largest scale of the released mt80 sweep: at 317 M the operator-on-F error is an order of magnitude above the 0.28 –0.36 cluster ( 2.62 vs. next-highest 0.91 , at 1M) while reward-prediction error ( 0.091 ) stays within the same small [0 .028 , 0.091] range as the rest of the sweep, and the planning return collapses to 0.9. We also report the same diagnostic on a pure-SSL world model trained from scratch (LeWM, Maes et al. (2026)) used as a cross-architecture comparison; both of these are single-environment observations, not a general claim. 1
+
+> arXiv:2607.04464v1 [cs.LG] 5 Jul 2026
+
+Our contributions are: (i) the operator-on-F definition and a probe-based estimator that runs natively on a model’s own latent predictor at its planning-time horizon; (ii) on the released TD-MPC2 mt80 size sweep, reward-prediction error stays within the narrow [0 .028 , 0.091] band across all five sizes (∼ 3× variation) while operator error spans 0.28 to 2.62 , with the 317 M model showing the highest operator error (an order of magnitude above the 0.28 –0.36 cluster) and a return collapse to 0.9 (rank correlation between operator error and return −0.90 , anchor-bootstrap 95% CI [−0.90 , −0.70] , with leave-one-out drop of any single size leaving Spearman at −0.80 or stronger); (iii) a re-ranking of the same five models that disagrees with the Bellman residual (Spearman +0 .30 , anchor-bootstrap 
+
+95% CI [+0 .30 , +0 .60] ), contrasted with the per-size near-identity between the unnormalized value-only error and the Bellman residual (Spearman +1 .00 ); and (iv) a cross-architecture sanity check between single-task TD-MPC2 and pure-SSL LeWM on cheetah-run with disjoint 95% CIs that are preserved under a 1-hidden-layer MLP-probe ablation. 
+
+## 2 Background and method 
+
+2.1 Operator-on-F
+
+Let st be a state, at an action, and zt = enc( st) a model’s latent encoding. We write the model’s 
+
+k-step rollout as ˆzt+k = Ok(zt, a t:t+k−1) and the environment’s encoded next-state as z′ 
+
+> t+k
+
+=enc( st+k). For TD-MPC2 (Hansen et al., 2024), Ok is its latent dynamics rolled k times open-loop; for LeWM (Maes et al., 2026), Ok is its native predictor at a k-step frameskip. A probe 
+
+ϕF : Z → F maps latents to a chosen observable subset F (Alain & Bengio, 2017), so a fair cross-model comparison can happen on a surface both encoders share. For each functional ϕ ∈ F and each anchor (st, a t:t+k−1, s t+k), we compute the per-anchor oper-ator error |ϕ(ˆ zt+k) − ϕ(z′
+
+> t+k
+
+)| normalized by the across-anchor spread of the true pushforward, and aggregate by RMS over (ϕ, anchor ). The value slice sets F = {r, V } using the model’s own reward and value heads. The full-F aggregate adds a held-out per-anchor PCA basis on the encoded next-state geometry (top-16 directions, whitened by their singular values); the basis is fit on a held-out half of the anchors and evaluated on the other half so it cannot adapt to operator error. Appendix A gives the full expression. 
+
+2.2 Epistemic class and probe 
+
+We report all operator-on-F values as native : Ok is each model’s own predictor at the same k a plan-ner would use at deployment, and the comparison is to encoded ground-truth next-states. We never substitute a synthetic predictor. LeWM has no reward or value head, so for the cross-architecture comparison we report the operator on a shared observation-level F (cheetah-run observation plus reward) probed identically on both models. The probe is a ridge regression with feature standardization and λ chosen by grid search on a held-out sub-split, reported with per-observable R2 so probe quality is visible. Unregularized probes degrade sharply on high-dimensional latents (in a pilot, unregularized ridge on the TD-MPC2 mt80-
+
+19 M 768 -dim latent gave strongly negative R2 on some observables), an instance of the capacity-vs-information confounds documented in the probing-classifier literature (Hewitt & Liang, 2019), which makes unregularized probes an unfair surface for cross-model comparison. Appendix B gives the protocol in full, including the commonly-well-probed restriction used as the probe-asymmetry control in Section 4.3. 
+
+## 3 Experimental setup 
+
+We evaluate three sources of world models on the DMC cheetah-run task (Tassa et al., 2018): the released TD-MPC2 (Hansen et al., 2024) mt80 multitask checkpoints at five parameter counts (1M, 5M, 19 M, 48 M, 317 M), used as the size-sweep axis; the released TD-MPC2 single-task 2cheetah-run checkpoint, used as the single-task control; and three LeWM ( LeWorldModel , Maes et al. (2026)) seeds trained from pixels for 100 epochs each with the SIGReg regularizer of Balestriero & LeCun (2025) active. LeWM has no reward or value head, so the cross-architecture comparison reports the operator on observation-level F only. Operator error is measured at a matched horizon of 5 collect-steps. LeWM predicts the jump in one forward pass (frameskip 5); TD-MPC2 rolls its latent dynamics 5× open-loop under the recorded actions. The cross-architecture comparison (Section 4.3) pools 1552 evaluation anchors over 16 
+
+held-out episodes; the TD-MPC2 size-sweep (Sections 4.1 and 4.2) uses the 1500 pooled anchors from the size-sweep rollouts. Configurations, analysis scripts, and figure scripts to reproduce the operator-error, metric-disagreement, and cross-architecture results reported in Section 4 are avail-able at https://github.com/DonnaVakalis/operator-on-F .
+
+## 4 Results 
+
+4.1 Value-equivalence can be silent when the operator is wrong 
+
+On the released TD-MPC2 mt80 sweep over five parameter counts (Figure 1), reward-prediction error stays within [0 .028 , 0.091] at every size — only ∼ 3× variation, narrow resolution for an un-normalized reward-fit check to distinguish them — while the full-F operator-on-F error spans 0.28 
+
+to 2.62 . The 317 M checkpoint is the clearest case: operator error is 2.62 , an order of magnitude above the 0.28 –0.36 cluster (next-highest 0.91 , at 1M), and the planning return collapses to 0.9,while reward-prediction error ( 0.091 ) remains within the same small [0 .028 , 0.091] range as the rest of the sweep. Neither value-equivalence proxy, as conventionally (unnormalized) reported, orders the models by return: Spearman −0.10 for the Bellman residual and −0.30 for reward-prediction error (normalizing each channel by its target spread, as operator-on-F does, recovers the return or-dering; Appendix C). Per-size operator-on-F values have tight anchor-bootstrap CIs (Appendix C): the across-size rank correlation with return is −0.90 (anchor-bootstrap 95% CI [−0.90 , −0.70] ), and leave-one-out removal of any single size leaves the Spearman at −0.80 or stronger, so the rank order is stable to single-point outliers, though n = 5 is inherently small. Because reward-prediction error has limited variance across the sweep, a partial correlation controlling for it reproduces the marginal value ( −0.89 ); we report this as consistency, not an independent control. 
+
+4.2 Operator-on-F disagrees with value-equivalence proxies 
+
+On the same five TD-MPC2 sizes, the full-F operator-on-F rank-disagrees with the Bellman resid-ual: Spearman +0 .30 (anchor-bootstrap 95% CI [+0 .30 , +0 .60] ), and +0 .10 ([+0 .10 , +0 .30] )against the kernel-divergence operator. The paper’s value slice F = {r, V } (normalized per-functional aggregate) also disagrees with the Bellman residual at Spearman +0 .10 ([+0 .10 , +0 .20] ); it is the held-out PCA basis that lets full-F pick up return-tracking structure neither metric sees. To anchor the comparison: a naive value-equivalence proxy, the per-anchor unnormalized |V (ˆ z) −
+
+V (z′)| averaged across anchors, is numerically near-identical to the Bellman residual on this sweep (per size: 2.66 /1.33 /2.80 /2.70 /6.78 vs. Bellman residual 2.65 /1.33 /2.78 /2.67 /6.73 ; Spearman 
+
++1 .00 ). This is the γ-scaled equivalence that TD-MPC2’s small reward-prediction error ( error ∈
+
+[0 .028 , 0.091] , nearly two orders of magnitude below the value-error component) produces between the two quantities. The normalized value slice and the full-F operator both depart from this equiva-lence; the full-F operator is the one whose ranking tracks return loss (Section 4.1). 
+
+4.3 Cross-architecture sanity check 
+
+To check whether the diagnostic returns informative estimates across architectures, we com-pare pure-SSL LeWM ( 3 seeds, no anchor) against the released single-task TD-MPC2 on 
+
+cheetah-run , both at the matched 5-step horizon and on a shared observation-level F probed identically. LeWM’s operator error on shared F across seeds is 0.384 ± 0.009 ; single-task TD-31M 5M 19M 48M 317M 
+
+TD-MPC2 mt80 model size     
+
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> operator-on-F error (full  F) operator-on-F
+> return
+> 1M 5M 19M 48M 317M
+
+TD-MPC2 mt80 model size 
+
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> reward-prediction error  reward error ∈ [0.028, 0.091]
+> across all sizes
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> episode return 317M:
+> worst operator,
+> return collapse
+
+Figure 1: TD-MPC2 mt80 size sweep on cheetah-run . Left: full-F operator-on-F error and ex-ecuted return as a function of model size. Right: reward-prediction error on the same axis. Reward-prediction error stays within [0 .028 , 0.091] across all five sizes ( ∼ 3× variation), while operator error tracks the return loss (Spearman −0.90 , anchor-bootstrap 95% CI [−0.90 , −0.70] ; leave-one-out ∈ [−1.00 , −0.80] ). The 317 M model has the highest operator error and a return collapse to 0.9;reward-prediction error at 317 M ( 0.091 ) is the highest of the five sizes but stays within the same small range as the rest of the sweep. MPC2’s is 0.840 (95% CI [0 .79 , 0.89] ); both beat the persistence baseline ( 1.33 for LeWM, 1.40 for TD-MPC2), and the 95% CIs are disjoint (Figure 3 in Appendix D). A re-run with a 1-hidden-layer MLP probe (matched protocol, α grid-searched on the same sub-split) preserves the ordering with disjoint CIs (LeWM 0.494 ± 0.006 , TD-MPC2 0.997 , ratio 0.495 ± 0.006 ; Appendix B), so the gap is not a ridge-probe-capacity artifact. Probe-asymmetry and prediction-mode controls (Appendix D) also preserve the gap. We do not draw a broader claim about which family of model the operator metric favors from a single environment with a two-point architecture spectrum. 
+
+## 5 Limitations and discussion 
+
+The cross-architecture comparison is on a single environment ( cheetah-run ), and the architec-ture spectrum is two points (TD-MPC2 and LeWM) with no reconstruction-anchored midpoint such as DreamerV3 (Hafner et al., 2023); the TD-MPC2 size-sweep correlation is n = 5 and reported as correlational. The 317 M return collapse that anchors that correlation is specific to cheetah-run :on four sibling mt80 tasks the same 317 M checkpoint plans competently (walker-walk and reacher-easy return ∼ 800 –930 ) with correspondingly low operator error, so it is one operating point of a broader operator–return association (pooled partial Spearman −0.49 across the (task , size ) cells) rather than a globally degenerate checkpoint. The probe is a confound, since a shared F across dif-ferent latent geometries must be read out through a probe; we report probe R2 with each operator-on-
+
+F , cross-check on the commonly-well-probed restriction (Appendix D), and verify that a 1-hidden-layer MLP-probe variant preserves the cross-architecture ordering with disjoint CIs (Appendix B). Operator-on-F is a Koopman-style pushforward comparison on a chosen observable subset (Williams et al., 2015); Lyu et al. (2023) train a task-anchored Koopman latent for control and Ruiz-Morales et al. (2025) examine Koopman invariants inside JEPA-style models. We use operator-on-F as a diagnostic on existing models, not as a training objective. We do not claim that value-equivalence (Grimm et al., 2020; 2021) is wrong, only that on this sweep and this environment a reward- or Bellman-residual check, as conventionally reported, is silent at the failure mode the operator metric detects; we recommend reporting both rather than one in place of the other. 4Acknowledgments 
+
+We gratefully acknowledge financial support from the Canada CIFAR AI Chairs program, and com-pute resources from Mila (mila.quebec). 
+
+## References 
+
+Guillaume Alain and Yoshua Bengio. Understanding intermediate layers using linear classifier probes. In International Conference on Learning Representations Workshop (ICLR Workshop) ,2017. Randall Balestriero and Yann LeCun. LeJEPA: Provable and scalable self-supervised learning with-out the heuristics, 2025. Christopher Grimm, André Barreto, Satinder Singh, and David Silver. The value equivalence prin-ciple for model-based reinforcement learning. In Advances in Neural Information Processing Systems , 2020. Christopher Grimm, André Barreto, Gregory Farquhar, David Silver, and Satinder Singh. Proper value equivalence. In Advances in Neural Information Processing Systems , 2021. Danijar Hafner, Jurgis Pasukonis, Jimmy Ba, and Timothy Lillicrap. Mastering diverse domains through world models. arXiv preprint arXiv:2301.04104 , 2023. Nicklas Hansen, Hao Su, and Xiaolong Wang. TD-MPC2: Scalable, robust world models for con-tinuous control. In International Conference on Learning Representations , 2024. John Hewitt and Percy Liang. Designing and interpreting probes with control tasks. In Kentaro Inui, Jing Jiang, Vincent Ng, and Xiaojun Wan (eds.), Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Confer-ence on Natural Language Processing (EMNLP-IJCNLP) , pp. 2733–2743, Hong Kong, China, November 2019. Association for Computational Linguistics. DOI: 10.18653/v1/D19-1275. URL 
+
+https://aclanthology.org/D19-1275/ .Xubo Lyu, Hanyang Hu, Seth Siriya, Ye Pu, and Mo Chen. Task-oriented Koopman-based control with contrastive encoder. In Conference on Robot Learning (CoRL) , 2023. Lucas Maes, Quentin Le Lidec, Damien Scieur, Yann LeCun, and Randall Balestriero. LeWorld-Model: Stable end-to-end joint-embedding predictive architecture from pixels, 2026. Pablo Ruiz-Morales, Dries Vanoost, Davy Pissoort, and Mathias Verbeke. Koopman invariants as drivers of emergent time-series clustering in joint-embedding predictive architectures, 2025. David Silver, Hado van Hasselt, Matteo Hessel, Tom Schaul, Arthur Guez, Tim Harley, Gabriel Dulac-Arnold, David Reichert, Neil Rabinowitz, André Barreto, and Thomas Degris. The pre-dictron: End-to-end learning and planning. In International Conference on Machine Learning ,2017. Yuval Tassa, Yotam Doron, Alistair Muldal, Tom Erez, Yazhe Li, Diego de Las Casas, David Bud-den, Abbas Abdolmaleki, Josh Merel, Andrew Lefrancq, Timothy Lillicrap, and Martin Ried-miller. DeepMind control suite, 2018. arXiv:1801.00690. Matthew O. Williams, Ioannis G. Kevrekidis, and Clarence W. Rowley. A data-driven approxima-tion of the Koopman operator: Extending dynamic mode decomposition. Journal of Nonlinear Science , 25(6):1307–1346, 2015. 5A Operator-on-F : full definition 
+
+For an anchor (st, a t:t+k−1, s t+k) and a functional ϕ : Z → R in F , the per-anchor operator error is 
+
+eϕ(t) = ϕ(ˆ zt+k) − ϕ(z′
+
+> t+k
+
+)
+
+σϕ
+
+, ˆzt+k = Ok(zt, a t:t+k−1), z′ 
+
+> t+k
+
+= enc( st+k),
+
+where σϕ is the standard deviation of ϕ(z′) across the anchor pool. Per-functional aggregation is the root-mean-square over anchors. The full-F value is the RMS of {eϕ}ϕ∈F , with F split into two reported groups: • Value slice : F = {r, V }, where r is the model’s reward head and V its value head. • Full-F : the value slice plus a per-anchor PCA basis on the encoded next-state geometry. We use the top-16 principal directions and whiten by their singular values so each direction contributes a unit-variance functional. The PCA is fit on a held-out half of the anchor pool; the operator-on-F
+
+is evaluated on the other half. This prevents the basis from being chosen to minimize operator error on the evaluation half. The choice of k matches each model’s native planning step: k = 5 collect-steps throughout (one frameskip-5 predictor call for LeWM, five open-loop dynamics steps under the recorded actions for TD-MPC2). 
+
+## B Probe protocol 
+
+The probe ϕF : Z → F for each observable is a ridge regression trained on a feature-standardized latent, with the regularizer λ chosen by grid search on a held-out sub-split. We report per-observable 
+
+R2 alongside each operator-on-F number. For the cross-architecture comparison in Section 4.3 we also restrict F to the commonly-well-probed subset — those observables for which both LeWM and TD-MPC2 achieve R2 ≥ 0.7, giving n = 7 observations on cheetah-run . The restricted-F ratio 
+
+LeWM /TD -MPC2 is 0.395 ±0.012 across the three LeWM seeds, compared with 0.457 ±0.011 on the shared F ; the gap grows on the restriction, so probe asymmetry is not the source of the disjoint CIs reported in Section 4.3. The unregularized-probe symptom noted in Section 2.2 — strongly negative R2 on some observables for the 768 -dim mt80-19 M latent before regularization — is what motivates the λ grid search; the chosen λ values are recorded per model in the released configs. 
+
+MLP-probe ablation for the cross-architecture comparison 
+
+The reviewer-relevant question for the cross-architecture comparison in Section 4.3 is whether the LeWM/TD-MPC2 ordering depends on the probe family. We re-ran the protocol with a 1-hidden-layer MLP probe ( 64 ReLU units, weight decay α grid-searched on an 80 /20 sub-split of the train half, identical otherwise to the ridge protocol). The probe family is the only thing that changed: same compare data, same 50 /50 train/eval split, same target F .Table 1: MLP-probe ablation of the cross-architecture comparison. The absolute operator error on shared F values shift upward under the MLP probe (probe family changes the realized observable estimates), but the LeWM/TD-MPC2 ordering and the disjoint 95% CIs are preserved. seed LeWM op. err. on shared F LeWM 95% CI TD-MPC2 op. err. on shared F ratio                         
+
+> 10.490 [0 .476 ,0.504] 0.997 0.492 20.490 [0 .475 ,0.505] 0.997 0.492 30.500 [0 .486 ,0.517] 0.997 0.502
+> mean ±SD 0.494 ±0.006 0.997 0.495 ±0.006
+
+6Compared to the ridge baseline (ratio 0.457 ± 0.011 , Table 3), the MLP-probe ratio of 0.495 ± 0.006 
+
+is slightly closer to one but the LeWM advantage and disjoint 95% CIs hold. The cross-architecture gap in Section 4.3 is therefore not a ridge-probe-capacity artifact. 
+
+## C Per-size rows for the TD-MPC2 size sweep 
+
+Table 2 reports the five-row source data behind Figure 1 and the metric-disagreement numbers cited in Section 4.2. Table 2: TD-MPC2 mt80 size sweep on cheetah-run . “reward err.” is the reward-prediction error, “Bellman res.” the value-equivalence (Bellman) residual, and “value-only (unnorm.)” the unnormalized RMS of |V (ˆ z)−V (z′)|, near-identical to the Bellman residual across sizes (Spearman 
+
++1 .00 ). The full-F operator-error 95% CI is the anchor-bootstrap percentile interval over the 1500 
+
+pooled evaluation anchors ( 1000 resamples). size return full-F op. 95% CI reward err. Bellman res. value-only (unnorm.) 
+
+1M 13 .3 0.91 [0 .89 , 0.93] 0.042 2.65 2.66 5M 26 .1 0.30 [0 .28 , 0.32] 0.028 1.33 1.33 19 M 91 .5 0.28 [0 .27 , 0.29] 0.053 2.78 2.80 48 M 43 .9 0.36 [0 .35 , 0.37] 0.031 2.67 2.70 317 M 0.9 2.62 [2 .43 , 2.79] 0.091 6.73 6.78 
+
+Across-size Spearman (full-F operator, return) = −0.90 (anchor-bootstrap 95% CI [−0.90 , −0.70] ,
+
+P (ρ < 0) = 1 .000 across 1000 resamples). Leave-one-out values: dropping 1M → − 0.80 , 5M →−1.00 , 19 M → − 0.80 , 48 M → − 1.00 , 317 M → − 0.80 , so the rank order is stable to single-point removal but the n = 5 sample remains small. Reward-prediction error has range [0 .028 , 0.091] , so a partial correlation that conditions on it reproduces the marginal value (reported −0.89 ); we treat this as consistency, not as an independent control. Other across-size Spearmans (anchor-bootstrap CIs over the full-F operator, comparator held at its point estimate): vs. Bellman residual +0 .30 
+
+([+0 .30 , +0 .60] ); vs. kernel divergence +0 .10 ([+0 .10 , +0 .30] ); for the normalized value-slice F =
+
+{r, V } vs. Bellman residual +0 .10 ([+0 .10 , +0 .20] ). Bellman residual vs. return: −0.10 ; reward error vs. return: −0.30 .Under operator-on-F ’s own per-functional normalization (each channel divided by the across-anchor spread of its true pushforward), the reward slice and the value slice F = {r, V } track return at Spear-man −0.90 and −1.00 respectively, as strong as the full-F operator ( −0.90 ); their conventional unnormalized forms (raw reward error, Bellman residual) instead give −0.30 and −0.10 . On this sweep the resolution gap between operator-on-F and the value-equivalence proxies is thus largely a normalization effect, and operator-on-F ’s distinct contribution is to carry this normalized push-forward comparison onto a shared observable basis and onto models without reward or value heads (Section 4.3). Figure 2 plots the metric-disagreement scatter (full-F operator vs. Bellman residual) referenced from Section 4.2. 
+
+## D Cross-architecture controls 
+
+Table 3 reports the three LeWM seeds against the fixed single-task TD-MPC2 checkpoint. Each cell is generated by re-running the shared protocol on a checkpoint trained from scratch with a different random seed. As an additional control, we replace the mt80 multitask TD-MPC2 with the released single-task checkpoint and re-run the comparison; the TD-MPC2 number is essentially identical ( 0.840 vs. 
+
+0.833 on mt80), so the cross-architecture gap is not a multitask handicap. 71 2 3 4 5 6 7
+
+Bellman residual 
+
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> operator-on-F error (full  F)
+> 1M
+> 5M
+> 19M
+> 48M
+> 317M
+> Spearman(op-on-F, Bellman) = 0.30
+> Spearman(op-on-F, kernel div.) = 0.10
+> value-only → Bellman: Spearman = 1.00
+> 1M / 5M / 19M / 48M
+> 317M
+
+Figure 2: Full-F operator-on-F vs. Bellman residual on the TD-MPC2 mt80 size sweep. Spearman across the five sizes is +0 .30 for the full-F operator, contrasted with the near-identity ( +1 .00 )between the unnormalized value-only error and the Bellman residual (Table 2). The 317 M point is the clearest disagreement. Table 3: Cross-architecture comparison: per-seed LeWM operator error on shared F against the deterministic single-task TD-MPC2 (operator error on shared F ) = 0 .840 .seed LeWM op. err. on shared F LeWM full-F op. err. ratio (shared F ) restricted-F ratio ( n = 7 )
+
+1 0.380 0.396 0.453 0.386 2 0.377 0.417 0.449 0.409 3 0.394 0.408 0.469 0.391 
+
+mean ± SD 0.384 ± 0.009 0.407 ± 0.010 0.457 ± 0.011 0.395 ± 0.012 LeWM 
+
+> (no anchor)
+> TD-MPC2
+> (single-task)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> operator-on-F error on shared  F
+> (lower = closer 5-step pushforward)
+> persistence
+> 0.384 ± 0.009
+> 0.840 [0.79, 0.89]
+
+Figure 3: Operator error on shared observation F for LeWM ( 3 seeds) and single-task TD-MPC2 on cheetah-run at the 5-step horizon. Both models beat the persistence baseline (dashed); the 
+
+95% CIs are disjoint. 8

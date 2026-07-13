@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-07-12T21:27:33.158623+00:00",
-  "updated_date": "20260712",
+  "generated_at": "2026-07-13T21:46:31.170961+00:00",
+  "updated_date": "20260713",
   "carryover_days": 9,
   "tag_states": {
     "Latent-VLA": {
-      "updated_date": "20260712",
+      "updated_date": "20260713",
       "carryover_days": 9,
       "items": []
     },
     "WAM-VLA": {
-      "updated_date": "20260712",
+      "updated_date": "20260713",
       "carryover_days": 9,
       "items": []
     },
     "Gen2Embodied": {
-      "updated_date": "20260712",
+      "updated_date": "20260713",
       "carryover_days": 9,
       "items": []
     }

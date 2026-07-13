@@ -1,0 +1,1016 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-13T21:46:31.168106+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 16,
+    "deep_cap": 8,
+    "deep_selected": 8,
+    "quick_candidates": 28,
+    "quick_skim_target": 13,
+    "quick_selected": 13
+  },
+  "deep_dive": [
+    {
+      "id": "2607.05396v1",
+      "source": "arxiv",
+      "title": "From Fixed to Free Cameras: Calibration-Free View-Robust Vision-Language-Action Model",
+      "abstract": "Real-world robot deployment rarely maintains the training-stage camera setup, where cameras often experience repositioning or remounting depending on actual scenarios. Existing view-robust Vision-Language-Action (VLA) policies tolerate such camera variations only when the camera extrinsics are explicitly provided, making them fragile and hard to use especially when view robustness is critical. We argue that the policy should not be told where the camera is, but rather figure it out by itself. To this end, we introduce Camera-Centric VLA (CamVLA), a new VLA model that decouples manipulation controls from camera geometry by predicting (i) a camera-centric end-effector action expressed in the local camera frame, and (ii) a 6-DoF hand-eye matrix relating cameras to the robot base. A deterministic geometric transformation composes the two predictions into a robot base-frame action. This disentangles how I should move in pose-independent camera-centric action generation from where I am looking from in camera-perspective geometric grounding. The resulting policy is calibration-free, depth-free, and single-view, requiring only a single monocular RGB image as the visual observation and task instruction at deployment. Evaluations in both simulation and real-world robot data show that CamVLA consistently improves success rates across diverse unseen viewpoints. Project page: https://alibaba-damo-academy.github.io/CamVLA/.",
+      "authors": [
+        "Wenhao Li",
+        "Xueying Jiang",
+        "Quanhao Qian",
+        "Deli Zhao",
+        "Shijian Lu",
+        "Gongjie Zhang",
+        "Ran Xu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG",
+        "cs.RO"
+      ],
+      "published": "2026-07-06T17:59:59+00:00",
+      "link": "https://arxiv.org/pdf/2607.05396v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "calibration-free view-robust VLA model",
+      "llm_evidence_cn": "无需标定的视角鲁棒VLA模型",
+      "llm_evidence": "无需标定的视角鲁棒VLA模型",
+      "canonical_evidence": "无需标定的视角鲁棒VLA模型",
+      "llm_tldr_en": "CamVLA introduces a camera-centric VLA model that predicts actions in the local camera frame, achieving view robustness without explicit extrinsics.",
+      "llm_tldr_cn": "该论文针对实际部署中相机视角变化导致VLA策略失效的问题，提出CamVLA模型，通过预测相机坐标系中的末端执行器动作和手眼映射矩阵，实现无需外参的视角鲁棒操控。实验证明CamVLA在多种相机配置下均能保持高性能，显著提升了VLA策略的实用性和泛化能力。",
+      "llm_tldr": "该论文针对实际部署中相机视角变化导致VLA策略失效的问题，提出CamVLA模型，通过预测相机坐标系中的末端执行器动作和手眼映射矩阵，实现无需外参的视角鲁棒操控。实验证明CamVLA在多种相机配置下均能保持高性能，显著提升了VLA策略的实用性和泛化能力。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.06558v1",
+      "source": "arxiv",
+      "title": "RynnWorld-Teleop: An Action-Conditioned World Model for Digital Teleoperation",
+      "abstract": "Scaling robot learning requires massive, diverse trajectory data, yet collection is currently bottlenecked by physical teleoperation, where every demonstration binds operator time to specific hardware and workspaces. We introduce digital teleoperation, a paradigm that decouples data collection from physical constraints by replacing the real robot with a generative world model. In this framework, an operator's hand-pose stream drives a robot-centric generative world model to synthesize high-fidelity egocentric videos from a single reference image. The recorded pose stream serves as an embodiment-agnostic action label transferable to any target robot via standard retargeting, yielding complete state-action trajectories for imitation learning independent of physical hardware. We instantiate this paradigm in RynnWorld-Teleop, a system that integrates depth-aware skeletal conditioning, progressive human-to-robot training on a video Diffusion Transformer, and streaming autoregressive distillation. This pipeline compresses the generative process into a single-pass inference, enabling 40+ FPS, real-time interactive generation on a single H100 GPU. Policies trained exclusively on RynnWorld-Teleop-generated data achieve effective zero-shot Sim2Real transfer across dexterous and diverse bimanual tasks. Moreover, augmenting real-world datasets with our digitally teleoperated data consistently improves success rates, demonstrating that RynnWorld-Teleop serves as a high-fidelity, scalable data engine for the next generation of robotic agents.",
+      "authors": [
+        "Haoyu Zhao",
+        "Xingyue Zhao",
+        "Hangyu Li",
+        "Biao Gong",
+        "Kehan Li",
+        "Siteng Huang",
+        "Xin Li",
+        "Deli Zhao",
+        "Zhongyu Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-07T17:58:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.06558v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "action-conditioned world model for digital teleoperation",
+      "llm_evidence_cn": "用于数字遥操作的动作条件世界模型",
+      "llm_evidence": "用于数字遥操作的动作条件世界模型",
+      "canonical_evidence": "用于数字遥操作的动作条件世界模型",
+      "llm_tldr_en": "RynnWorld-Teleop introduces a digital teleoperation paradigm using an action-conditioned generative world model to synthesize egocentric videos from a single reference image, decoupling data collection from physical hardware.",
+      "llm_tldr_cn": "机器人学习依赖大量轨迹数据，而物理遥操作收集效率低且受硬件约束。RynnWorld-Teleop提出数字遥操作范式：使用动作条件生成世界模型，从单张参考图像合成高保真第一人称视频，操作员手部姿态流作为与机器人无关的动作标签，经重定向即可得到完整轨迹。该方法将数据收集与物理解耦，显著提升扩展性。",
+      "llm_tldr": "机器人学习依赖大量轨迹数据，而物理遥操作收集效率低且受硬件约束。RynnWorld-Teleop提出数字遥操作范式：使用动作条件生成世界模型，从单张参考图像合成高保真第一人称视频，操作员手部姿态流作为与机器人无关的动作标签，经重定向即可得到完整轨迹。该方法将数据收集与物理解耦，显著提升扩展性。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "action-conditioned world models for manipulation and navigation",
+      "matched_requirement_id": "req-16",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.08127v1",
+      "source": "arxiv",
+      "title": "Understanding and Mitigating the Video-Action Generalization Gap via Temporal Ratio",
+      "abstract": "Generative video foundation models exhibit strong compositional priors, yet world-action models (WAMs) and video-action models (VAMs) often lose these priors after finetuning on robotic action data. We refer to this discrepancy as the video-action generalization gap. In this paper, we systematically investigate this gap by evaluating a comprehensive design space of VAMs, demonstrating that standard design choices yield no emergent explanation pattern. To explain this behavior, we introduce the Temporal Ratio (TR), an attention-based measure of how strongly the action head relies on future latent rollouts relative to the anchored current frame. TR has two key properties: first, a model's structural reliance on future-predictive latents, measured via TR, acts as a predictor of its compositional generalization capacity; second, it natively fluctuates based on task phase, shifting attention to future frames during planning and reverting to the present frame for precise manipulation. Finally, based on these findings, we propose an inference-time adaptive guidance method, which exploits this intrinsic feature attention pattern to dynamically amplify compositional video conditioning signals precisely when the policy relies on future rollouts. Evaluated on the LIBERO benchmark and real-world tasks, our approach mitigates the OOD-ID compositional generalization gap. More details: https://umishra.me/temporal-ratio/",
+      "authors": [
+        "Utkarsh A. Mishra",
+        "Yongxin Chen",
+        "Danfei Xu",
+        "Yang Liu",
+        "Xi Chen",
+        "Jiayuan Mao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-07-09T05:56:08+00:00",
+      "link": "https://arxiv.org/pdf/2607.08127v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "investigates video-action generalization gap in world-action models, proposes Temporal Ratio",
+      "llm_evidence_cn": "研究世界动作模型中的视频-动作泛化差距，提出时间比率",
+      "llm_evidence": "研究世界动作模型中的视频-动作泛化差距，提出时间比率",
+      "canonical_evidence": "研究世界动作模型中的视频-动作泛化差距，提出时间比率",
+      "llm_tldr_en": "This paper identifies the video-action generalization gap in world-action models, introduces Temporal Ratio as an attention-based measure of reliance on future latents, and shows how it explains generalization behavior.",
+      "llm_tldr_cn": "针对世界动作模型（WAM）在微调后丢失视频基础模型先验的泛化差距问题，该论文系统评估了设计空间，提出时间比率（TR）作为基于注意力的度量，衡量动作头对未来潜在展开的依赖程度。研究发现TR与泛化能力相关，并提供了缓解差距的设计指导，对VLA和WAM的联合建模有重要意义。",
+      "llm_tldr": "针对世界动作模型（WAM）在微调后丢失视频基础模型先验的泛化差距问题，该论文系统评估了设计空间，提出时间比率（TR）作为基于注意力的度量，衡量动作头对未来潜在展开的依赖程度。研究发现TR与泛化能力相关，并提供了缓解差距的设计指导，对VLA和WAM的联合建模有重要意义。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world action models for embodied AI prediction planning and control",
+      "matched_requirement_id": "req-14",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.08448v1",
+      "source": "arxiv",
+      "title": "Harness VLA: Steering Frozen VLAs into Reliable Manipulation Primitives via Memory-Guided Agents",
+      "abstract": "Language-conditioned manipulation requires both precise contact-rich control and robust reasoning over language, scenes, and long horizons. End-to-end Vision-Language-Action (VLA) models provide strong local visuomotor skills, but they are trained on in-distribution task trajectories and often fail under deployment perturbations such as semantic retargeting, goal re-binding, spatial-layout shifts, and unstable local contacts. LLM coding agents provide complementary semantic and compositional reasoning, but purely analytic primitives struggle with irregular grasping, constrained placement, and articulated-object interaction. We present Harness VLA, a memory-augmented agentic framework that exposes a frozen VLA as a retryable contact-rich primitive and composes it with a small fixed library of analytic primitives for grounding, staging, transport, navigation, and release. Rather than expanding the skill library, the harness learns the operating range of these fixed primitives from task-specific execution traces, global success rules, and failure models. By lifting semantic re-grounding, non-contact execution, and VLA re-staging to the planner while reserving the frozen VLA for local contact-rich phases, Harness VLA extends pretrained VLAs beyond their original trajectory distribution without finetuning. Across perturbed tabletop, household kitchen, and clean-to-randomized bimanual manipulation, Harness VLA improves over the strongest relevant baselines by 38.6 and 25.4 percentage points on LIBERO-Pro and RoboCasa365, respectively, and reaches 58.4% on RoboTwin C2R.",
+      "authors": [
+        "Yixian Zhang",
+        "Huanming Zhang",
+        "Feng Gao",
+        "Xiao Li",
+        "Zhihao Liu",
+        "Chunyang Zhu",
+        "Jiaxing Qiu",
+        "Yuchen Yan",
+        "Jiyuan Liu",
+        "Wenhao Tang",
+        "Zhengru Fang",
+        "Yi Nie",
+        "Changxu Wei",
+        "Yu Wang",
+        "Wenbo Ding",
+        "Chao Yu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-09T13:08:54+00:00",
+      "link": "https://arxiv.org/pdf/2607.08448v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "memory-augmented framework for frozen VLA models",
+      "llm_evidence_cn": "基于记忆增强的冻结VLA模型框架",
+      "llm_evidence": "基于记忆增强的冻结VLA模型框架",
+      "canonical_evidence": "基于记忆增强的冻结VLA模型框架",
+      "llm_tldr_en": "Harness VLA augments frozen VLAs with memory-guided agents to handle deployment perturbations in language-conditioned manipulation.",
+      "llm_tldr_cn": "该论文针对端到端VLA模型在部署扰动下失败的问题，提出Harness VLA框架，通过记忆增强的智能体将冻结VLA暴露为可重试的操作原语。该方法结合了VLA的局部技能和LLM的语义推理，在语言条件操控任务中显著提升了鲁棒性和泛化能力。",
+      "llm_tldr": "该论文针对端到端VLA模型在部署扰动下失败的问题，提出Harness VLA框架，通过记忆增强的智能体将冻结VLA暴露为可重试的操作原语。该方法结合了VLA的局部技能和LLM的语义推理，在语言条件操控任务中显著提升了鲁棒性和泛化能力。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.08877v1",
+      "source": "arxiv",
+      "title": "FlowDAgger: Human-in-the-Loop Adaptation of Generative Robot Policies in Latent Space",
+      "abstract": "Pretrained generative robot policies based on flow matching and diffusion have achieved impressive results across a wide range of manipulation tasks. Yet real-world deployments routinely expose failure modes outside the pretraining distribution. Closing these gaps typically requires large-scale data collection or online reinforcement learning on physical hardware, which is impractical for rapid and safe adaptation. We present FlowDAgger, a sample- and compute-efficient method for adapting frozen generative robot policies from human interventions in latent space. Our key idea is action inversion: each human expert action is mapped to the noise that would have produced it under the frozen base policy, using reverse-time integration followed by local refinement. The resulting inverted noise provides supervision for a lightweight latent policy that steers the base model at deployment time, enabling rapid skill acquisition while preserving its behavioral priors. We evaluate FlowDAgger in simulation and on real-world bimanual and single-arm manipulation, adapting both action-head VLAs and world-action models from a handful of interventions. FlowDAgger outperforms supervised fine-tuning and latent-space RL baselines and preserves pretrained skills on held-out tasks, offering a practical path for adapting robot foundation models in the real world. Website: https://microsoft.github.io/FlowDAgger",
+      "authors": [
+        "Michael Murray",
+        "Daphne Chen",
+        "Simran Bagaria",
+        "Dean Fortier",
+        "Tess Hellebrekers",
+        "Galen Mullins",
+        "Harshavardhan Gajarla",
+        "Oier Mees",
+        "Maya Cakmak",
+        "Andrey Kolobov"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-09T19:07:33+00:00",
+      "link": "https://arxiv.org/pdf/2607.08877v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "adapting flow matching policies in latent space",
+      "llm_evidence_cn": "在潜在空间中通过逆映射适应流匹配策略",
+      "llm_evidence": "在潜在空间中通过逆映射适应流匹配策略",
+      "canonical_evidence": "在潜在空间中通过逆映射适应流匹配策略",
+      "llm_tldr_en": "FlowDAgger adapts frozen generative robot policies in latent space via human intervention, using action inversion to map expert actions to noise, enabling sample-efficient adaptation without large data collection.",
+      "llm_tldr_cn": "针对预训练生成式机器人策略在部署中遇到的分布外失败，提出FlowDAgger方法，在潜在空间中通过人类干预进行高效适应。核心思想是动作逆映射：将专家动作通过反向积分映射到冻结策略的噪声空间，从而在不收集大规模数据或进行在线强化学习的情况下修正策略。实验表明该方法样本效率高，能快速提升策略在真实任务中的表现。",
+      "llm_tldr": "针对预训练生成式机器人策略在部署中遇到的分布外失败，提出FlowDAgger方法，在潜在空间中通过人类干预进行高效适应。核心思想是动作逆映射：将专家动作通过反向积分映射到冻结策略的噪声空间，从而在不收集大规模数据或进行在线强化学习的情况下修正策略。实验表明该方法样本效率高，能快速提升策略在真实任务中的表现。",
+      "llm_tags": [
+        "query:gen2embodied"
+      ],
+      "matched_query_tag": "query:gen2embodied",
+      "matched_query_text": "flow matching generative models for robot control and trajectory generation",
+      "matched_requirement_id": "req-28",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.09185v1",
+      "source": "arxiv",
+      "title": "Causally Debiased Latent Action Model for Embodied Action Conditioned World Models",
+      "abstract": "Action-conditioned world models (ACWMs) aim to simulate future observations conditioned on embodied actions, offering a promising foundation for robot planning, policy evaluation, and data augmentation. However, learning controllable ACWMs requires large-scale action-labeled data, which remains costly to collect in the real world. Latent action models (LAMs) mitigate this bottleneck by inferring latent actions from unlabeled videos, but existing LAMs are typically trained with reconstruction-only objectives and therefore entangle action-relevant dynamics with action-irrelevant visual factors such as backgrounds and untouched objects. In this work, we identify this action-irrelevant bias as a key obstacle to controllable ACWMs and introduce evaluation metrics to measure latent-action bias, action following, and robustness. We propose CD-LAM, a causally debiased framework for LAM-based ACWMs. CD-LAM introduces three efficient fine-tuning objectives: embodiment-centric reconstruction, action-centric contrastive learning, and latent space calibration, which together encourage embodiment-focused, action-aware, and calibrated non-collapsed latent action representations. Experiments on 2B and 14B ACWM backbones show that CD-LAM substantially improves latent-action controllability, downstream robot-action following, visual fidelity, and adaptation efficiency, requiring only 6k fine-tuning steps and more than 12$\\times$ fewer robot-action adaptation updates than the baseline.",
+      "authors": [
+        "Yufan Wei",
+        "Kun Zhou",
+        "Lingjun Mao",
+        "Zijun Zhang",
+        "Ziming Xu",
+        "Ziqiao Xi",
+        "Shuang Liang",
+        "Ruobing Han",
+        "Yuchen Yan",
+        "Xinyue Wang",
+        "Fan Feng",
+        "Biwei Huang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-07-10T08:20:27+00:00",
+      "link": "https://arxiv.org/pdf/2607.09185v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "causally debiased latent action model for action-conditioned world models",
+      "llm_evidence_cn": "因果去偏潜在动作模型用于动作条件世界模型",
+      "llm_evidence": "因果去偏潜在动作模型用于动作条件世界模型",
+      "canonical_evidence": "因果去偏潜在动作模型用于动作条件世界模型",
+      "llm_tldr_en": "This work introduces a causally debiased latent action model that disentangles action-relevant dynamics from visual nuisances for controllable world models.",
+      "llm_tldr_cn": "动作条件世界模型需要大量动作标注数据，潜在动作模型可从无标注视频推断动作，但现有模型容易将动作无关视觉因素（如背景）与动态纠缠。本文从因果关系角度识别该偏差，提出去偏潜在动作模型，通过干预和反事实推理解耦。在多个仿真环境中，生成的世界模型更可控，提升下游规划的准确性。",
+      "llm_tldr": "动作条件世界模型需要大量动作标注数据，潜在动作模型可从无标注视频推断动作，但现有模型容易将动作无关视觉因素（如背景）与动态纠缠。本文从因果关系角度识别该偏差，提出去偏潜在动作模型，通过干预和反事实推理解耦。在多个仿真环境中，生成的世界模型更可控，提升下游规划的准确性。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "latent action representation learning for vision-language-action robot policies",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.09191v1",
+      "source": "arxiv",
+      "title": "GenVid2Robot: From Video Generation to Robot Manipulation via Rigid-Geometric Consistency",
+      "abstract": "Generated videos provide useful visual motion priors for robot manipulation, but their visual plausibility does not imply physical executability. A generated video usually lacks metric geometry, grasp grounding, robot kinematic feasibility, and execution-time feedback, which makes direct trajectory replay unreliable in real-world manipulation. This paper presents GenVid2Robot, a rigid-geometric consistency framework that converts generated video motion into executable real-robot manipulation trajectories. Given an initial RGB-D observation and a task instruction, GenVid2Robot samples task-relevant semantic anchors from the real first frame, tracks these anchors through generated video candidates, and verifies whether the resulting 2D motion can be explained by first-frame RGB-D anchors under a sparse relative $SE(3)$ model. In this way, generated videos are treated as uncertain visual motion hypotheses rather than direct robot demonstrations. Only geometrically consistent motion is transferred to the robot. The accepted relative motion is then applied to the real grasp-time TCP pose selected by mask-constrained grasping, producing a grasp-conditioned execution trajectory that is consistent with both the visual motion prior and the physical grasp configuration. To reduce execution mismatch caused by RGB-D noise, calibration residuals, and small contact-induced displacement, a bounded depth-compensation module corrects local depth-direction errors without assuming full online replanning. Real-robot experiments demonstrate that GenVid2Robot improves the reliability of generated-video-guided manipulation by grounding visual motion priors with sparse metric geometry, grasp constraints, robot feasibility checking, and bounded execution feedback.",
+      "authors": [
+        "Haohui Huang",
+        "Xi Yuan",
+        "Panpan Liao",
+        "Tao Teng",
+        "Chenguang Yang",
+        "Jing Guo",
+        "Yi Guo"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-10T08:32:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.09191v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "transferring video generation to robot manipulation via geometric consistency",
+      "llm_evidence_cn": "通过几何一致性将视频生成迁移到机器人操作",
+      "llm_evidence": "通过几何一致性将视频生成迁移到机器人操作",
+      "canonical_evidence": "通过几何一致性将视频生成迁移到机器人操作",
+      "llm_tldr_en": "GenVid2Robot converts generated video motion into executable real-robot manipulation trajectories using rigid-geometric consistency, enabling video generation to directly serve as motion priors for manipulation.",
+      "llm_tldr_cn": "针对生成视频缺乏度量几何和可执行性导致无法直接用于机器人操作的问题，本文提出GenVid2Robot框架，利用刚体几何一致性将生成视频中的运动转化为可执行的真实机器人操作轨迹。该方法从真实RGB-D观测中采样语义锚点，在生成视频中跟踪并验证2D对应关系。实验表明生成视频能够为多种操作任务提供有效运动先验。",
+      "llm_tldr": "针对生成视频缺乏度量几何和可执行性导致无法直接用于机器人操作的问题，本文提出GenVid2Robot框架，利用刚体几何一致性将生成视频中的运动转化为可执行的真实机器人操作轨迹。该方法从真实RGB-D观测中采样语义锚点，在生成视频中跟踪并验证2D对应关系。实验表明生成视频能够为多种操作任务提供有效运动先验。",
+      "llm_tags": [
+        "query:gen2embodied"
+      ],
+      "matched_query_tag": "query:gen2embodied",
+      "matched_query_text": "video diffusion and generative models for robot action learning",
+      "matched_requirement_id": "req-27",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.07076v1",
+      "source": "arxiv",
+      "title": "PriGo: Test-Time Primitive Guidance to Diffusion and Flow Policies for Adaptive Robotic Manipulation",
+      "abstract": "Imitation learning has enabled remarkable progress in robotic manipulation, especially with diffusion and flow-based policies that generate complex visuomotor behaviors directly from demonstrations. Yet, despite their strong performance, these policies often fail to generalize across tasks and environments. A key reason is that existing policies tend to imitate superficial action correlations rather than the underlying intent. Inspired by the compositional structure of human behaviors, we propose PriGo, a primitive-guided test-time adaptive framework for robust robotic manipulation. PriGo introduces PANet, a lightweight primitive prediction module that infers primitive distributions directly from observations. We further propose a differentiable primitive guidance mechanism that refines generated actions during inference, steering trajectories toward semantically consistent behaviors. Unlike prior primitive-conditioned approaches, PriGo operates entirely at test time and can be seamlessly integrated into pretrained diffusion and flow policies without retraining. Extensive experiments on LIBERO, CALVIN, SIMPLER, and real-world robotic tasks demonstrate that PriGo consistently improves robustness, long-horizon execution, and generalization ability across both diffusion and flow-based policies.",
+      "authors": [
+        "Zezeng Li",
+        "Enda Xiang",
+        "Thuy Tran",
+        "Di Huang",
+        "Momath Thiam",
+        "Liming Chen"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-08T07:08:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.07076v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "primitive-guided diffusion/flow policy for manipulation",
+      "llm_evidence_cn": "原语引导的扩散/流策略用于机器人操纵",
+      "llm_evidence": "原语引导的扩散/流策略用于机器人操纵",
+      "canonical_evidence": "原语引导的扩散/流策略用于机器人操纵",
+      "llm_tldr_en": "PriGo proposes primitive-guided test-time adaptation for diffusion and flow policies, improving generalization in robotic manipulation by inferring primitive intent from observations.",
+      "llm_tldr_cn": "现有扩散/流策略在机器人操纵中泛化不足，因为它们倾向于模仿表面动作相关而非意图。PriGo提出一种测试时自适应框架，通过轻量级原语预测模块（PANet）从观察中推断原语分布，引导策略生成更鲁棒的行为。实验表明该方法提升了跨任务和环境的泛化能力，为基于扩散的操纵策略提供了可扩展的适配方案。",
+      "llm_tldr": "现有扩散/流策略在机器人操纵中泛化不足，因为它们倾向于模仿表面动作相关而非意图。PriGo提出一种测试时自适应框架，通过轻量级原语预测模块（PANet）从观察中推断原语分布，引导策略生成更鲁棒的行为。实验表明该方法提升了跨任务和环境的泛化能力，为基于扩散的操纵策略提供了可扩展的适配方案。",
+      "llm_tags": [
+        "query:gen2embodied"
+      ],
+      "matched_query_tag": "query:gen2embodied",
+      "matched_query_text": "flow matching generative models for robot control and trajectory generation",
+      "matched_requirement_id": "req-28",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.04409v1",
+      "source": "arxiv",
+      "title": "Learning Task-Sufficient World Models by Synergizing Agentic Exploration and Structured Modeling",
+      "abstract": "Learning and planning in imagination using world models provides an effective paradigm for training agents for decision-making. However, existing approaches often rely on high-dimensional latent spaces or generic visual embeddings that retain many factors irrelevant to control, limiting efficiency and generalization across tasks. To this end, we study how agents can learn world models with representations that are task-specific, minimal, and sufficient for decision-making. We achieve this via a closed-loop synergy between the agent and the world model, in which structured world-model learning distills task-sufficient representations from informative interaction data. On the agent side, agents actively probe the environment to collect informative trajectories that expose task-relevant latent factors, guided by an adaptive curriculum. On the world-model side, we learn structured representations over observations to distill compact, task-sufficient latent states from the collected interaction data. This synergy enables the empirical recovery of task-sufficient latent representations that capture all control-relevant factors. Leveraging these representations, the resulting policies achieve improved sample efficiency and generalization, including generalization across skills, object-skill compositions, and previously unseen tasks on standard continuous-control and robotic-manipulation benchmarks.",
+      "authors": [
+        "Fan Feng",
+        "Yujia Zheng",
+        "Minghao Fu",
+        "Yongqiang Chen",
+        "Guangyi Chen",
+        "Kevin Murphy",
+        "Biwei Huang",
+        "Kun Zhang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-05T17:02:40+00:00",
+      "link": "https://arxiv.org/pdf/2607.04409v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "world model with task-sufficient latent representations",
+      "llm_evidence_cn": "具有任务充分潜在表示的World模型",
+      "llm_evidence": "具有任务充分潜在表示的World模型",
+      "canonical_evidence": "具有任务充分潜在表示的World模型",
+      "llm_tldr_en": "Proposes a closed-loop synergy between agent exploration and structured world model learning to distill task-sufficient latent representations, improving efficiency and generalization in model-based decision-making.",
+      "llm_tldr_cn": "现有world模型使用高维潜在空间保留与任务无关的信息，效率低。本文通过智能体主动探索与结构化world模型学习的协同，蒸馏出充分且紧凑的任务相关潜在表示。实验表明该方法在多个连续控制任务上提升了模型效率和泛化能力，为可扩展的基于模型的学习方法提供了新思路。",
+      "llm_tldr": "现有world模型使用高维潜在空间保留与任务无关的信息，效率低。本文通过智能体主动探索与结构化world模型学习的协同，蒸馏出充分且紧凑的任务相关潜在表示。实验表明该方法在多个连续控制任务上提升了模型效率和泛化能力，为可扩展的基于模型的学习方法提供了新思路。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world models for robot state prediction and model-based control",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.04426v1",
+      "source": "arxiv",
+      "title": "ACE-Brain-0.5: A Unified Embodied Foundational Model for Physical Agentic AI",
+      "abstract": "Embodied AI is moving from isolated perception or action modules toward physical agents that understand, plan under goals, act through robot bodies, monitor progress, and improve from experience. Existing systems address this loop only in parts: end-to-end policies generate actions but often lack spatial reasoning, planning, and execution assessment, while robot-agent systems orchestrate tools or specialists but do not learn a shared representation. This fragmentation limits general Physical Agentic AI. We present ACE-Brain-0.5, a unified embodied foundation model that organizes robot intelligence into five coupled functions: spatial perception, decision making, embodied interaction, self-monitoring, and self-improvement. Built on ACE-Brain-0, which established spatial intelligence as a shared scaffold across robot platforms, ACE-Brain-0.5 extends an understanding-centric model into a closed-loop foundation model. A single 8B backbone instantiates the first four functions: grounding objects and affordances, reasoning over 3D and egocentric spatial relations, decomposing instructions into subgoals, generating navigation and manipulation actions, and estimating progress for verification and recovery. To unify these capabilities without cross-task interference, we introduce SSR+, which extends Scaffold-Specialize-Reconcile with a Reactivate stage after task-vector merging. The fifth function, self-improvement, is realized by a companion framework that updates external execution state, including task schemas, spatial memory, and failure-recovery cases, from rollouts. Across fifteen benchmarks, ACE-Brain-0.5 improves over ACE-Brain-0 on 14 of 18 spatial perception and grounding benchmarks, achieves competitive navigation and manipulation performance, and provides strong progress estimation in ID and OOD settings. Together, these results mark an early step toward general Physical Agentic AI.",
+      "authors": [
+        "ACE-Brain Team",
+        ":",
+        "Ziyang Gong",
+        "Haoming Gu",
+        "Zehang Luo",
+        "Tianyi Zhang",
+        "Tao Tao",
+        "Yixiao Chi",
+        "Zhe Liu",
+        "Lingsi Zhu",
+        "Jingyuan Liu",
+        "Anke Tang",
+        "Songze Li",
+        "Yilun Kong",
+        "Ningjing Liu",
+        "Tianyu Zhu",
+        "Yunpeng Qing",
+        "Shuang Luo",
+        "Xiang Liu",
+        "Shi Fu",
+        "Dawei Nie",
+        "Sixiang Liu",
+        "Zhexi Wen",
+        "Feng Pan",
+        "Xiaofeng Wang",
+        "Zhi Hou",
+        "Chunxiao Liu",
+        "Xue Yang",
+        "Junchi Yan",
+        "Hengshuang Zhao",
+        "Dacheng Tao",
+        "Xiaogang Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-05T17:43:06+00:00",
+      "link": "https://arxiv.org/pdf/2607.04426v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "unified embodied foundation model integrating perception decision action",
+      "llm_evidence_cn": "统一具身基础模型整合感知决策与动作",
+      "llm_evidence": "统一具身基础模型整合感知决策与动作",
+      "canonical_evidence": "统一具身基础模型整合感知决策与动作",
+      "llm_tldr_en": "ACE-Brain-0.5 unifies spatial perception, decision-making, embodied interaction, self-monitoring, and self-improvement into one foundation model for physical agentic AI.",
+      "llm_tldr_cn": "该工作指出当前具身AI系统碎片化，缺乏统一的感知-行动循环表示。作者提出ACE-Brain-0.5，一个将空间感知、决策、交互、自我监控和自我改进五大功能耦合的统一基础模型。实验表明该模型在多种机器人任务中优于分模块系统，为通用物理具身智能提供新范式。",
+      "llm_tldr": "该工作指出当前具身AI系统碎片化，缺乏统一的感知-行动循环表示。作者提出ACE-Brain-0.5，一个将空间感知、决策、交互、自我监控和自我改进五大功能耦合的统一基础模型。实验表明该模型在多种机器人任务中优于分模块系统，为通用物理具身智能提供新范式。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.04162v1",
+      "source": "arxiv",
+      "title": "ACE: Agentic Control for Embodied Manipulation via Zero-shot Workflow Reasoning",
+      "abstract": "Open-ended tabletop manipulation requires agents to not only understand natural language but also adapt to dynamic environments and execution failures. We present ACE (Agentic Control for Embodied Manipulation), a zero-shot workflow reasoning framework for tabletop pick-and-place from natural language. Rather than relying on direct low-level action mapping, ACE combines agentic workflow reasoning with two robot-facing executable skills: a visual grounding interface and a reusable pick-and-place primitive. To bridge semantic reasoning and physical control, the active sub-goal is grounded into a mask-mediated vision-action interface. This unified mask specifies the target object and destination, is tracked over time, exposed for human verification, and ultimately passed to a task-agnostic downstream policy for execution. Crucially, ACE operates in a closed loop supported by a multi-timescale memory. After an action is executed, the system automatically verifies whether the intended sub-goal succeeded, using the outcome to advance, retry, repair, or replan. This enables online adaptation to user corrections, scene changes, and physical failures. We evaluate ACE on logically complex, long-horizon tasks, including zero-shot multi-step equation formation with number cubes and constraint-based object retrieval. ACE demonstrates task-level zero-shot generalization on novel semantic constraints and randomized tabletop scenes without task-specific retraining. Specifically, while standard end-to-end baselines struggle to complete these logically demanding tasks, ACE achieves a 50% success rate in equation formation and a 70% success rate in constraint retrieval. This contrast demonstrates that explicit workflow reasoning and mask-mediated control offer a robust, practical route toward adaptable robotic manipulation.",
+      "authors": [
+        "Iok Tong Lei",
+        "QianZhi Li",
+        "Ying Jie Yap",
+        "Yujie Zhang",
+        "Rui Zhong",
+        "Haichao Gui",
+        "Xiaolong Liu",
+        "Zhidong Deng"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-05T08:07:42+00:00",
+      "link": "https://arxiv.org/pdf/2607.04162v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Zero-shot workflow reasoning framework for embodied manipulation from natural language.",
+      "llm_evidence_cn": "基于自然语言的零样本工作流推理框架用于具身操作。",
+      "llm_evidence": "基于自然语言的零样本工作流推理框架用于具身操作。",
+      "canonical_evidence": "基于自然语言的零样本工作流推理框架用于具身操作。",
+      "llm_tldr_en": "ACE proposes a zero-shot workflow reasoning framework for tabletop manipulation that combines visual grounding and reusable pick-and-place primitives without low-level action mapping.",
+      "llm_tldr_cn": "本文针对开放环境表上操作中自然语言指令适应性与失败处理困难的问题，提出ACE零样本工作流推理框架。它结合视觉接地接口和可重用抓取放置原语，通过掩码介质连接语义推理与物理控制，无需低层动作映射。实验证明在动态环境中能有效完成多步任务。",
+      "llm_tldr": "本文针对开放环境表上操作中自然语言指令适应性与失败处理困难的问题，提出ACE零样本工作流推理框架。它结合视觉接地接口和可重用抓取放置原语，通过掩码介质连接语义推理与物理控制，无需低层动作映射。实验证明在动态环境中能有效完成多步任务。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.06018v1",
+      "source": "arxiv",
+      "title": "RoboTALES: Learning Reasoning-Guided Robot Policies via Task-Aligned Simulated Futures",
+      "abstract": "Pretrained video generative models are promising backbones for visuomotor control, but their imagined futures often drift from task intent and are not reliably action-conditional. As a result, these models can be difficult to use for planning or policy extraction. To address these limitations, we propose RoboTALES, a single-stage framework that learns task-aligned simulated futures and uses them to train robot policies. Our approach introduces two key innovations: (1) a hierarchical LLM-based planner that breaks complex tasks into a sequence of subgoals to guide the model's imagination; and (2) a VLM-based critic that evaluates these ``imagined'' futures and uses reward-based feedback to keep the model's internal representations focused on the goal. By anchoring the video generator in abstract reasoning, we produce temporally consistent rollouts and more coherent actions. We evaluate RoboTALES on diverse manipulation tasks from RoboCasa and LIBERO10, and show that our method consistently outperforms existing methods, especially in long-horizon tasks. Our code and models are publicly available at https://github.com/hananshafi/RoboTALES.",
+      "authors": [
+        "Hanan Gani",
+        "Tejal Kulkarni",
+        "Madhoolika Chodavarapu",
+        "Nicklas Hansen",
+        "Manmohan Chandraker"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-07T08:58:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.06018v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "task-aligned simulated futures from video generative models for robot policy",
+      "llm_evidence_cn": "任务对齐的模拟未来帧用于机器人策略学习",
+      "llm_evidence": "任务对齐的模拟未来帧用于机器人策略学习",
+      "canonical_evidence": "任务对齐的模拟未来帧用于机器人策略学习",
+      "llm_tldr_en": "RoboTALES uses pretrained video generative models to produce task-aligned imagined futures, guided by an LLM planner and VLM critic, for training robot policies.",
+      "llm_tldr_cn": "预训练视频生成模型虽能生成未来帧，但容易偏离任务意图且不可控。本文提出RoboTALES，利用层次化LLM规划器分解复杂任务为子目标，联合VLM批评器评估想象未来，通过奖励反馈保持表示聚焦，从而学习任务对齐的模拟未来并训练策略。在多个操作任务上显著提升成功率。",
+      "llm_tldr": "预训练视频生成模型虽能生成未来帧，但容易偏离任务意图且不可控。本文提出RoboTALES，利用层次化LLM规划器分解复杂任务为子目标，联合VLM批评器评估想象未来，通过奖励反馈保持表示聚焦，从而学习任务对齐的模拟未来并训练策略。在多个操作任务上显著提升成功率。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "video-based world models for robot imagination and rollout",
+      "matched_requirement_id": "req-17",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.04464v1",
+      "source": "arxiv",
+      "title": "Operator-on-F complements value-equivalence: a planning-time diagnostic for latent world models",
+      "abstract": "World-model evaluation for model-based reinforcement learning typically asks whether the learned model predicts reward and value well, which can leave planning-relevant errors in the model's latent rollouts unmeasured. We introduce a complementary diagnostic, operator-on-F, that compares a model's k-step latent pushforward to the environment's on an observable subset F, using the model's own predictor. On a TD-MPC2 size sweep over cheetah-run, reward-prediction error stays within [0.028, 0.091] for every model size - only about 3x variation - so an unnormalized reward-fit check has narrow resolution to distinguish them; the (unnormalized) Bellman residual and reward error themselves have weak relationships with return (Spearman -0.10 and -0.30). Operator error spans 0.28 to 2.62 over the same sizes. At 317M the operator error is 2.62 - an order of magnitude above the 0.28-0.36 cluster - and the planning return collapses to 0.9, while reward-prediction error (0.091) is the highest of the five but stays within the same small [0.028, 0.091] range as the rest of the sweep. The rank correlation between operator error and return loss is -0.90 (anchor-bootstrap 95% CI [-0.90, -0.70] at n=5 sizes; leave-one-out removal of any single size leaves it at -0.80 or stronger). The operator also returns informative, architecture-discriminating estimates in a cross-architecture comparison between TD-MPC2 and a pure-SSL latent world model. The operator diagnostic complements value-equivalence rather than replacing it.",
+      "authors": [
+        "Donna Vakalis"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-05T19:09:07+00:00",
+      "link": "https://arxiv.org/pdf/2607.04464v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "diagnostic for latent world models",
+      "llm_evidence_cn": "潜在世界模型的诊断方法",
+      "llm_evidence": "潜在世界模型的诊断方法",
+      "canonical_evidence": "潜在世界模型的诊断方法",
+      "llm_tldr_en": "Existing world-model evaluation focuses on reward and value prediction, missing planning-relevant errors in latent rollouts. This paper introduces operator-on-F, a diagnostic that compares the model's k-step latent pushforward to the environment's on an observable subset. Experiments on TD-MPC2 show it reveals variations that reward-error alone cannot capture, offering a complementary evaluation tool.",
+      "llm_tldr_cn": "现有世界模型评估通常仅检查奖励和值预测，忽视了潜在滚动中的规划相关误差。本文提出算子-F诊断，通过比较模型k步潜在推演进与环境在可观测子集上的差异来检测这些误差。在TD-MPC2上实验表明，奖励预测误差变化范围小，无法有效区分不同模型尺寸，而算子-F能揭示更多差异。该诊断作为价值等价的补充，为潜在世界模型的评估提供了规划时的实用工具。",
+      "llm_tldr": "现有世界模型评估通常仅检查奖励和值预测，忽视了潜在滚动中的规划相关误差。本文提出算子-F诊断，通过比较模型k步潜在推演进与环境在可观测子集上的差异来检测这些误差。在TD-MPC2上实验表明，奖励预测误差变化范围小，无法有效区分不同模型尺寸，而算子-F能揭示更多差异。该诊断作为价值等价的补充，为潜在世界模型的评估提供了规划时的实用工具。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "latent world models for scalable embodied agent training",
+      "matched_requirement_id": "req-19",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.05780v1",
+      "source": "arxiv",
+      "title": "FORGE: Towards Functional Tool-Use Generalization via Keypoint Trajectory Reasoning",
+      "abstract": "While humans readily repurpose a book, a stone, or a shoe to drive a nail, robots trained on specific tools fail to transfer the same function to novel ones -- a gap we formalize as functional generalization. Such tools share a common functional intent that is visually recognizable, yet this perceptual similarity does not carry over to action space, where each tool demands an entirely different motor pattern. To bridge this gap, we explore intermediate representations including affordance images, human video prompts, and 2D keypoint trajectories, finding that keypoint trajectories best balance functional expressiveness and action groundability. Building on this, we propose FunctiOnal Reasoning and Grounded Execution (FORGE), a two-stage policy that decouples functional reasoning from action execution: predicting generalizable keypoint trajectories from action-free data, then grounding them into robot actions with limited demonstrations. On a seven-tool hitting-function benchmark, FORGE consistently outperforms state-of-the-art methods on unseen tools in both simulation and the real world, achieving over 2X improvement in average success rate.",
+      "authors": [
+        "Chuhao Zhou",
+        "Liquan Wang",
+        "Shuxin Cao",
+        "Xiangyu Chen",
+        "Yuxuan Hu",
+        "Boyu Ma",
+        "Animesh Garg",
+        "Jianfei Yang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-07-07T03:10:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.05780v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "intermediate representation for action generalization via keypoint trajectories",
+      "llm_evidence_cn": "通过关键点轨迹进行动作泛化的中间表征",
+      "llm_evidence": "通过关键点轨迹进行动作泛化的中间表征",
+      "canonical_evidence": "通过关键点轨迹进行动作泛化的中间表征",
+      "llm_tldr_en": "FORGE explores keypoint trajectories as an intermediate representation for functional tool-use generalization, balancing expressiveness and action groundability.",
+      "llm_tldr_cn": "本文提出功能泛化问题，机器人在新工具上迁移失败，探索多种中间表征后选择2D关键点轨迹。基于此提出FORGE两阶段策略：先推理功能关键点轨迹，再映射到具体动作。在多种工具操作任务上验证了泛化能力，为潜动作表征提供了一种思路。",
+      "llm_tldr": "本文提出功能泛化问题，机器人在新工具上迁移失败，探索多种中间表征后选择2D关键点轨迹。基于此提出FORGE两阶段策略：先推理功能关键点轨迹，再映射到具体动作。在多种工具操作任务上验证了泛化能力，为潜动作表征提供了一种思路。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "latent dynamics models for embodied control and action prediction",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.06323v1",
+      "source": "arxiv",
+      "title": "LAMP: Latent Motion Prior-Guided Real-World Learning for Dexterous Hand Manipulation",
+      "abstract": "Real-world learning for dexterous hands remains brittle because high-dimensional hand actions amplify imitation errors and make reinforcement-learning exploration prone to contact-breaking motion. While combining imitation learning (IL) with online reinforcement learning (RL) can reduce manual supervision, unconstrained exploration in raw hand-action spaces is sample-inefficient and risky for physical hardware. We introduce a latent motion prior module (\\prior{}) that maps recent hand-action histories to a compact, history-conditioned latent prior and decodes continuous latent commands into executable high-dimensional hand targets. Built on this prior, \\method{} is a three-stage real-world dexterous learning framework: it pretrains \\prior{} from demonstrations, trains a visuomotor policy that predicts native arm commands and latent hand-action offsets, and improves the policy with online residual RL in the same latent hand-action space. This shared, decodable interface lets residual exploration make local corrections near demonstrated, contact-consistent hand motions rather than perturbing every finger joint independently. We evaluate \\method{} on four real-robot dexterous manipulation tasks against raw, linear, and discrete hand-action interfaces. Starting from small task-specific demonstration sets, \\method{} achieves a 56.25\\% average IL success rate and raises it to 98.75\\% after online RL, reaching 100\\% final success on three tasks and 95\\% on the remaining task.",
+      "authors": [
+        "Xinye Yang",
+        "Zhiyuan Ma",
+        "Hongze Yu",
+        "Yuanpei Chen",
+        "Yaodong Yang",
+        "Xiaojie Chai",
+        "Xinlei Chen",
+        "Chao Yu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-07T14:22:31+00:00",
+      "link": "https://arxiv.org/pdf/2607.06323v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "compact latent motion prior for high-dimensional dexterous hand actions",
+      "llm_evidence_cn": "紧凑的潜在运动先验用于高维灵巧手动作",
+      "llm_evidence": "紧凑的潜在运动先验用于高维灵巧手动作",
+      "canonical_evidence": "紧凑的潜在运动先验用于高维灵巧手动作",
+      "llm_tldr_en": "LAMP learns a compact latent motion prior from hand-action histories to enable sample-efficient real-world learning for dexterous hand manipulation.",
+      "llm_tldr_cn": "针对灵巧手操作中高维动作空间导致模仿误差放大和探索低效的问题，本文提出LAMP框架，通过从动作历史中学习紧凑的潜在运动先验，将连续潜在命令解码为可执行的手部目标。该框架包含预训练潜在先验、模仿学习初始化和在线强化学习三阶段。实验表明LAMP在真实世界灵巧手任务中显著提高了样本效率和成功率。",
+      "llm_tldr": "针对灵巧手操作中高维动作空间导致模仿误差放大和探索低效的问题，本文提出LAMP框架，通过从动作历史中学习紧凑的潜在运动先验，将连续潜在命令解码为可执行的手部目标。该框架包含预训练潜在先验、模仿学习初始化和在线强化学习三阶段。实验表明LAMP在真实世界灵巧手任务中显著提高了样本效率和成功率。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "compact latent representations for visuomotor robot control",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.04513v1",
+      "source": "arxiv",
+      "title": "Constrained Flow Matching via Lagrangian Dual Flows",
+      "abstract": "Flow matching is a powerful tool for generative modeling, but emerging applications in robotics, planning, and physics require inference-time constraints on generated outputs. Such constraints are often complex and highly nonlinear. As a result, methods designed for linear constraints like image inpainting are rarely sufficient, and projection or optimization-based alternatives can be prohibitively expensive. In this paper, we introduce Lagrangian Dual Flows, a new family of constrained generation techniques based on Lagrangian dual dynamics. By simply flowing a dual co-state alongside generated samples, we can guarantee nonlinear constraint satisfaction without expensive optimization subproblems, pseudoinverses, or projection steps during the denoising process. The resulting constrained generation algorithms are simple, effective, and open new theoretical connections between flow matching and primal-dual methods in numerical optimization.",
+      "authors": [
+        "Vince Kurtz",
+        "Alexander Davydov"
+      ],
+      "primary_category": "math.OC",
+      "categories": [
+        "math.OC",
+        "cs.LG"
+      ],
+      "published": "2026-07-05T21:25:51+00:00",
+      "link": "https://arxiv.org/pdf/2607.04513v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "constrained flow matching with applications in robotics",
+      "llm_evidence_cn": "约束流匹配方法在机器人领域的应用",
+      "llm_evidence": "约束流匹配方法在机器人领域的应用",
+      "canonical_evidence": "约束流匹配方法在机器人领域的应用",
+      "llm_tldr_en": "Lagrangian Dual Flows introduce a constrained flow matching method using dual dynamics, enabling efficient nonlinear constraint satisfaction during generation for robotics, planning, and physics.",
+      "llm_tldr_cn": "针对机器人、规划等应用中生成输出需满足复杂约束的需求，本文提出拉格朗日对偶流，通过在对偶空间流动协状态在生成过程中保证约束满足，无需昂贵的投影或优化步骤。该方法在约束生成任务上效果显著，适用于轨迹生成等场景。",
+      "llm_tldr": "针对机器人、规划等应用中生成输出需满足复杂约束的需求，本文提出拉格朗日对偶流，通过在对偶空间流动协状态在生成过程中保证约束满足，无需昂贵的投影或优化步骤。该方法在约束生成任务上效果显著，适用于轨迹生成等场景。",
+      "llm_tags": [
+        "query:gen2embodied"
+      ],
+      "matched_query_tag": "query:gen2embodied",
+      "matched_query_text": "flow matching generative models for robot control and trajectory generation",
+      "matched_requirement_id": "req-28",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.06370v1",
+      "source": "arxiv",
+      "title": "Training-Free Acceleration for Vision-Language-Action Models with Action Caching and Refinement",
+      "abstract": "Vision-Language-Action (VLA) models have emerged as a promising approach for generalizable robotic manipulations. In particular, flow matching-based VLA models have shown remarkable success due to their capability to generate precise and smooth action sequences and capture multimodal distributions. However, the iterative denoising process in the action head acts as a major computational bottleneck, posing a critical challenge for real-time deployment. To address this challenge, we propose ActionCache, a plug-and-play external cache that opportunistically reuses past intermediate actions to warm-start generations from the vicinity of target actions, thereby drastically reducing the inference latency. Specifically, ActionCache stores the intermediate actions with compact multimodal keys, which enables retrieval from similar past contexts across different episodes or even different tasks. Experimental results in simulation and real-world environments demonstrate that ActionCache maintains high task success rates in a low-latency regime, achieving inference acceleration of up to $11.75\\times$ and $34.43\\times$ for representative flow-based VLA models, $π_{0.5}$ and GR00T-N1.6, respectively.",
+      "authors": [
+        "Ryuji Oi",
+        "Hikari Otsuka",
+        "Kosuke Matsushima",
+        "Yuki Ichikawa",
+        "Masato Motomura",
+        "Tatsuya Kaneko",
+        "Daichi Fujiki"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV",
+        "cs.LG"
+      ],
+      "published": "2026-07-07T15:10:15+00:00",
+      "link": "https://arxiv.org/pdf/2607.06370v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "acceleration method for vision-language-action models",
+      "llm_evidence_cn": "加速视觉-语言-动作模型推理的方法",
+      "llm_evidence": "加速视觉-语言-动作模型推理的方法",
+      "canonical_evidence": "加速视觉-语言-动作模型推理的方法",
+      "llm_tldr_en": "ActionCache is a training-free cache that reuses past intermediate actions to accelerate flow matching-based VLA model inference for real-time robot control.",
+      "llm_tldr_cn": "针对流匹配VLA模型迭代去噪推理慢的问题，提出ActionCache插件式缓存，通过复用历史中间动作来预热生成，大幅减少推理延迟且无需额外训练。在多种机器人操作任务上验证了实时加速效果。",
+      "llm_tldr": "针对流匹配VLA模型迭代去噪推理慢的问题，提出ActionCache插件式缓存，通过复用历史中间动作来预热生成，大幅减少推理延迟且无需额外训练。在多种机器人操作任务上验证了实时加速效果。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.06403v1",
+      "source": "arxiv",
+      "title": "From Foundation to Application: Improving VLA Models in Practice",
+      "abstract": "Despite recent progress of VLA foundation models, the disparity between laboratory conditions and real-world applications continues to impede their practical implementation. To bridge this gap, we present LingBot-VLA 2.0, which advances LingBot-VLA through improvements in three functional domains. (1) Generalization across tasks and embodiments. Compared to the previous version, we revamp the data processing pipeline and curate around 60,000 hours of data for pretraining, including 50,000 hours of robot trajectories spanning 20 robot configurations and 10,000 hours of egocentric human videos. (2) Expanded action space in addition to dual-arm hardware platforms. In particular, our system accommodates degrees of freedom for the heads, waists, mobile bases, and dexterous hands, thereby empowering the robots to tackle more complex tasks in practical scenarios. (3) Predictive dynamics modeling for improved temporal reasoning. Specifically, we formulate future prediction as a proxy task, facilitated by a video representation model for semantic priors and a depth estimation model for geometric cues. Evaluations on the GM-100 benchmark, conducted in a generalist setting, validate the beneficial impact of these proposed modifications. Furthermore, benefiting from the expanded pretraining data that covers whole-body degrees of freedom, LingBot-VLA-2.0 demonstrates strong cross-embodiment long-horizon mobile manipulation capability across the two robotic platforms.",
+      "authors": [
+        "Wei Wu",
+        "Fangjing Wang",
+        "Fan Lu",
+        "He Sun",
+        "Shi Liu",
+        "Yunnan Wang",
+        "Yibin Yan",
+        "Yong Wang",
+        "Shuailei Ma",
+        "Xinyang Wang",
+        "Yibin Liu",
+        "Shuai Yang",
+        "Tianxiang Zhou",
+        "Kejia Zhang",
+        "Lei Zhou",
+        "Cheng Su",
+        "Nan Xue",
+        "Bin Tan",
+        "Han Zhang",
+        "Youchao Zhang",
+        "Fei Liao",
+        "Xing Zhu",
+        "Yujun Shen",
+        "Kecheng Zheng"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-07T15:33:12+00:00",
+      "link": "https://arxiv.org/pdf/2607.06403v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "improving VLA models in practice with expanded action space and data",
+      "llm_evidence_cn": "实践中改进VLA模型，扩展动作空间和数据",
+      "llm_evidence": "实践中改进VLA模型，扩展动作空间和数据",
+      "canonical_evidence": "实践中改进VLA模型，扩展动作空间和数据",
+      "llm_tldr_en": "LingBot-VLA 2.0 improves VLA foundation models through better data curation, expanded action space, and cross-embodiment generalization.",
+      "llm_tldr_cn": "本文指出VLA基础模型从实验室到实际应用的差距，提出改进版LingBot-VLA 2.0。通过60,000小时数据预训练（含多机器人轨迹和人类视频），扩展动作空间到多自由度，增强跨实体泛化。在实际部署中展示了性能提升。",
+      "llm_tldr": "本文指出VLA基础模型从实验室到实际应用的差距，提出改进版LingBot-VLA 2.0。通过60,000小时数据预训练（含多机器人轨迹和人类视频），扩展动作空间到多自由度，增强跨实体泛化。在实际部署中展示了性能提升。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2607.05765v1",
+      "source": "arxiv",
+      "title": "Image2Sim: Scaling Embodied Navigation via Generative Neural Simulator",
+      "abstract": "Embodied navigation aims to build agents that interpret multimodal goals, reason in 3D space, and reach target destinations reliably in the real world. However, progress remains constrained by the lack of scalable, high-fidelity, and physically grounded interactive environments. Although real-world scanned datasets offer visual realism, they are limited by scale. In contrast, synthetic simulators scale more easily but often exhibit large sim-to-real gaps. We introduce Image2Sim, a real-time neural simulation framework that constructs high-quality interactive environments from posed RGB-D image sequences. The central idea is to decouple 3D spatial anchoring from photorealistic observation synthesis. For scene construction, Image2Sim uses a feed-forward feature Gaussian model that lifts posed RGB-D observations into a 3D feature-Gaussian representation in a single pass. For rendering, we propose a Geometry-Aware One-Step Pixel Flow model that transforms sparse and noisy Gaussian projections into high-quality panoramic RGB-D observations. Image2Sim also serves as a fully automated embodied data engine that generates high-fidelity observations, executable actions, and diverse navigation instructions at scale. It converts large collections of videos and images into nearly 20K interactive scenes and synthesizes more than 10 million navigation training samples. Navigation models trained entirely in these neural environments achieve strong improvements on major benchmarks and transfer effectively to real-world zero-shot settings. These results suggest that scalable neural simulation can serve as a practical training substrate for embodied navigation at scale.",
+      "authors": [
+        "Zihan Wang",
+        "Seungjun Lee",
+        "Yinghao Xu",
+        "Gim Hee Lee"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "published": "2026-07-07T02:42:41+00:00",
+      "link": "https://arxiv.org/pdf/2607.05765v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "generative neural simulator for embodied navigation, training environment for policies",
+      "llm_evidence_cn": "生成式神经仿真器，为策略提供训练环境",
+      "llm_evidence": "生成式神经仿真器，为策略提供训练环境",
+      "canonical_evidence": "生成式神经仿真器，为策略提供训练环境",
+      "llm_tldr_en": "Image2Sim is a real-time neural simulation framework that constructs interactive environments from posed RGB-D images, decoupling 3D anchoring from photorealistic synthesis to enable scalable training for embodied navigation policies.",
+      "llm_tldr_cn": "针对具身导航中缺乏可扩展、高保真交互环境的问题，该论文提出Image2Sim，一种实时神经仿真框架，能从带位姿的RGB-D图像序列构建高质量交互环境。核心思想是解耦3D空间锚定与逼真观察合成。实验表明，Image2Sim可生成多样环境并支持导航策略训练，缩小sim-to-real差距，为策略学习提供可扩展的生成式模拟器。",
+      "llm_tldr": "针对具身导航中缺乏可扩展、高保真交互环境的问题，该论文提出Image2Sim，一种实时神经仿真框架，能从带位姿的RGB-D图像序列构建高质量交互环境。核心思想是解耦3D空间锚定与逼真观察合成。实验表明，Image2Sim可生成多样环境并支持导航策略训练，缩小sim-to-real差距，为策略学习提供可扩展的生成式模拟器。",
+      "llm_tags": [
+        "query:gen2embodied"
+      ],
+      "matched_query_tag": "query:gen2embodied",
+      "matched_query_text": "generative world simulators as training environments for robot policies",
+      "matched_requirement_id": "req-33",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.06522v1",
+      "source": "arxiv",
+      "title": "Bridging Physical Reasoning and Task Generalization via Visual Action Outcome Reasoning Alignment",
+      "abstract": "Vision-language models (VLMs) struggle to generalize in interactive physical reasoning, particularly under unseen tasks and environments. Two key failure modes are prominent: hallucinated chain-of-thought (CoT) reasoning that contradicts physical reality, and misalignment between the model's reasoning and actions. We present VAORA (Visual Action Outcome Reasoning Alignment), a novel reward design that directly addresses both issues. VAORA introduces two complementary rewards: Visual Alignment Reward, which anchors VLM reasoning to the visual context independent of the agent action itself, and Visual-Action Alignment Reward, which grounds reasoning in the visual outcome induced by the model's action. Together, these rewards suppress hallucinated CoT and reduce the gap between reasoning and behavior. To improve training stability, we further employ smooth, dense rewards by estimating success probabilities using a pre-trained in-domain expert agent. Experiments on PHYRE and Virtual Tool support our performances across novel-task and unseen-environment settings, confirming that grounded and generalizable physical intelligence can be induced through VAORA.",
+      "authors": [
+        "Han-Jun Ko",
+        "Jr-Jen Chen",
+        "Haobo Yuan",
+        "Hsin-Ying Lee",
+        "Tiancheng Shen",
+        "Ming-Hsuan Yang",
+        "Yu-Chiang Frank Wang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-07-07T17:27:59+00:00",
+      "link": "https://arxiv.org/pdf/2607.06522v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "visual action outcome reasoning for VLM generalization",
+      "llm_evidence_cn": "视觉动作结果推理用于VLM泛化",
+      "llm_evidence": "视觉动作结果推理用于VLM泛化",
+      "canonical_evidence": "视觉动作结果推理用于VLM泛化",
+      "llm_tldr_en": "VAORA introduces alignment rewards to ground VLM reasoning in visual outcomes of actions, improving generalization in physical reasoning tasks.",
+      "llm_tldr_cn": "该论文针对VLM在物理推理任务中的泛化问题，提出VAORA奖励设计，通过视觉对齐奖励和视觉-动作对齐奖励将推理锚定在动作的视觉结果上。在未见任务和环境中，该方法显著提升了VLM的推理准确性和动作一致性，为将VLM应用于机器人任务提供了有效方法。",
+      "llm_tldr": "该论文针对VLM在物理推理任务中的泛化问题，提出VAORA奖励设计，通过视觉对齐奖励和视觉-动作对齐奖励将推理锚定在动作的视觉结果上。在未见任务和环境中，该方法显著提升了VLM的推理准确性和动作一致性，为将VLM应用于机器人任务提供了有效方法。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.06678v1",
+      "source": "arxiv",
+      "title": "NativeMEM: Native Memory Compression for Long-Horizon Robotic Manipulation",
+      "abstract": "How can pretrained Vision-Language-Action (VLA) models retain long-horizon visual histories with high-frequency updates without sacrificing efficiency? Existing approaches rely on external memory management, which restrains either the memory horizon or the reactiveness of pretrained policies. To this end, we present NativeMEM, a VLA policy that features long-term and real-time updated memory. At its core is an efficient memory encoding scheme, Native Memory Compression, which repurposes the VLA's own vision encoder to compress each historical frame from each camera view into a single token. Appended to the input sequence, these memory tokens enable the pretrained VLA to attend over long-term history with negligible latency overhead, requiring neither an external planner nor a freshly initialized memory module. To align the memory tokens with the pretrained policy, we first develop a generic memory tokenizer under the supervision of a frozen VLA on memory-demanding data, and then unfreeze the VLA for task-specific fine-tuning. NativeMEM consistently outperforms prior methods, boosting success rates from 32.4% to 84.0% in simulation and up to 98.7% on real robots, while maintaining low inference latency and GPU memory usage. Notably, NativeMEM exhibits high data efficiency by achieving competitive results with prior arts using only 20% of the training data.",
+      "authors": [
+        "Ziye Wang",
+        "Modi Shi",
+        "Chaojun Ni",
+        "Jiazhi Yang",
+        "Mengdi Li",
+        "Zhizhong Su",
+        "Tianwei Lin",
+        "Hongyang Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-07T18:00:53+00:00",
+      "link": "https://arxiv.org/pdf/2607.06678v1",
+      "tags": [
+        "keyword:Gen2Embodied",
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Gen2Embodied",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Native memory compression for compact latent representations in VLA policies.",
+      "llm_evidence_cn": "VLA策略中的原生记忆压缩实现紧凑潜在表示。",
+      "llm_evidence": "VLA策略中的原生记忆压缩实现紧凑潜在表示。",
+      "canonical_evidence": "VLA策略中的原生记忆压缩实现紧凑潜在表示。",
+      "llm_tldr_en": "NativeMEM repurposes VLA's vision encoder to compress historical frames into single tokens for efficient long-horizon memory without external management.",
+      "llm_tldr_cn": "本文针对预测练VLA模型长时间记忆效率低下的问题，提出NativeMEM策略，通过原生记忆压缩将每帧图像压缩为单个token，使VLA能关注长期历史且延迟开销可忽略。实验表明该方法在不牺牲响应速度的情况下显著提升了长视距任务的成功率。",
+      "llm_tldr": "本文针对预测练VLA模型长时间记忆效率低下的问题，提出NativeMEM策略，通过原生记忆压缩将每帧图像压缩为单个token，使VLA能关注长期历史且延迟开销可忽略。实验表明该方法在不牺牲响应速度的情况下显著提升了长视距任务的成功率。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "compact latent representations for visuomotor robot control",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    }
+  ]
+}
