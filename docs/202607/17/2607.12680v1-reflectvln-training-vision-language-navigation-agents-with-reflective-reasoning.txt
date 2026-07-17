@@ -1,0 +1,490 @@
+Title: ReflectVLN: Training Vision-Language Navigation Agents with Reflective Reasoning
+
+URL Source: https://arxiv.org/pdf/2607.12680v1
+
+Published Time: Wed, 15 Jul 2026 11:58:04 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# ReflectVLN: Training Vision-Language Navigation Agents with Reflective Reasoning 
+
+Jiahang Wang 1∗, Yirong Yang 2∗, Yanqing Zhu 1†, Minghua Luo 1, Shichao Xie 1,Fei Liu 1, and Mu Xu 1 
+
+> 1
+
+Amap, Alibaba Group, China  
+
+> 2
+
+Beihang University 
+
+Abstract. Existing vision-language navigation methods often couple a VLM with waypoint decoders to produce multi-step action plans, but they typically lack an explicit closed-loop mechanism for tracking se-mantic progress, diagnosing execution failures, and recovering from error accumulation in long-horizon navigation. To address this gap, we propose ReflectVLN, an agentic VLN framework that organizes decision-making through bidirectionally interactive intention and execution agents. The intention agent performs subtask decomposition and reflection, generat-ing executable subtask descriptions as corrective plans. Conditioned on these descriptions, the execution agent grounds them into short-horizon actions under current observations while monitoring sub-goal progress and detecting off-track behavior. Crucially, ReflectVLN enables closed-loop bidirectional communication: the execution agent emits progress and deviation signals to trigger reflection and subtask updates on de-mand, and the intention agent returns structured guidance that recondi-tions subsequent actions for recovery. To encourage temporally coherent decisions with interpretable intermediate rationales, we introduce Action Chain-of-Thought (Action-CoT), a path-conditioned dual-query training scheme for action generation. Experiments on standard VLN benchmarks show that ReflectVLN improves success rates and path efficiency under a constrained data budget, with favorable training cost and fewer high-level intention calls at inference time, while providing interpretable in-termediate decisions for analysis and collaboration. Code is available at: https://github.com/AIprogrammer/ReflectVLN 
+
+Keywords: Vision-Language Navigation · Agentic Navigation · Reflec-tion · Action Chain-of-Thought 
+
+1 Introduction 
+
+Visual-Language Navigation (VLN) in continuous environments is a central problem in embodied AI, in which an agent must follow natural-language instruc-tions to reach a goal through complex real-world scenes. A key challenge lies in  
+
+> ∗
+
+Equal contribution.  
+
+> †
+
+Project lead. arXiv:2607.12680v1 [cs.CV] 14 Jul 2026 2 J. Wang et al. 
+
+long-horizon execution: small control errors accumulate, the agent may drift off route, and successful navigation requires not only short-horizon action execution but also explicit tracking of instruction-level semantic progress and timely plan correction. However, most existing VLN frameworks learn tightly coupled end-to-end policies that map vision and language directly to short-horizon actions, without an explicit mechanism for monitoring sub-goal completion or reflecting on failures during execution. Prior work often adopts a cascaded design, in which a high-level module predicts sub-goals at a low frequency and a low-level controller executes them. Hi-Robot [33] proposes a hierarchical VLA framework with a high-level policy that generates low-level language commands and a low-level policy that outputs actions with verbal responses. Pi-0.5 [14] improves generalization via decoupled two-stage training with heterogeneous data sources. DualVLN [41] further sepa-rates high-level reasoning from low-level execution through dual-system training. Despite these advances, existing slow–fast or dual-system designs still rely largely on one-way communication: high-level plans are passed to the fast executor, but execution-time progress and deviation signals are not systematically fed back to the slow system to enable timely sub-goal updates. As a result, the two modules can become semantically misaligned during closed-loop inference, as shown in Fig. 1(a), leading to delayed replanning and sub-goal switching—an issue that is amplified in long-horizon navigation, where small errors compound. In addition, many paradigms lack an explicit reflection mechanism to detect, diagnose, and revise failures, which limits robustness and recovery in unseen environments. Slow     
+
+> System
+> Fast
+> System
+> Intentio n
+> Agen t
+> Execution
+> Agen t
+> Unidirectional Instruction
+> SubGoal
+> Reflection
+> <VLN BOR > | < VLN BOC > | < VLN BOA >
+> (a) Prior Approach
+> (b) ReflectVLN
+
+Fig. 1: Comparison between Re-flectVLN and prior slow–fast /dual-system VLN frameworks. Prior cascaded methods pass sub-goals unidi-rectionally from a slow planner to a fast executor. We define three trigger tokens to explicitly control the system mode. 
+
+<VLNBOR> denotes the start of the reflection phase for sub-goal generation. <VLNBOC> 
+
+denotes the start of the correction phase for error diagnosis and recovery. <VLNBOA> 
+
+denotes the action mode, in which the execution agent acts without invoking the intention agent. 
+
+Q1: How can we achieve closed-loop co-evolution between high-level semantic intention and low-level action execution? We propose ReflectVLN, as shown in Fig. 1(b), an agentic VLN framework with bidirectionally interactive inten-tion and execution agents. Compared with existing dual systems, the key distinction lies in the feedback inter-face : the execution agent tracks sub-goal progress and emits deviation sig-nals to trigger the intention agent on demand, rather than relying on one-way or fixed-cadence plan issuance. The intention agent performs deliber-ate reflection for long-horizon subtask decomposition and correction, while the execution agent conducts short-horizon control conditioned on sub-goals. ReflectVLN 3
+
+Q2: How can execution-time error signals be fed back to enable on-demand replanning and reli-able recovery? To equip the model with reflection capability, we construct a reflection-driven data pipeline. We collect failure cases from model rollouts, invoke an expert policy to generate corrected trajectories, and use a VLM to produce natural-language descriptions of these corrections. An automatic anno-tation and verification module then filters out hallucinations and inconsistencies, yielding verified error-correction trajectories and reflective feedback for train-ing. Our pipeline enriches corrected trajectories with reflective feedback at the language-level, enabling explicit supervision for recovery-oriented learning. We further introduce Action-CoT, a path-conditioned dual-query training scheme that promotes joint reasoning over a coarse future route and short-horizon ac-tions. Our contributions can be summarized as follows: 
+
+– We propose ReflectVLN, an agentic VLN framework with bidirectionally interactive intention and execution agents, in which the execution agent not only predicts short-horizon actions but also triggers the intention agent to adaptively update sub-goals via progress and deviation feedback. 
+
+– We propose a two-stage training framework that couples reflective supervi-sion with Action-CoT, encouraging explicit route-level auxiliary reasoning alongside short-horizon control. 
+
+– We develop a reflection-driven data pipeline that converts rollout failures into verified error-correction trajectories with reflective language feedback for recovery-oriented training. 
+
+– We demonstrate competitive improvements on R2R-CE and RxR-CE under a constrained data budget, without large-scale pretraining corpora or multi-round data augmentation, while on-demand intention calls reduce high-level invocations relative to dense periodic refreshing. 
+
+2 Related Work 
+
+Robust Vision-Language Navigation. In recent years, researchers have in-creasingly focused on the robustness of VLN agents [22, 32, 43] under distri-bution shifts [10, 23, 46]. In real-world deployment [28, 53] and long-horizon instruction-following scenarios [25,41], execution errors can cause an agent to de-viate from the expert trajectory, thereby compounding errors and reducing nav-igation success rates. One prevailing paradigm adopts DAgger [31] and its vari-ants [15, 21, 22, 29], which iteratively collect on-policy data and query an expert for ground-truth actions. CorrectNav [47] further transforms model-generated error trajectories into training data, internalizing error-correction capabilities through a multi-round self-correcting flywheel. However, such methods often rely on high-frequency iterative sampling, which is computationally expensive and difficult to scale. In addition, BudVLN [12] and DV-VLN [24] employ historical re-anchoring and dual verification for rectification, while memory-based methods such as SkillNav [35, 42, 44] mitigate error propagation through modular atomic 4 J. Wang et al. 
+
+skills. Complementary slow–fast or dual-system designs [41] decouple high-level planning from low-level control, yet remain largely one-way: plans are issued to the executor without systematically feeding execution-time progress and failure signals back for timely sub-goal updates. Nevertheless, these approaches still lack a closed-loop recovery mechanism for handling drift during long-horizon execu-tion. In contrast, we propose ReflectVLN, an agentic framework with bidirec-tionally interactive intention and execution agents for on-demand reflection and deviation correction, trained with a one-round reflective augmentation pipeline under a constrained data budget. 
+
+Chain-of-Thought (CoT) Reasoning. The paradigm of CoT reasoning, originally designed to enhance the reasoning capabilities of LLMs through ex-plicit step-by-step derivation [40], has undergone substantial architectural di-versification. While early advances such as self-consistency [37] and hierarchical task decomposition [55] focused on improving the robustness of internal rea-soning, the emergence of VLA models has shifted attention toward grounded decision-making. Strategic exploration in the reasoning space, as enabled by tree-structured search processes [26, 45], provides a foundation for more deliber-ate planning in complex environments. Recent advances have further moved from purely linguistic rationales to multimodal imaginative reasoning. CoT-VLA [52] and DreamVLA [51] employ visual foresight by predicting future states as an intermediate reasoning modality, while Visual Thoughts [9] integrates such rea-soning into a unified multimodal framework. Moving beyond static prediction, recent methods such as ACoT-VLA [54] and RoboticCoT [48] prioritize action-centric reasoning chains to ensure temporal consistency in robotic control [3]. In contrast, our Action-CoT is a path-conditioned dual-query auxiliary train-ing scheme for VLN short-horizon control, coupled with the intention–execution closed loop rather than used as a standalone sequential language CoT. 
+
+3 Method 
+
+We introduce ReflectVLN, an agentic VLN framework with bidirectionally in-teractive intention and execution agents, as shown in Fig. 2. The core idea is to couple an execution agent for short-horizon action control with an intention agent for reflective planning and correction. Concretely, we first establish a formal definition of the VLN task and its in-ference pipeline (Sec. 3.1). To provide recovery-oriented supervision, we curate a reflective training set that incorporates off-route scenarios and corresponding re-covery trajectories (Sec. 3.2). We then detail the intention–execution dual-agent architecture together with Action-CoT for path-conditioned execution (Sec. 3.3), followed by the two-stage training objective (Sec. 3.4) and closed-loop inference procedure (Sec. 3.5). ReflectVLN 5Intentio n Agen t Execution Agent 
+
+> Visual Input
+
+… …
+
+> Visual Input
+
+… …
+
+> Instruction
+> Turn around to face the open
+> doorway behind you. The walk
+> forward through the doorway into
+> the hallway with white double
+> doors and hardwood flooring.
+
+… … …
+
+> <SubGoal>
+
+Visual Encoder Text Encoder Visual Encoder 
+
+…
+
+Text Encoder 
+
+………
+
+Cross Attention 
+
+…… …
+
+……
+
+MLP    
+
+> Yaw
+> Angle
+> Way
+> Point Nav -wNav -a
+> Turn
+> Turn …
+> Move
+
+Trigger                                 
+
+> Locate and
+> move the an
+> suite bathroom
+> across the
+> room
+> ...
+> < Reflection >
+> Text Embeds Vision Embeds Reflection Tokens Trigger Tokens Navigation Path Tokens
+> Turn around to
+> face the open
+> doorway behind
+> you. The walk
+> forward through
+> ...
+> Instruction
+> Turn around and walk down
+> the hall to the left of
+> the stairs. Make your
+> first left and go to the
+> bedroom straight ahead.
+> <SubGoal >/< Reflection >
+> Action Tokens Potential Intent Tokens
+> < VLNBOR > < VLNBOC > < VLNBOA >
+
+Fig. 2: Overview of ReflectVLN Framework. The intention agent operates as a high-level reflective planner that takes egocentric visual history, the natural-language instruction, and execution feedback from the execution agent as input, and produces a reflective sub-goal description summarizing the next navigational intent. Conditioned on this sub-goal together with visual observations, the execution agent outputs continu-ous motion trajectories and a status token that governs subsequent intention–execution interaction. 
+
+3.1 Problem Definition 
+
+VLN agents are generally trained using diverse navigation demonstrations or within simulated environments. Given a natural-language instruction ℓ, an em-bodied agent is tasked with navigating to a target goal by strictly following a described route in previously unseen environments. In our formulation, observa-tions are restricted to monocular visual inputs consisting of current and historical RGB frames It−H:t = {It−H , . . . , I t}. Unlike conventional methods, our model operates without depth information, multi-view panoramas, or additional sen-sors. At each time step t, the agent predicts a sequence of relative waypoints that specifies the next motion segment. The central difficulty is that the instruction ℓ describes a global route, whereas the observation history only reveals a local and potentially ambiguous portion of that route. We therefore introduce a language sub-goal ct as a persistent interme-diate state between global instruction understanding and local control. Rather than regenerating ct at every step, the agent maintains it while execution remains valid and updates it only after detecting sub-goal completion or route deviation. This formulation turns high-level replanning into an event-driven decision and makes the source of each update explicit. 6 J. Wang et al. 
+
+3.2 Reflective Data Construction 
+
+To mitigate compounding errors in sequential decision-making, we design a reflection-driven data pipeline that transforms navigation failures into targeted training supervision, as shown in Fig. 3. Importantly, this pipeline is imple-mented as a one-round augmentation procedure rather than a multi-round it-erative flywheel: we roll out the current policy once, collect failures, generate corrections, and merge the verified samples into the training set. 
+
+Expert Data. We build our training set by directly reusing the public expert demonstrations from NavForSee [25] on R2R-CE [18] and RxR-CE [20], with-out collecting new trajectories. Each episode consists of the original instruction paired with the full egocentric RGB observation sequence. The expert data con-tain approximately 1.3M training samples from RxR-CE and 0.2M from R2R-CE. Step 1: Data Collection                    
+
+> R2R -CE +RxR -CE
+> Step 2: Data Flywheel
+> Closed -loop Rollout Oracle Intervention
+> First -person Observation
+> Trajectory
+> –Instruction
+> -Images Pairs
+> Episode
+> Failed Case
+> VLM Reasoning
+> Expert Trajectory
+> •Reflective Description
+> •Expert Steps
+> •Logged Observations
+
+…  
+
+> Step 3: Quality Filtering
+> Tripartite Cross -Validation
+> Consistency Verification
+
+…       
+
+> Reflective
+> Instruction
+> Aligned Observations
+> Correct
+> Trajectory
+> Keep walking straight
+> through the corridor.
+> When a prominent …
+> Then, turn right and
+> walk until you reach
+> abed …
+> Turn around to face the open
+> doorway behind you .The walk
+> forward through the doorway into
+> the hallway with white double
+> doors and hardwood flooring .
+> Reflective Dataset
+
+Fig. 3: Overview of reflective data generation. The data pipeline contains three steps. (1) Expert/oracle trajectory collection: reference demonstrations and milestone progressions from an oracle expert provide ground-truth trajectories and waypoint-level supervision. (2) Reflective data annotation: we roll out the agent policy, detect deviations from the reference trajectory, and use a VLM to generate a reflective de-scription of sub-goal corrections. (3) Quality filtering: we filter reflective samples by consistency between atomic actions and the reflective annotation. 
+
+Reflection-Augmented Recovery Data. During exploration, the current pol-icy is executed in the simulator. When the agent fails to reach the goal or severely leaves the intended path, we invoke a privileged expert with access to the environ-ment graph to compute a recovery trajectory consisting of expert steps, poses, and actions. A VLM (Qwen3-VL-32B [34]) then generates a natural-language trajectory description that explains what should have been done and highlights key visual cues. To reduce hallucinations, a checker module cross-validates the VLM description against expert steps and logged observations, and discards or repairs inconsistent samples. The checker outputs a structured package with the corrected trajectory, a reflective instruction, and aligned observations. These ReflectVLN 7
+
+verified examples are merged into the training set for a single fine-tuning stage on previously failing patterns. This pipeline yields approximately 100k closed-loop samples. We subsample dominant straight-move transitions and augment stop-containing episodes to balance the supervision distribution. 
+
+3.3 Bidirectionally Interactive Intention–Execution Agents 
+
+ReflectVLN separates semantic deliberation from continuous control while cou-pling them through an explicit feedback interface. The intention agent translates the global instruction and recent execution history into a language sub-goal, whereas the execution agent grounds this sub-goal into short-horizon controls and emits a discrete status token. This token either maintains action execution or requests a regular or corrective intention update, thereby forming a closed-loop intention–execution process rather than a one-way planning cascade. The two agents adopt the same Qwen2.5-VL-3B architecture [4] but are in-stantiated with independent parameters, denoted by θint and θexe . For compact-ness, we write R := ⟨VLNBOR ⟩, C := ⟨VLNBOC ⟩, and A := ⟨VLNBOA ⟩. Their interaction at time t is summarized as 
+
+ct = πθint (ℓ, It−H:t, z t), zt ∈ { R, C},
+
+( ˆPt, ˆAt, z t) = πθexe (ℓ, c t, It−H:t), (1) where ct is a language sub-goal, ˆPt and ˆAt are coarse-route and short-horizon control predictions, and zt is the execution status. 
+
+Intention Agent The intention agent is a high-level reflective planner. Given the navigation instruction, recent observations, and an update request from the execution agent, it performs one of two language-generation tasks. Upon a regu-lar request ( zt = R ), it aligns the global instruction with the observed trajectory and generates the next executable sub-goal. Upon a correction request ( zt = C ), it diagnoses off-track behavior and generates a corrective sub-goal. Unlike hi-erarchical systems that communicate through pixel goals or bounding boxes, our language interface directly exploits the VLM’s multimodal reasoning and generation capabilities and requires no additional goal detector. 
+
+Execution Agent with Action-CoT The execution agent maps the current language sub-goal to continuous controls while monitoring whether execution remains consistent with that sub-goal. At each step, it predicts a sequence of Nq
+
+controls, each parameterized as 
+
+ut =  ∆x t, ∆y t, cos ϕt, sin ϕt, s t
+
+, (2) where (∆x t, ∆y t) is the relative planar displacement, (cos ϕt, sin ϕt) represents heading, and st is a stop logit. 8 J. Wang et al. 
+
+To improve route-level consistency of local control, we equip the execution agent with Action Chain-of-Thought (Action-CoT) , a path-conditioned dual-query architecture. Unlike the sequential action-intent formulation of ACoT-VLA [54], “thought” in our design is a latent coarse route rather than a token-by-token language rationale. Given the multimodal context X encoded from 
+
+(ℓ, c t, It−H:t), navigation queries Qnav first predict a longer-horizon route: 
+
+Enav = fθexe (X, Q nav ), ˆPt = MLP nav (Enav ). (3) The route representation then conditions the short-horizon action queries Qact :
+
+Eact = fθexe 
+
+ X, [Enav ; Qact ], ˆAt = MLP act (Eact ). (4) Both query sets are learnable. The coarse route provides an explicit intermedi-ate prediction that regularizes near-term control toward globally consistent mo-tion. In addition to waypoints, the execution agent autoregressively emits one of three status tokens: ⟨VLNBOA ⟩ continues action execution, ⟨VLNBOR ⟩ indi-cates completion of the current sub-goal and requests the next regular sub-goal, and ⟨VLNBOC ⟩ indicates deviation and requests corrective reflection. These outputs provide the feedback interface from execution to intention. 
+
+3.4 Two-Stage Training 
+
+We train the independently parameterized agents with complementary objec-tives. Stage I initializes the execution agent through Action-CoT pretraining on expert trajectories. Stage II trains the intention agent on regular and corrective language supervision while continuing to optimize the execution agent for way-point and status-token prediction. No gradient is propagated between the two agents. 
+
+Stage I: Action-CoT Pretraining Both the short-horizon action sequence 
+
+ˆA and the coarse route ˆP use the parameterization in Eq. (2). For a predicted sequence ˆU = {ˆuj }Nj=1 and its expert target U ∗, we define 
+
+Lpos ( ˆU , U ∗) = 1
+
+N
+
+> N
+
+X
+
+> j=1
+
+ |∆x j − ∆x ∗ 
+
+> j
+
+| + |∆y j − ∆y ∗ 
+
+> j
+
+| , (5) 
+
+Lang ( ˆU , U ∗) = 1 − 1
+
+N
+
+> N
+
+X
+
+> j=1
+
+ cos ϕj cos ϕ∗ 
+
+> j
+
++ sin ϕj sin ϕ∗
+
+> j
+
+ , (6) 
+
+Lstop ( ˆU , U ∗) = − 1
+
+N
+
+> N
+
+X
+
+> j=1
+
+s∗ 
+
+> j
+
+log σ(sj ) + (1 − s∗ 
+
+> j
+
+) log(1 − σ(sj ))  . (7) Their weighted combination is 
+
+Ltraj ( ˆU , U ∗) = λpos Lpos + λang Lang + λstop Lstop . (8) ReflectVLN 9
+
+The short-horizon target A∗ contains the next Nq expert controls. The coarse-route target P ∗ is obtained by uniformly sampling future expert waypoints over a longer horizon. Action-CoT pretraining minimizes 
+
+LWP = Ltraj ( ˆA, A ∗) + βLtraj ( ˆP , P ∗), (9) where the second term encourages navigation queries to capture route structure before producing local controls. We use λpos = λang = λstop = 1 and β = 0 .1.
+
+Stage II: Status-Aware Fine-Tuning 
+
+Intention objective. For an intention request z ∈ { R, C}, the intention agent is trained by autoregressive imitation: 
+
+L(z)int = −
+
+> T
+
+X
+
+> j=1
+
+log pθint 
+
+ y∗ 
+
+> j
+
+| y∗ 
+
+> <j
+
+, ℓ, It−H:t, z  , (10) where y∗ is the target regular or corrective sub-goal. This objective trains seman-tic sub-goal generation only and is distinct from the continuous action objective. 
+
+Execution objective. The execution agent learns the status output with an au-toregressive classification loss 
+
+Lstatus = − log pθexe (z∗ 
+
+> t
+
+| ℓ, c t, It−H:t) . (11) Together with Action-CoT waypoint supervision, its objective is 
+
+Lexe = 1[z∗ 
+
+> t
+
+= A] LWP + λstatus Lstatus , (12) where waypoint loss is applied when the target status continues execution. The complete objective is 
+
+min 
+
+> θint ,θ exe
+
+X
+
+> z∈{ R,C}
+
+ρz Eξ∼D z
+
+h
+
+L(z)int 
+
+i
+
++ ρexe Eξ∼D exe [Lexe ] , (13) where ρ denotes the sampling weight of each data source. 
+
+3.5 Closed-Loop Inference 
+
+At test time, the intention agent first generates an initial sub-goal. Thereafter, the status token emitted by the execution agent directly determines whether to execute the predicted control or invoke the intention agent for an update. The resulting event-driven interaction requires no oracle trigger and limits expen-sive intention calls while enabling timely recovery; fixed-interval alternatives are compared in Sec. 4.3. 10 J. Wang et al. 
+
+Algorithm 1 Closed-loop intention–execution inference                                            
+
+> Require: instruction ℓ
+> 1: c←IntentionAgent (ℓ, ∅,R)
+> 2: while not stopped do
+> 3: ( ˆPt,ˆAt, z t)←ExecutionAgent (ℓ, c, It−H:t)
+> 4: if zt= C then
+> 5: c←IntentionAgent (ℓ, It−H:t,C)
+> 6: else if zt= R then
+> 7: c←IntentionAgent (ℓ, It−H:t,R)
+> 8: else
+> 9: execute the first control in ˆAt
+> 10: if stop is predicted then
+> 11: break
+> 12: end if
+> 13: end if
+> 14: end while
+
+Implementation details. Both agents are initialized from separate Qwen2.5-VL-3B checkpoints. The intention agent retains the language-generation head, whereas the execution agent adds the navigation-query and action-query MLP heads and generates the status token through its language head. Observations use a history of H frames, and the action branch predicts Nq future controls at each step. 
+
+4 Experiments 
+
+4.1 Experimental Setup 
+
+Both agents are initialized from Qwen2.5-VL-3B and trained following the two-stage procedure in Fig. 2. In Stage 1, we pretrain the execution agent with Action-CoT on expert trajectories for one epoch. In Stage 2, we train the de-coupled agents for one epoch using a mixture of expert demonstrations and one-round reflective trajectories. We use a learning rate of 1 × 10 −5 in both stages. Training is conducted on 32 NVIDIA H20 GPUs and takes approximately 16 and 60 hours for the two stages, respectively. 
+
+Benchmarks and metrics. We evaluate on the Val-Unseen splits of R2R-CE and RxR-CE, two standard continuous-control VLN benchmarks built on Matterport3D. We report navigation error (NE), success rate (SR), oracle success rate (OSR), and success weighted by path length (SPL). An episode is successful if the agent stops within 3 m of the goal; OSR instead measures whether the trajectory visits this region at any point. 
+
+4.2 Comparison with State of the Art 
+
+Main results. Table 1 compares ReflectVLN with existing VLN-CE approaches. ReflectVLN achieves strong performance using only monocular RGB observa-ReflectVLN 11 
+
+Table 1: Comparison with existing approaches on the VLN-CE benchmarks (R2R and RxR Val-Unseen split). Pano, Odo, Depth, and S.RGB respectively represent panoramic view, odometry, depth, and single RGB. CorrectNav ∗ denotes the result obtained using only the first round of self-correction flywheel post-training. Method Observation R2R-CE Val-Unseen RxR-CE Val-Unseen S.RGB Pano. Depth Odo NE ↓ OS ↑ SR ↑ SPL ↑ NE ↓ SR ↑ SPL ↑                                                                                                                                                                                                                                
+
+> HPN+DN [16] ✓✓✓6.31 40.0 36.0 34.0 –––CMA [13] ✓✓✓6.20 52.0 41.0 36.0 8.76 26.5 22.1 Sim2Sim [17] ✓✓✓6.07 52.0 43.0 36.0 8.76 26.5 22.1 GridMM [39] ✓✓✓5.11 61.0 49.0 41.0 –––DreamWalker [36] ✓✓✓5.53 59.0 49.0 44.0 –––Reborn [2] ✓✓✓5.40 57.0 50.0 46.0 5.98 48.6 42.0 ETPNav [1] ✓✓✓4.71 65.0 57.0 49.0 5.64 54.7 44.8 HNR [38] ✓✓✓4.42 67.0 61.0 51.0 5.50 56.3 46.7 AG-CMTP [6] ✓✓✓7.90 39.0 23.0 19.0 –––R2R-CMTP [6] ✓✓✓7.90 38.0 26.0 22.0 –––Instruct-Nav [27] ✓✓✓6.89 –31.0 24.0 –––LAW [30] ✓✓✓6.83 44.0 35.0 31.0 10.90 8.0 8.0 CM2 [11] ✓✓✓7.02 41.0 34.0 27.0 –––WS-MGMap [7] ✓✓✓6.28 47.0 38.0 34.0 –––AO-Planner [5] ✓✓5.55 59.0 47.0 33.0 –––Seq2Seq [19] ✓✓7.77 37.0 25.0 22.0 12.10 13.9 11.9 CMA [19] ✓✓7.37 40.0 32.0 30.0 –––NAVid [50] ✓5.47 49.0 37.0 35.0 –––UniNAVid [49] ✓5.58 53.5 47.0 42.7 6.24 48.7 40.9 NaViLA [8] ✓5.22 62.5 54.0 49.0 6.77 49.3 44.0 StreamVLN [42] ✓4.98 64.2 56.9 51.9 6.22 52.9 46.0 CorrectNav ∗[47] ✓4.50 –61.4 59.0 4.40 63.1 57.0 DualVLN [41] ✓4.05 70.7 64.3 58.5 4.58 61.4 51.8 ReflectVLN (Ours) ✓4.19 67.3 62.8 58.5 3.98 66.0 57.2
+
+tions, without panoramic views, depth, or odometry. Compared with the RGB-only StreamVLN baseline, it improves SR by 5.9 percentage points on R2R and 13.1 points on RxR, with corresponding gains in SPL. The larger improvement on RxR, which contains longer and more detailed instructions, supports the ben-efit of maintaining semantic progress and revising sub-goals during long-horizon execution. ReflectVLN is particularly effective on RxR: it obtains the lowest NE among the compared methods and outperforms DualVLN by 4.6 SR points and 5.4 SPL points. On R2R, it matches DualVLN in SPL while remaining slightly lower in SR. Under the one-round setting of CorrectNav, ReflectVLN yields better SR on both benchmarks and comparable or better SPL. These results show that closed-loop intention–execution interaction provides a favorable accuracy–data trade-off, rather than uniformly dominating methods trained with larger-scale or iterative supervision. 
+
+Training efficiency. As summarized in Table 2, ReflectVLN uses a 3B back-bone and 1.5M samples drawn only from R2R and RxR. In contrast, DualVLN 12 J. Wang et al. ：“Walk down the hallway post the vases, enter the bedroom, walk to the foot of the bed, walk toward the bathroom on the left, wai t in the doorway to the bathroom.”                                      
+
+> The Robot is positioned
+> at the top of the stairs.
+> Looking towards ahallway
+> ,Walk down the hallway
+> post the vases.
+> Continue walking down the
+> hallway towards the
+> bedroom at the end.
+> Continue forward to the
+> bathroom doorway.
+> The entire instruction
+> set is complete.
+> <VLN BOR > <VLN BOA > <VLN BOA > <VLN BOR > <VLN BOR > ：“Enter the first bedroom on the right and wait in the an suite bathroom.”
+> The robot is positioned in
+> the hallway. Enter the
+> first bedroom on the right.
+> Locate and move the an
+> suite bathroom across the
+> room.
+> Turn around to face the
+> open doorway behind you.
+> The walk forward through
+> the doorway into the hall -
+> way with white double doors
+> and hardwood flooring.
+> The entire instruction set
+> id complete.
+> <VLN BOR > <VLN BOA > <VLN BOC > <VLN BOA > <VLN BOR >
+
+Fig. 4: Example visualizations on R2R Val-Unseen. Top: sub-goal grounding and progress tracking. Bottom: off-track detection and recovery via closed-loop replanning. 
+
+and CorrectNav use 7B backbones, additional ScaleVLN data, and substantially more training samples or iterative post-training. The competitive results under this controlled budget indicate that the gains arise from more effective reflective supervision and agent interaction, rather than data or model scaling alone. 
+
+Qualitative analysis. Figure 4 shows representative R2R Val-Unseen rollouts. The intention agent emits sub-goal descriptions that decompose long-horizon in-structions into actionable steps, making semantic progress inspectable. When the execution agent drifts, progress/deviation signals trigger on-demand reflec-tion, which revises the sub-goal and enables recovery to the correct route instead of continuing down an incorrect branch. 
+
+4.3 Ablation Studies 
+
+Effect of Action-CoT. Table 4 shows that Action-CoT improves SR and SPL by 7.2 and 7.1 points, respectively, while also reducing NE. This consistent improvement across success, efficiency, and goal distance suggests that coarse-route prediction provides useful path-level supervision for short-horizon control. 
+
+Decoupled agent design. As shown in Table 3, decoupling intention reason-ing from action execution improves SR and SPL by 5.5 and 5.8 points, respec-tively, over a unified VLM baseline(Qwen2.5-VL-7B). Although the unified model ReflectVLN 13 Method Data sources Samples CorrectNav (7B) R2R+RxR+ScaleVLN+VQA ∼3M (1st round) DualVLN (7B) R2R+RxR+ScaleVLN ∼12M Ours (2 ×3B) R2R+RxR+reflection ∼1.6M               
+
+> Table 2: Training data scale. ReflectVLN uses two independently parameterized 3B agents and approximately 1.5M expert plus 100k reflection-augmented samples, with-out ScaleVLN.
+> Table 3: Ablation of decoupled vs. unified training on R2R-CE Val-Unseen. methods R2R Validation Unseen NE ↓OS ↑SR ↑SPL ↑
+> Unified 5.052 68.6 57.3 52.7 Ours 4.190 67.3 62.8 58.5
+
+achieves a marginally higher OSR, it is less effective at translating near-goal visits into successful terminations. Notably, this comparison involves distinct param-eter budgets (a dual 3B-agent configuration versus a single 7B unified model). The superior performance of our approach, despite a smaller total parameter count, demonstrates that the gains are driven by the complete decoupled design itself, rather than mere architectural separation or parameter scaling. 
+
+On-demand intention updates. Table 5 compares feedback-triggered up-dates with periodic replanning. Fixed intervals expose a clear trade-off: infre-quent updates delay correction, whereas frequent updates invoke the high-level agent unnecessarily. On-demand triggering achieves the best NE, SR, and SPL among the tested schedules, showing that execution feedback provides a more effective update criterion than a fixed temporal cadence. 
+
+4.4 Inference Efficiency 
+
+Table 6 compares high-level invocation frequency with DualVLN [41]. ReflectVLN invokes its intention agent once every 9.63 execution steps on average, substan-             
+
+> Table 4: Ablation of Action-CoT pretraining on R2R-CE Val-Unseen. Methods R2R Validation Unseen NE ↓OS ↑SR ↑SPL ↑
+> Vanilla 5.145 59.5 52.8 50.1 Action-CoT 4.727 64.9 60.0 57.2
+
+14 J. Wang et al. 
+
+Table 5: On-demand intention triggering vs. fixed intervals on R2R-CE Val-Unseen. Interval denotes steps between intention calls. Trigger NE ↓ SR ↑ SPL ↑
+
+Fixed (every 4) 4.25 61.8 57.6 Fixed (every 12) 4.50 59.4 56.5 On-demand (Ours) 4.19 62.8 58.5 Table 6: Inference chunk settings vs. DualVLN on R2R-CE Val-Unseen. methods Global-Chunk Local-Chunk R2R Validation Unseen SR ↑ OSR ↑             
+
+> DualVLN 2464.9 70.9 3464.4 71.2 2662.6 69.9 Ours 19.63 62.8 67.3
+
+tially less often than the fixed schedules used by DualVLN, while retaining com-parable SR. This result demonstrates reduced reliance on high-level replanning. Because the table measures invocation frequency rather than latency or FLOPs, it should be interpreted as interaction efficiency rather than end-to-end compu-tational efficiency. 
+
+5 Conclusion 
+
+We present ReflectVLN, an agentic VLN framework with bidirectionally interac-tive intention and execution agents that targets long-horizon error accumulation. The intention agent performs subtask decomposition and corrective planning, while the execution agent conducts short-horizon control with progress and de-viation monitoring; closed-loop feedback enables on-demand reflection and recov-ery. Action-CoT provides path-conditioned auxiliary supervision for temporally coherent action prediction with interpretable intermediate signals. Experiments on standard VLN benchmarks show competitive success and path efficiency un-der a constrained data and training budget, together with fewer high-level in-tention calls and interpretable sub-goal decisions that facilitate analysis and collaboration. The invocation-frequency analysis characterizes interaction effi-ciency rather than complete system latency or computational cost. In addition, the decoupled and unified configurations differ in total parameter count, so their comparison evaluates the complete system designs rather than architectural sep-aration in isolation. Future work can study capacity-matched agent designs and more direct measures of recovery, triggering quality, and end-to-end efficiency. ReflectVLN 15 
+
+References 
+
+1. An, D., Wang, H., Wang, W., Wang, Z., Huang, Y., He, K., Wang, L.: Etpnav: Evolving topological planning for vision-language navigation in continuous envi-ronments. IEEE Transactions on Pattern Analysis and Machine Intelligence (2024) 2. An, D., Wang, Z., Li, Y., Wang, Y., Hong, Y., Huang, Y., Wang, L., Shao, J.: 1st place solutions for rxr-habitat vision-and-language navigation competition (cvpr 2022). arXiv preprint arXiv:2206.11610 (2022) 3. Azzolini, A., Bai, J., Brandon, H., Cao, J., Chattopadhyay, P., Chen, H., Chu, J., Cui, Y., Diamond, J., Ding, Y., et al.: Cosmos-reason1: From physical common sense to embodied reasoning. arXiv preprint arXiv:2503.15558 (2025) 4. Bai, S., Chen, K., Liu, X., Wang, J., Ge, W., Song, S., Dang, K., Wang, P., Wang, S., Tang, J., Zhong, H., Zhu, Y., Yang, M., Li, Z., Wan, J., Wang, P., Ding, W., Fu, Z., Xu, Y., Ye, J., Zhang, X., Xie, T., Cheng, Z., Zhang, H., Yang, Z., Xu, H., Lin, J.: Qwen2.5-vl technical report. arXiv preprint arXiv:2502.13923 (2025) 5. Chen, J., Lin, B., Liu, X., Ma, L., Liang, X., Wong, K.Y.K.: Affordances-oriented planning using foundation models for continuous vision-language navigation. In: Proceedings of the AAAI Conference on Artificial Intelligence. vol. 39, pp. 23568– 23576 (2025) 6. Chen, K., Chen, J.K., Chuang, J., Vázquez, M., Savarese, S.: Topological plan-ning with transformers for vision-and-language navigation. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 11276– 11286 (2021) 7. Chen, P., Ji, D., Lin, K., Zeng, R., Li, T., Tan, M., Gan, C.: Weakly-supervised multi-granularity map learning for vision-and-language navigation. Advances in Neural Information Processing Systems 35 , 38149–38161 (2022) 8. Cheng, A.C., Ji, Y., Yang, Z., Gongye, Z., Zou, X., Kautz, J., Bıyık, E., Yin, H., Liu, S., Wang, X.: Navila: Legged robot vision-language-action model for navigation. arXiv preprint arXiv:2412.04453 (2024) 9. Cheng, Z., Chen, Q., Xu, X., Wang, J., Wang, W., Fei, H., Wang, Y., Wang, A.J., Chen, Z., Che, W., et al.: Visual thoughts: A unified perspective of understanding multimodal chain-of-thought. arXiv preprint arXiv:2505.15510 (2025) 10. Dong, X., Zhao, H., Gao, J., Li, H., Ma, X., Zhou, Y., Chen, F., Liu, J.: Se-vln: A self-evolving vision-language navigation framework based on multimodal large language models. arXiv preprint arXiv:2507.13152 (2025) 11. Georgakis, G., Schmeckpeper, K., Wanchoo, K., Dan, S., Miltsakaki, E., Roth, D., Daniilidis, K.: Cross-modal map learning for vision and language navigation. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recog-nition. pp. 15460–15470 (2022) 12. He, G., Liu, Z., Xu, K., Xu, L., Qiao, T., Yu, W., Wu, C., Xie, W.: Nipping the drift in the bud: Retrospective rectification for robust vision-language navigation. arXiv preprint arXiv:2602.06356 (2026) 13. Hong, Y., Wang, Z., Wu, Q., Gould, S.: Bridging the gap between learning in discrete and continuous environments for vision-and-language navigation. In: Pro-ceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 15439–15449 (2022) 14. Intelligence, P., Black, K., Brown, N., Darpinian, J., Dhabalia, K., Driess, D., Esmail, A., Equi, M., Finn, C., Fusai, N., et al.: π0.5: a vision-language-action model with open-world generalization. arXiv preprint arXiv:2504.16054 (2025) 16 J. Wang et al. 15. Kelly, M., Sidrane, C., Driggs-Campbell, K., Kochenderfer, M.J.: Hg-dagger: Inter-active imitation learning with human experts. In: 2019 International Conference on Robotics and Automation (ICRA). pp. 8077–8083. IEEE (2019) 16. Krantz, J., Gokaslan, A., Batra, D., Lee, S., Maksymets, O.: Waypoint models for instruction-guided navigation in continuous environments. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 15162–15171 (2021) 17. Krantz, J., Lee, S.: Sim-2-sim transfer for vision-and-language navigation in con-tinuous environments. In: European conference on computer vision. pp. 588–603. Springer (2022) 18. Krantz, J., Wijmans, E., Majumdar, A., Batra, D., Lee, S.: Beyond the nav-graph: Vision-and-language navigation in continuous environments. In: European Confer-ence on Computer Vision. pp. 104–120. Springer (2020) 19. Krantz, J., Wijmans, E., Majumdar, A., Batra, D., Lee, S.: Beyond the nav-graph: Vision-and-language navigation in continuous environments. In: European Confer-ence on Computer Vision. pp. 104–120. Springer (2020) 20. Ku, A., Anderson, P., Patel, R., Ie, E., Baldridge, J.: Room-across-room: Multi-lingual vision-and-language navigation with dense spatiotemporal grounding. In: Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP). pp. 4392–4412 (2020) 21. Lee, S.W., Kang, X., Kuo, Y.L.: Diff-dagger: Uncertainty estimation with diffu-sion policy for robotic manipulation. In: 2025 IEEE International Conference on Robotics and Automation (ICRA). pp. 4845–4852. IEEE (2025) 22. Li, J., Tan, H., Bansal, M.: Envedit: Environment editing for vision-and-language navigation. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 15407–15417 (2022) 23. Li, Y.W., Wan, L.C.: Inspiring tourists’ imagination: How and when human pres-ence in photographs enhances travel mental simulation and destination attractive-ness. Tourism management 106 , 104969 (2025) 24. Li, Z., Li, S., Zhang, Z., Li, B., Zhou, S.: Dv-vln: Dual verification for reliable llm-based vision-and-language navigation. arXiv preprint arXiv:2601.18492 (2026) 25. Liu, F., Xie, S., Luo, M., Chu, Z., Hu, J., Wu, X., Xu, M.: Navforesee: A unified vision-language world model for hierarchical planning and dual-horizon navigation prediction. arXiv preprint arXiv:2512.01550 (2025) 26. Long, J.: Large language model guided tree-of-thought. arXiv preprint arXiv:2305.08291 (2023) 27. Long, Y., Cai, W., Wang, H., Zhan, G., Dong, H.: Instructnav: Zero-shot sys-tem for generic instruction navigation in unexplored environment. arXiv preprint arXiv:2406.04882 (2024) 28. Mei, Y., Yang, Y., Guo, L., Wang, Q., Yu, M.M., He, X., Wu, W., Liu, J.: Urbannav: Learning language-guided urban navigation from web-scale human trajectories. arXiv preprint arXiv:2512.09607 (2025) 29. Otto, T.D., Sanders, M., Berriman, M., Newbold, C.: Iterative correction of refer-ence nucleotides (icorn) using second generation sequencing technology. Bioinfor-matics 26 (14), 1704–1707 (2010) 30. Raychaudhuri, S., Wani, S., Patel, S., Jain, U., Chang, A.: Language-aligned way-point (law) supervision for vision-and-language navigation in continuous environ-ments. In: Proceedings of the 2021 conference on empirical methods in natural language processing. pp. 4018–4028 (2021) 31. Ross, S., Gordon, G., Bagnell, D.: A reduction of imitation learning and struc-tured prediction to no-regret online learning. In: Proceedings of the fourteenth in-ReflectVLN 17 ternational conference on artificial intelligence and statistics. pp. 627–635. JMLR Workshop and Conference Proceedings (2011) 32. Seeber, M., Stangl, M., Vallejo Martelo, M., Topalovic, U., Hiller, S., Halpern, C.H., Langevin, J.P., Rao, V.R., Fried, I., Eliashiv, D., et al.: Human neural dynamics of real-world and imagined navigation. Nature Human Behaviour 9(4), 781–793 (2025) 33. Shi, L.X., Ichter, B., Equi, M., Ke, L., Pertsch, K., Vuong, Q., Tanner, J., Walling, A., Wang, H., Fusai, N., et al.: Hi robot: Open-ended instruction following with hierarchical vision-language-action models. arXiv preprint arXiv:2502.19417 (2025) 34. Team, Q.: Qwen3 technical report (2025), https://arxiv.org/abs/2505.09388 
+
+35. Wang, D., Bai, C., Li, C., Shi, J., Ding, Y., Zhang, C., Zhao, B.: Skill-nav: en-hanced navigation with versatile quadrupedal locomotion via waypoint interface. Vicinagearth 2(1), 7 (2025) 36. Wang, H., Liang, W., Van Gool, L., Wang, W.: Dreamwalker: Mental planning for continuous vision-language navigation. In: Proceedings of the IEEE/CVF interna-tional conference on computer vision. pp. 10873–10883 (2023) 37. Wang, X., Wei, J., Schuurmans, D., Le, Q., Chi, E., Narang, S., Chowdhery, A., Zhou, D.: Self-consistency improves chain of thought reasoning in language models. arXiv preprint arXiv:2203.11171 (2022) 38. Wang, Z., Li, X., Yang, J., Liu, Y., Hu, J., Jiang, M., Jiang, S.: Lookahead explo-ration with neural radiance representation for continuous vision-language naviga-tion. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 13753–13762 (2024) 39. Wang, Z., Li, X., Yang, J., Liu, Y., Jiang, S.: Gridmm: Grid memory map for vision-and-language navigation. In: Proceedings of the IEEE/CVF International conference on computer vision. pp. 15625–15636 (2023) 40. Wei, J., Wang, X., Schuurmans, D., Bosma, M., Xia, F., Chi, E., Le, Q.V., Zhou, D., et al.: Chain-of-thought prompting elicits reasoning in large language models. Advances in neural information processing systems 35 , 24824–24837 (2022) 41. Wei, M., Wan, C., Peng, J., Yu, X., Yang, Y., Feng, D., Cai, W., Zhu, C., Wang, T., Pang, J., et al.: Ground slow, move fast: A dual-system foundation model for generalizable vision-and-language navigation. arXiv preprint arXiv:2512.08186 (2025) 42. Wei, M., Wan, C., Yu, X., Wang, T., Yang, Y., Mao, X., Zhu, C., Cai, W., Wang, H., Chen, Y., et al.: Streamvln: Streaming vision-and-language navigation via slowfast context modeling. arXiv preprint arXiv:2507.05240 (2025) 43. Xu, Y., Pan, Y., Liu, Z., Wang, H.: Flame: Learning to navigate with multimodal llm in urban environments. In: Proceedings of the AAAI Conference on Artificial Intelligence. vol. 39, pp. 9005–9013 (2025) 44. Xue, X., Hu, J., Luo, M., Xie, S., Chen, J., Xie, Z., Quan, K., Guo, W., Xu, M., Chu, Z.: Omninav: A unified framework for prospective exploration and visual-language navigation. arXiv preprint arXiv:2509.25687 (2025) 45. Yao, S., Yu, D., Zhao, J., Shafran, I., Griffiths, T., Cao, Y., Narasimhan, K.: Tree of thoughts: Deliberate problem solving with large language models. Advances in neural information processing systems 36 , 11809–11822 (2023) 46. Yao, X., Gao, J., Xu, C.: Navmorph: A self-evolving world model for vision-and-language navigation in continuous environments. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 5536–5546 (2025) 47. Yu, Z., Long, Y., Yang, Z., Zeng, C., Fan, H., Zhang, J., Dong, H.: Correctnav: Self-correction flywheel empowers vision-language-action navigation model. arXiv preprint arXiv:2508.10416 (2025) 18 J. Wang et al. 48. Zawalski, M., Chen, W., Pertsch, K., Mees, O., Finn, C., Levine, S.: Robotic control via embodied chain-of-thought reasoning. arXiv preprint arXiv:2407.08693 (2024) 49. Zhang, J., Wang, K., Wang, S., Li, M., Liu, H., Wei, S., Wang, Z., Zhang, Z., Wang, H.: Uni-navid: A video-based vision-language-action model for unifying embodied navigation tasks. arXiv preprint arXiv:2412.06224 (2024) 50. Zhang, J., Wang, K., Xu, R., Zhou, G., Hong, Y., Fang, X., Wu, Q., Zhang, Z., Wang, H.: Navid: Video-based vlm plans the next step for vision-and-language navigation. arXiv preprint arXiv:2402.15852 (2024) 51. Zhang, W., Liu, H., Qi, Z., Wang, Y., Yu, X., Zhang, J., Dong, R., He, J., Lu, F., Wang, H., et al.: Dreamvla: a vision-language-action model dreamed with compre-hensive world knowledge. arXiv preprint arXiv:2507.04447 (2025) 52. Zhao, Q., Lu, Y., Kim, M.J., Fu, Z., Zhang, Z., Wu, Y., Li, Z., Ma, Q., Han, S., Finn, C., et al.: Cot-vla: Visual chain-of-thought reasoning for vision-language-action models. In: Proceedings of the Computer Vision and Pattern Recognition Conference. pp. 1702–1713 (2025) 53. Zhao, Y., Yang, Y., Zhu, Y., Shen, Y., Wang, C., Gu, Z., Shi, P., Guo, W., Xu, M.: Bridging the indoor-outdoor gap: Vision-centric instruction-guided embodied navigation for the last meters. arXiv preprint arXiv:2602.06427 (2026) 54. Zhong, L., Liu, Y., Wei, Y., Xiong, Z., Yao, M., Liu, S., Ren, G.: Acot-vla: Action chain-of-thought for vision-language-action models. arXiv preprint arXiv:2601.11404 (2026) 55. Zhou, D., Schärli, N., Hou, L., Wei, J., Scales, N., Wang, X., Schuurmans, D., Cui, C., Bousquet, O., Le, Q., et al.: Least-to-most prompting enables complex reasoning in large language models. arXiv preprint arXiv:2205.10625 (2022)

@@ -6,112 +6,85 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-08 ~ 2026-07-17
-- 运行时间：2026-07-17 09:32:40 UTC
+- 最新运行日期：2026-07-17
+- 运行时间：2026-07-17 21:18:24 UTC
 - 运行状态：成功
-- 本次总论文数：30
-- 精读区：17
+- 本次总论文数：21
+- 精读区：8
 - 速读区：13
 
 ### 今日简报（AI）
-本期聚焦机器人学习前沿，精读2篇满分论文，涵盖预测对齐与语义锚定。  
-最值得关注的方向是预测性、对齐与可扩展的机器人学习，以及动作语义的锚定机制。  
-建议普通读者优先精读两篇满分论文，再速读CLAP等高效适应方法，以系统把握当前VLA研究主线。
-- 详情：[/20260708-20260717/README](/20260708-20260717/README)
+今日精读两篇高分论文，分别探索从世界模型到具身智能的路线图与基于潜交互的自动驾驶决策方法，速读则涵盖操控策略、触觉感知与视觉鲁棒性。  
+最值得关注的是通往开放世界物理智能的蓝图及无需解码器的自动驾驶潜交互Dreamer方法。  
+建议优先精读这两篇9.0分论文，速读部分可补充操控与感知的实用改进。
+- 详情：[/202607/17/README](/202607/17/README)
 
 ### 精读区论文标签
-1. [Towards Predictive, Aligned, and Scalable Robot Learning](/20260708-20260717/2607.11270v1-towards-predictive-aligned-and-scalable-robot-learning)  
-   标签：评分：10.0/10、query:wam-vla
-   evidence：在潜在空间进行预测推理的潜在世界动作模型
-2. [Semantic Anchoring for Robotic Action Representations](/20260708-20260717/2607.13597v1-semantic-anchoring-for-robotic-action-representations)  
-   标签：评分：10.0/10、query:latent-vla
-   evidence：VLA动作表示的语义锚定
-3. [BadWAM: When World-Action Models Dream Right but Act Wrong](/20260708-20260717/2607.15207v1-badwam-when-world-action-models-dream-right-but-act-wrong)  
-   标签：评分：10.0/10、query:wam-vla
-   evidence：世界-动作模型的对抗攻击分析
-4. [TFP: Temporally Conditioned Memory-Fusion Policies for Visuomotor Learning](/20260708-20260717/2607.08283v2-tfp-temporally-conditioned-memory-fusion-policies-for-visuomotor-learning)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：面向VLA策略的动力学感知信念更新，融入潜在任务进度
-5. [FlowDAgger: Human-in-the-Loop Adaptation of Generative Robot Policies in Latent Space](/20260708-20260717/2607.08877v1-flowdagger-human-in-the-loop-adaptation-of-generative-robot-policies-in-latent-space)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：通过动作逆映射在潜在空间中自适应生成式机器人策略
-6. [ActiveFly-Bench: Aligning Embodied Question Answering with Vision-Language-Action for Aerial Embodied Perception](/20260708-20260717/2607.10180v1-activefly-bench-aligning-embodied-question-answering-with-vision-language-action-for-aerial-embodied-perception)  
-   标签：评分：9.0/10、query:latent-vla
-   evidence：用于空中具身感知的视觉-语言-动作模型
-7. [A Control Theory of Predictability in Latent World Models](/20260708-20260717/2607.10362v1-a-control-theory-of-predictability-in-latent-world-models)  
+1. [From World Action Models to Embodied Brains: A Roadmap for Open-World Physical Intelligence](/202607/17/2607.11689v1-from-world-action-models-to-embodied-brains-a-roadmap-for-open-world-physical-intelligence)  
    标签：评分：9.0/10、query:wam-vla
-   evidence：潜在世界模型；可预测性；控制理论
-8. [WALA Learning Executable Latent Actions from Action-Labeled Demonstrations and Action-Free Videos](/20260708-20260717/2607.11397v1-wala-learning-executable-latent-actions-from-action-labeled-demonstrations-and-action-free-videos)  
+   evidence：关于世界动作模型在具身AI中的全面综述
+2. [LIDAR-AD: A Decoder-Free Latent-Interaction Dreamer with Action-Residual Chains for Autonomous Driving](/202607/17/2607.11964v1-lidar-ad-a-decoder-free-latent-interaction-dreamer-with-action-residual-chains-for-autonomous-driving)  
    标签：评分：9.0/10、query:latent-vla
-   evidence：从视频和演示中学习可执行的潜在动作
-9. [EDAR: Learning Environment-Dependent Action Representations for Robotic Manipulation](/20260708-20260717/2607.11427v1-edar-learning-environment-dependent-action-representations-for-robotic-manipulation)  
+   evidence：用于自动驾驶的无解码器潜在交互Dreamer与动作残差链，是一种潜在动力学模型
+3. [ExToken: Structured Exploration for Efficient Vision-Language-Action Reinforcement Fine-tuning](/202607/17/2607.12931v1-extoken-structured-exploration-for-efficient-vision-language-action-reinforcement-fine-tuning)  
    标签：评分：9.0/10、query:latent-vla
-   evidence：面向VLA机器人策略的潜在动作表征学习
-10. [See like a Robot: Robot-Centric Pointmaps for Vision-Language-Action Models](/20260708-20260717/2607.11498v1-see-like-a-robot-robot-centric-pointmaps-for-vision-language-action-models)  
+   evidence：VLA强化微调中基于离散行为先验的结构化探索
+4. [DiMaS: Distribution Matching for Steering Vision-Language-Action Models](/202607/17/2607.14280v1-dimas-distribution-matching-for-steering-vision-language-action-models)  
    标签：评分：9.0/10、query:latent-vla
-   evidence：机器人中心点图解决VLA坐标系不匹配
-11. [VistaVLA: Geometry- and Semantic-Aware 3D Gaussian-Grounded VLA for Robotic Manipulation](/20260708-20260717/2607.12356v2-vistavla-geometry--and-semantic-aware-3d-gaussian-grounded-vla-for-robotic-manipulation)  
+   evidence：通过分布匹配操控VLA内部表示以实现行为控制
+5. [Action QFormer: Structured Representation Shaping under Action Supervision in Vision-Language-Action Models](/202607/17/2607.14635v1-action-qformer-structured-representation-shaping-under-action-supervision-in-vision-language-action-models)  
    标签：评分：9.0/10、query:latent-vla
-   evidence：面向机器人操作的VLA模型，融入3D几何与语义感知
-12. [Mind the Gap: Promises and Pitfalls of Hierarchical Planning in LeWorldModel](/20260708-20260717/2607.12547v1-mind-the-gap-promises-and-pitfalls-of-hierarchical-planning-in-leworldmodel)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：潜在世界模型中的分层规划与子目标生成
-13. [FlowWAM: Optical Flow as a Unified Action Representation for World Action Models](/20260708-20260717/2607.13017v1-flowwam-optical-flow-as-a-unified-action-representation-for-world-action-models)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：使用光流作为动作表示的世界动作模型
-14. [Generalizable VLA Finetuning via Representation Anchoring and Language-Action Alignment](/20260708-20260717/2607.13429v1-generalizable-vla-finetuning-via-representation-anchoring-and-language-action-alignment)  
+   evidence：通过基于查询的接口，动作监督塑造VLA模型中的潜在表示
+6. [Reflex: Real-Time VLA Control through Streaming Inference](/202607/17/2607.14695v1-reflex-real-time-vla-control-through-streaming-inference)  
+   标签：评分：9.0/10、query:vla-models
+   evidence：面向A100等GPU的实时VLA推理
+7. [FoMoVLA: Bridging Visual Foresight and Motion Guidance for Vision-Language-Action Models](/202607/17/2607.14739v1-fomovla-bridging-visual-foresight-and-motion-guidance-for-vision-language-action-models)  
    标签：评分：9.0/10、query:latent-vla
-   evidence：视觉-语言-动作（VLA）策略微调
-15. [GigaWorld-Policy-0.5: A Faster and Stronger WAM Empowered by AutoResearch](/20260708-20260717/2607.13960v2-gigaworld-policy-05-a-faster-and-stronger-wam-empowered-by-autoresearch)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：World Action Model；以动作为中心的公式实现高效推理
-16. [Steering Robustness into World Action Models via Mechanistic Interpretability and Optimal Control](/20260708-20260717/2607.14943v1-steering-robustness-into-world-action-models-via-mechanistic-interpretability-and-optimal-control)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：用于具身AI预测规划与控制的世界行动模型
-17. [DriftWorld: Fast World Modeling through Drifting](/20260708-20260717/2607.15065v1-driftworld-fast-world-modeling-through-drifting)  
-   标签：评分：9.0/10、query:wam-vla
-   evidence：快速单次前向生成的动作条件世界模型
+   evidence：通过未来特征预测和稀疏点跟踪增强VLA的时空监督
+8. [Towards Human-like Physical Intelligence: LifelongVision-Language-Action Learning for Robotic Manipulation](/202607/17/2607.14852v1-towards-human-like-physical-intelligence-lifelongvision-language-action-learning-for-robotic-manipulation)  
+   标签：评分：9.0/10、query:latent-vla
+   evidence：面向机器人操作的终身视觉-语言-动作学习
 
 ### 速读区论文标签
-1. [CLAP: Direct VLM-to-VLA Adaptation via Language-Action Grounding](/20260708-20260717/2607.08974v1-clap-direct-vlm-to-vla-adaptation-via-language-action-grounding)  
+1. [B-spline Policy: Accelerating Manipulation Policies via B-spline Action Representations](/202607/17/2607.09648v1-b-spline-policy-accelerating-manipulation-policies-via-b-spline-action-representations)  
    标签：评分：8.0/10、query:latent-vla
-   evidence：直接将VLM适配为VLA用于机器人控制
-2. [Learning More from Less: Reinforcement Learning from Hindsight](/20260708-20260717/2607.09042v1-learning-more-from-less-reinforcement-learning-from-hindsight)  
+   evidence：B样条动作表示加速机器人操作策略
+2. [Representation-Aligned Tactile Grounding for Contact-Rich Robotic Manipulation](/202607/17/2607.14609v1-representation-aligned-tactile-grounding-for-contact-rich-robotic-manipulation)  
    标签：评分：8.0/10、query:latent-vla
-   evidence：使用事后重标记对VLA模型进行强化学习后训练
-3. [TS-Mask VLA: 2D Temporal-Spatial Masking for Vision-Language-Action Model with Effective Bridging](/20260708-20260717/2607.09818v1-ts-mask-vla-2d-temporal-spatial-masking-for-vision-language-action-model-with-effective-bridging)  
+   evidence：触觉增强的VLA操作策略
+3. [Lights, Camera, Malfunction: When Illumination Robustness Leaves VLA Models Blind to Color](/202607/17/2607.14698v1-lights-camera-malfunction-when-illumination-robustness-leaves-vla-models-blind-to-color)  
    标签：评分：8.0/10、query:latent-vla
-   evidence：用于机器人操作的视觉-语言-动作模型
-4. [On the Efficiency of LoRA Fine-Tuning for Vision-Language-Action Models in Industrial Robotic Manipulation](/20260708-20260717/2607.10172v1-on-the-efficiency-of-lora-fine-tuning-for-vision-language-action-models-in-industrial-robotic-manipulation)  
-   标签：评分：8.0/10、query:latent-vla
-   evidence：针对VLA模型的LoRA微调研究，应用于机器人操作
-5. [SUREFlow: State-space Uncertainty-aware REsidual Flow Matching for Robust Robot Manipulation](/20260708-20260717/2607.10504v1-sureflow-state-space-uncertainty-aware-residual-flow-matching-for-robust-robot-manipulation)  
-   标签：评分：8.0/10、query:latent-vla
-   evidence：含不确定性感知的VLA策略
-6. [Validate the Dream Before You Trust Its Verdict: Admissibility for World-Model Simulators](/20260708-20260717/2607.07196v1-validate-the-dream-before-you-trust-its-verdict-admissibility-for-world-model-simulators)  
-   标签：评分：7.0/10、query:wam-vla
-   evidence：世界模型模拟器在策略评估中的验证
-7. [APIVOT: Adaptive Planning with Interleaved Vision-Language Thoughts](/20260708-20260717/2607.08024v1-apivot-adaptive-planning-with-interleaved-vision-language-thoughts)  
+   evidence：研究VLA模型的光照鲁棒性并提出物理攻击框架
+4. [Action Map Policy: Learning 3D Closed-loop Manipulation via Pixel Classification](/202607/17/2607.10706v1-action-map-policy-learning-3d-closed-loop-manipulation-via-pixel-classification)  
    标签：评分：7.0/10、query:latent-vla
-   evidence：使用想象未来状态的自适应规划，融合视觉-语言思考
-8. [Robot Trajectron V3: A Probabilistic Shared Control Framework for SE(3) Manipulation](/20260708-20260717/2607.09315v1-robot-trajectron-v3-a-probabilistic-shared-control-framework-for-se3-manipulation)  
+   evidence：通过图像像素分类学习动作表示
+5. [Traj-VLN: Learning Pixel-Space Interaction via Autoregressive Trajectory Generation](/202607/17/2607.10744v1-traj-vln-learning-pixel-space-interaction-via-autoregressive-trajectory-generation)  
+   标签：评分：7.0/10、query:latent-vla
+   evidence：基于VLM的导航与轨迹生成
+6. [Is Energy Guidance All You Need? Training-Free Norm Injection for Driving World Models](/202607/17/2607.10781v1-is-energy-guidance-all-you-need-training-free-norm-injection-for-driving-world-models)  
    标签：评分：7.0/10、query:wam-vla
-   evidence：未来轨迹先验作为机器人状态预测的世界模型
-9. [ABot-AgentOS: A General Robotic Agent OS with Lifelong Multi-modal Memory](/20260708-20260717/2607.10350v1-abot-agentos-a-general-robotic-agent-os-with-lifelong-multi-modal-memory)  
-   标签：评分：7.0/10、query:vla-models
-   evidence：具有充分基准实验结果的VLA系统
-10. [Multi-Agent Robotic Control with Onboard Vision-Language Models](/20260708-20260717/2607.07403v1-multi-agent-robotic-control-with-onboard-vision-language-models)  
+   evidence：驾驶世界模型，通过能量引导进行动作轨迹规划
+7. [Reducing Temporal Redundancy for Efficient Vision-Language-Action Inference](/202607/17/2607.12287v1-reducing-temporal-redundancy-for-efficient-vision-language-action-inference)  
+   标签：评分：7.0/10、query:latent-vla
+   evidence：通过减少感知和动作中的时间冗余实现高效VLA推理
+8. [Jetson-PI: Towards Onboard Real-Time Robot Control via Foresight-Aligned Asynchronous Inference](/202607/17/2607.12659v1-jetson-pi-towards-onboard-real-time-robot-control-via-foresight-aligned-asynchronous-inference)  
+   标签：评分：7.0/10、query:latent-vla
+   evidence：通过异步推理校正实现VLA在板载设备上的高效部署
+9. [Hy-Embodied-VLM-1.0: Efficient Physical-World Agents](/202607/17/2607.12894v1-hy-embodied-vlm-10-efficient-physical-world-agents)  
+   标签：评分：7.0/10、query:latent-vla
+   evidence：具有以动作中心能力分类的高效实体VLM，用于物理世界代理
+10. [ABot-N1: Toward a General Visual Language Navigation Foundation Model](/202607/17/2607.10383v2-abot-n1-toward-a-general-visual-language-navigation-foundation-model)  
    标签：评分：6.0/10、query:latent-vla
-   evidence：VLA模型用于机器人控制；多智能体系统在板载硬件上运行
-11. [GenVid2Robot: From Video Generation to Robot Manipulation via Rigid-Geometric Consistency](/20260708-20260717/2607.09191v1-genvid2robot-from-video-generation-to-robot-manipulation-via-rigid-geometric-consistency)  
+   evidence：视觉语言导航基础模型，适用于具身任务
+11. [Affordance-Based Manipulation Planning with Text Goals and Sim-to-Real Generalisation via Real-to-Sim Image Conversion](/202607/17/2607.11004v1-affordance-based-manipulation-planning-with-text-goals-and-sim-to-real-generalisation-via-real-to-sim-image-conversion)  
    标签：评分：6.0/10、query:wam-vla
-   evidence：利用生成视频作为机器人操作的世界模型，将视频运动转换为可执行轨迹
-12. [PAC-ACT: Post-training Actor-Critic for Action Chunking Transformers](/20260708-20260717/2607.09590v1-pac-act-post-training-actor-critic-for-action-chunking-transformers)  
+   evidence：基于可供性的操作规划，通过动作效果预测和未来状态推理
+12. [ReflectVLN: Training Vision-Language Navigation Agents with Reflective Reasoning](/202607/17/2607.12680v1-reflectvln-training-vision-language-navigation-agents-with-reflective-reasoning)  
    标签：评分：6.0/10、query:latent-vla
-   evidence：针对预训练动作分块策略的后训练强化学习框架，与VLA模型相关
-13. [HELP: Human-Efficient Large-Scale Robot Post-Training with Rollout Segmentation](/20260708-20260717/2607.09776v2-help-human-efficient-large-scale-robot-post-training-with-rollout-segmentation)  
+   evidence：具有反射推理的视觉语言导航智能体
+13. [SoftNav: Injecting 3D Scene Tokens into VLMs for Embodied Navigation](/202607/17/2607.14586v1-softnav-injecting-3d-scene-tokens-into-vlms-for-embodied-navigation)  
    标签：评分：6.0/10、query:latent-vla
-   evidence：关注人体效率的VLA后训练流程
+   evidence：将3D场景标记注入视觉-语言模型用于具身导航
 
 
 <div class="dpr-home-promo-card">

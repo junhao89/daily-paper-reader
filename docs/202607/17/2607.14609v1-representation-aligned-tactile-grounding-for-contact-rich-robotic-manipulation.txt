@@ -1,0 +1,351 @@
+Title: Representation-Aligned Tactile Grounding for Contact-Rich Robotic Manipulation
+
+URL Source: https://arxiv.org/pdf/2607.14609v1
+
+Published Time: Fri, 17 Jul 2026 00:37:59 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Representation-Aligned Tactile Grounding for Contact-Rich Robotic Manipulation 
+
+Ruilin Chen 1∗ Jingkai Jia 2∗ Tong Yang 1,5 Xinyu Zhou 4 Qiao Sun 3 Jiangwei Zhong 3
+
+Shizeng Zhang 3 Nuo Chen 3 Bailin He 3 Wei Li 2 Wenqiang Zhang 1,21Shanghai Key Lab of Intelligent Information Processing, College of Computer Science and Artificial Intelligence, Fudan University 
+
+> 2
+
+College of Intelligent Robotics and Advanced Manufacturing, Fudan University 
+
+> 3
+
+Lenovo CTO Organization 4Nanyang Technological University 5TeleAl, China Telecom 
+
+{rlchen25, jkjia24, tongyang23}@m.fudan.edu.cn sunqiao6@lenovo.com wqzhang@fudan.edu.cn 
+
+Abstract: Tactile-enhanced vision-language-action (VLA) policies have been introduced for contact-rich manipulation, where critical interaction states are of-ten hidden from vision. Future tactile prediction is a promising way to use touch because it turns tactile outcomes into supervision for action-induced contact dynam-ics. Yet VLA policies contain representations with different roles, from perceptual encoding to motor prediction, making it unclear where this supervision should be applied. We study this as a representation-alignment problem. Through a linear probe analysis, we find that future tactile states are most predictable from inter-mediate action-expert features, rather than from vision-language features or final action states. Motivated by this observation, we introduce a lightweight Latent Tactile Predictor (LTP), which predicts compact future tactile embeddings from the identified intermediate representation. By avoiding direct prediction of noisy raw tactile signals, LTP provides an action-outcome grounding signal that aligns intermediate action representations with future contact consequences. Experiments on real-world contact-rich manipulation tasks show that representation-aligned tactile grounding outperforms less aligned or multi-interface tactile prediction, highlighting the importance of where tactile supervision is applied. 
+
+## 1 Introduction 
+
+Despite recent progress in vision-language-action (VLA) models [ 1, 2 , 3], contact-rich manipulation remains challenging because many critical state variables are not visually observable. Tasks such as insertion, alignment, and force-sensitive handling depend on robot–object–environment contact dynamics, where success hinges on how the robot presses, slides, and corrects its pose. Tactile sensing therefore provides a direct source of information about interaction dynamics hidden from visual perception [ 4, 5], motivating tactile-enhanced VLA methods that introduce touch for contact-rich control [ 6, 7, 8 , 9]. Beyond conditioning the policy on tactile observations, future tactile prediction offers a more active way to use touch: it turns tactile outcomes into supervision for how the policy’s own action chunk changes subsequent contact states, encouraging action-conditioned representations to encode contact dynamics. Once tactile prediction is introduced, the key question is what representation it should shape. A natural intuition is to attach future tactile prediction to the final action representation, since tactile feedback and motor control are tightly coupled in contact-rich manipulation. Yet the final action state is already specialized for immediate motor decoding and may have compressed away information useful for modeling future contact. Conversely, applying tactile prediction to the vision-language backbone may keep the objective too close to semantic perception and too far from the action-conditioned 
+
+> ∗
+
+Equal contribution. arXiv:2607.14609v1 [cs.RO] 16 Jul 2026 1. 增加论文的 motivation 图Figure 1: Motivation of representation-aligned tactile grounding. Future tactile prediction is most effective when applied to a representation aligned with action-conditioned contact dynamics. VLM-side features are too perception-oriented, while final action features are already specialized for motor decoding. We therefore ground the intermediate action-expert representation, where future tactile information is most accessible. dynamics that give tactile signals their control relevance. Thus, tactile prediction is not simply an auxiliary loss to be added anywhere in the policy. This raises a representation-alignment question: which internal representation should future tactile prediction supervise to ground action-conditioned contact dynamics rather than introduce mismatched regularization? In this work, we study tactile prediction as an interaction-grounding objective for VLA policies. Rather than choosing the grounding interface by architectural convention, we diagnose where future tactile information is most accessible along the action pathway using lightweight frozen linear probes. Across settings with and without tactile input, as well as across model scales, the same pattern emerges: intermediate action-expert representations are more predictive of future tactile states than either vision-language backbone features or terminal action states. This suggests that future contact information is most available after action-conditioned interaction features have formed, but before the representation becomes specialized for immediate motor prediction. Guided by this diagnosis, we apply tactile prediction to the intermediate action-expert representation. However, directly predicting raw tactile signals is ill-suited for grounding: tactile measurements are high-dimensional, sensor-specific, and noisy, so a raw prediction loss may emphasize sensing artifacts rather than control-relevant contact dynamics. We therefore introduce a lightweight Latent Tactile Predictor (LTP), which predicts future tactile outcomes in a compact latent space and provides a training-time grounding loss without changing the inference pathway. This loss encourages the intermediate action representation to preserve contact dynamics before they are compressed into immediate motor commands. We evaluate this representation-aligned tactile grounding strategy across a range of real-world contact-rich manipulation tasks. Applying LTP at the intermediate action-expert representation achieves 74% average success, outperforming less aligned tactile prediction interfaces at the VLM and final action states by 16 and 12 points, respectively, as well as broad multi-interface supervision. These results support the central premise of our method: tactile prediction benefits most when it supervises the stage where action-conditioned interaction dynamics are still being formed, before the final action layers specialize the representation toward executable motor predictions. In summary, our contributions are as follows: • Representation-aligned diagnosis. We formulate future tactile prediction as representation-aligned grounding and use frozen linear probes to identify intermediate action-expert features as the most predictive interface for future tactile states. 2• Latent tactile grounding. LTP predicts compact future tactile latents at the diagnosed intermediate interface, avoiding noisy raw tactile prediction while providing a training-time grounding loss without changing inference. • Effectiveness on contact-rich manipulation. Our representation-aligned tactile grounding improves contact-rich manipulation and outperforms less aligned and multi-interface tactile prediction strategies. 
+
+## 2 Related Work 
+
+2.1 Vision-Language-Action Models 
+
+By leveraging the semantic and perceptual capabilities of pre-trained vision-language models [ 10 ,11 , 12 ], vision-language-action (VLA) models extend multimodal pretraining to robotic control by mapping visual observations and language instructions into executable actions [ 13 , 14 , 15 , 1, 2, 16 , 3]. These models differ in how they adapt pretrained backbones and parameterize robot actions, but they share the same central objective of translating visual-linguistic context into executable action trajectories. This line of work has substantially improved the scalability, generality, and deployability of robot policies. However, these advances mainly improve how actions are generated from visual-linguistic context, while contact states remain difficult to observe. States such as slip, pressure, local resistance, and insertion alignment are often visually ambiguous or hidden, but are decisive for contact-rich manipulation. This contact-observability gap motivates the use of tactile sensing, which provides direct access to interaction states that vision alone may miss [ 5 , 4, 17 ]. It has also motivated recent efforts to extend VLA policies with tactile feedback. 
+
+2.2 Tactile-Enhanced Vision-Language-Action Models 
+
+Motivated by this contact-observability gap, tactile-enhanced VLA methods provide policies with direct access to touch. Existing work mainly improves how tactile signals enter or modulate the policy, through tactile tokens or embeddings, multimodal fusion, adapters, gating, or mixture-of-experts mechanisms [ 6, 18 , 7 , 8, 19 , 20 , 21 , 9, 22 , 23 , 24 ]. These designs improve tactile access and fusion, but mostly treat touch as an input signal: the policy can condition on tactile readings, yet is not explicitly required to model how its own actions change future contact. A complementary direction is to predict future tactile states or visuo-tactile dynamics conditioned on actions [ 25 , 26 , 27 , 28 ]. Prediction turns tactile outcomes into supervision for action-induced contact dynamics, making touch more active than passive input. However, existing work typically uses such prediction as an auxiliary loss, world-modeling objective, or feedback signal, without studying which internal policy representation should be shaped by this supervision. Our work addresses this representation-alignment problem by diagnosing where future tactile prediction should supervise the VLA action pathway and using it to design a representation-aligned tactile grounding objective. 
+
+## 3 Method 
+
+3.1 Overview 
+
+Future tactile prediction can ground VLA policies in contact dynamics, but only if the loss is applied to a suitable representation. Since future tactile targets describe contact consequences of the policy’s action chunk, they are best suited to supervise representations that are action-conditioned but not yet specialized for motor prediction. This creates a representation-alignment problem: VLM features may be too semantic, while final action states may be too control-specialized. To resolve this alignment problem, we first probe the frozen policy to identify where future tactile information is most accessible along the action pathway. This diagnosis reveals intermediate action-expert features as the most suitable grounding interface. We then attach a lightweight Latent Tactile Predictor (LTP) at this interface, predicting compact future tactile latents to avoid raw sensor noise. 31 4 8 12 16           
+
+> Layer
+> 0.271
+> 0.327
+> 0.383
+> 0.439
+> Validation MSE
+> (A) - Baseline
+> T=0.25
+> T=0.5
+> T=0.75
+> T=1
+> VLM 0.461
+> 14812 16
+> Layer
+> 0.070
+> 0.090
+> 0.110
+> 0.130
+> (B) - With Tactile
+> T=0.25
+> T=0.5
+> T=0.75
+> T=1
+> VLM 0.458
+> 15914 18
+> Layer
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> (C) - Larger Model
+> T=0.25
+> T=0.5
+> T=0.75
+> T=1
+> VLM 0.702
+> VLM Mid Final
+> 0
+> 10
+> 20
+> 30
+> 40
+> (D) - Task Success Rate
+
+Figure 2: Linear-probe diagnosis and downstream validation. (A) Future tactile prediction MSE without tactile input. (B) The same probe analysis with current tactile as input. (C) The same analysis on the π0 backbone. (D) Downstream success when grounding VLM-side, intermediate action-expert, and final action representations. Curves in (A–C) are evaluated at normalized action-generation timesteps T of the flow-based action expert. 
+
+3.2 Diagnosing the Tactile Grounding Interface 
+
+Before introducing the tactile grounding loss, we diagnose where future tactile information is most accessible along the VLA action pathway. We start from a base VLA policy trained with its native action objective and freeze all policy parameters. For a trajectory segment starting at time t, we extract candidate representations from the VLM-side output hvlm  
+
+> t
+
+and each action-expert layer {hℓt }Lℓ=1 . For each candidate representation h, we train an independent lightweight linear probe gh to predict the raw future tactile sequence rt+1: t+H :
+
+ˆrt+1: t+H = gh(h), Lprobe = ∥ˆrt+1: t+H − rt+1: t+H ∥22 . (1) The policy is never updated during this diagnosis. Lower probe error indicates that future tactile information is more linearly accessible from the corresponding representation. We use raw future tactile measurements as the probe target to keep the interface diagnosis independent of the latent tactile encoder used later for policy training. For flow-based action experts, we repeat the probe at several normalized action-generation times T ∈ { 0.25 , 0.5, 0.75 , 1.0} and report the predictability trend across candidate representations for each T .
+
+Future tactile information peaks at intermediate action-expert layers. We first examine the clean diagnostic setting, where the SmolVLA policy is frozen and tactile observations are removed from the input. As shown in Fig. 2(A), future tactile predictability follows a non-monotonic trend along the action pathway. The VLM-side representation has high prediction error, indicating that future contact outcomes are not easily read out from perceptual-semantic features alone. Prediction error decreases as representations enter the action expert and reaches its minimum at an intermediate layer, before increasing again near the final action state. This pattern suggests that future tactile information is most accessible after the policy has formed action-conditioned interaction features, but before these features are compressed toward immediate motor prediction. The VLM-side representation remains close to semantic perception, while the final action state is specialized for executable action decoding. The intermediate action-expert representation lies between these extremes and therefore provides a better-matched interface for future tactile supervision. We observe the same qualitative trend when tactile observations are included as input and when the diagnosis is repeated with a larger VLA backbone, as shown in Fig. 2(B,C). This indicates that the intermediate-stage advantage is not an artifact of removing tactile input or of a specific model scale. 
+
+Tactile predictability aligns with grounding effectiveness. We next test whether the representation with the strongest tactile predictability also provides the best grounding interface for policy learning. 4VLM B ackbone 
+
+> “Plug the
+> power cord
+> into the
+> socket. ”
+
+Action Expert 
+
+Latent 
+
+Tactile 
+
+Predictor 
+
+> L2 L oss
+> cross-attention
+> Visual
+> Encoder
+> Tex t
+> Tokenizer
+> cross-attention
+> aligned feature
+> aligned feature
+> training only
+
+Tactile Encoder Figure 3: Overview of future latent tactile grounding. The VLA policy takes current observations 
+
+(It, l, r t) - image, language, and tactile input—and predicts an action chunk ˆat+1: t+H . During training, the aligned action-expert feature, which is most grounded in future contact states, conditions a latent tactile predictor, which predicts future tactile latents ˆzt+1: t+H from learnable queries q1: H .The targets zt+1: t+H are encoded from future tactile observations rt+1: t+H and used with stop-gradient for the grounding loss. The predictor is used only during training. We apply future tactile prediction to representative interfaces and evaluate the resulting policies on the USB Drive Insertion task. As shown in Fig. 2(D), downstream success across these evaluated interfaces follows the same ordering as the probe results: VLM-side grounding is weakest, final-state grounding improves but remains suboptimal, and intermediate action-expert grounding performs best. This agreement supports using the probe-diagnosed intermediate representation as the interface for latent tactile grounding. 
+
+3.3 Latent Tactile Predictor 
+
+Having identified the intermediate action-expert representation as the grounding interface, we now define the latent tactile prediction objective applied to this representation. As illustrated in Fig.3 , at time t, the tactile-conditioned VLA policy receives the current image observation It, language instruction l, and current tactile observation rt. The current tactile observation rt is encoded into tactile latent tokens and provided to the policy together with the visual-language and state tokens. The policy then predicts an action chunk ˆat+1: t+H through its native action-generation pathway. After executing this action chunk, the robot observes a future tactile sequence rt+1: t+H , which is used only during training as the tactile grounding target. Thus, current tactile rt serves as policy input, while future tactile rt+1: t+H serves as supervision. Directly predicting the raw future tactile sequence rt+1: t+H is ill-suited for grounding. Tactile signals are high-dimensional, sensor-dependent, and often contain measurement noise, calibration bias, and local contact artifacts. A raw tactile prediction objective may therefore encourage the policy representation to model sensor recovery rather than the contact consequences useful for action generation. We instead predict future tactile outcomes in a compact latent space, so that the auxiliary objective focuses on contact-relevant structure rather than raw sensor details. Concretely, we encode the future tactile sequence into a latent tactile sequence: 
+
+zt+1: t+H = Etac (rt+1: t+H ), (2) where Etac denotes the tactile encoder in our framework. Let hmid  
+
+> t
+
+be the intermediate action-expert representation identified by the probe analysis. The Latent Tactile Predictor uses a set of learnable 5USB D rive Insertion  
+
+> Plug Insertion
+> Whiteboard Wiping
+> Light Bulb Unscrewing
+> Deformable Object Grasping Gently clamp the clay ball onto the plate.
+> Erase the words on the whiteboard.
+> Pull the bulb out of the base.
+> Insert the USB drive into the slot.
+> Plug the power cord into the socket.
+
+Figure 4: Experimental task suite. The five blocks correspond to USB Drive Insertion, Whiteboard Wiping, Plug Insertion, Light Bulb Unscrewing and Deformable Object Grasping.Green check marks indicate successful executions. For deformable-object grasping, both a successful execution and a failure case, marked with a red cross, are shown. tactile queries Q = {q1, . . . , q H } to predict the future tactile latent sequence from the intermediate action-expert representation: 
+
+ˆzt+1: t+H = Pθ
+
+ Q, h mid 
+
+> t
+
+ , (3) where Pθ is a lightweight query-based prediction head. We train the predictor with a latent tactile prediction loss: 
+
+Ltac = ∥ˆzt+1: t+H − sg( zt+1: t+H )∥22 , (4) where sg( ·) stops gradients through the tactile target. The final training objective combines this grounding loss with the native VLA action objective: 
+
+L = Lact + λtac Ltac . (5) The LTP branch is used only during training. At inference, the prediction branch is removed, and the policy keeps the original tactile-conditioned action-generation pathway unchanged. In this way, future tactile prediction provides a compact grounding signal for the intermediate action representation without adding inference-time cost. 
+
+## 4 Experiments 
+
+We evaluate whether representation-aligned tactile grounding enables VLA policies to use touch more effectively in real-world contact-rich manipulation. Rather than treating tactile sensing as a binary design choice, our experiments focus on how future tactile supervision should be used once tactile information is available to the policy. We therefore compare different grounding interfaces, tactile prediction targets, and supervision scopes under the same tactile-conditioned VLA setting. The experiments are designed to answer the following questions: • Does the diagnosed intermediate action-expert interface outperform less aligned tactile prediction interfaces? • Does predicting compact future tactile latents provide a stronger grounding signal than raw tactile prediction? • Is representation-aligned single-interface grounding more effective than indiscriminate multi-interface tactile supervision? 6Plug I nsertion                              
+
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> USB Drive Insertion Whiteboard Wiping
+> Deformable Object Grasping
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> Light Bulb Unscrewing Avera ge
+> SmolVLA +Tactile +exUMI +VLM P red +AE F inal P red +Ours
+> 30 40
+> 65 55
+> 80
+> 00
+> 20 20 25 30 40 30
+> 45 50 50 55
+> 70
+> 20
+> 50 60 70 80 80
+> 40
+> 60 70 80 90 100
+> 18
+> 41 48 58 62
+> 74
+
+Figure 5: Success rates on five real-world contact-rich manipulation tasks using the SmolVLA backbone. We report task success rates for input-level tactile conditioning, external predictive tactile representation learning, less-aligned tactile prediction interfaces, and our representation-aligned tactile grounding under identical settings. 
+
+4.1 Experimental Setup Tasks and data collection. All experiments are conducted on a real-world single-arm setup with an ARX R5 robot equipped with PaXini tactile sensors. The policy observes two RGB streams, including a third-person camera and a wrist-mounted camera, together with robot proprioception and tactile readings. We evaluate on five contact-rich manipulation tasks designed to cover complementary physical interaction challenges. For each task, we collect 50 expert demonstrations using leader– follower teleoperation, recording synchronized RGB observations, robot states, actions, and tactile readings throughout execution. Fig. 4 illustrates the task suite, while the text below summarizes the contact-specific capability tested by each task. Plug Insertion and USB Drive Insertion test fine alignment and force-sensitive insertion under tight geometric tolerance. Whiteboard Wiping tests stable surface contact and pressure regulation during continuous motion: insufficient pressure fails to erase the mark, while excessive pressure can push the board away. Deformable Object Grasping uses a plasticine object to evaluate pressure-sensitive grasping without visible deformation. Light Bulb Unscrewing tests contact engagement, alignment maintenance, and controlled rotational motion. 
+
+Baselines. We organize baselines around the alternative explanations they test. Standard VLA poli-cies (SmolVLA [ 3] and π0 [2]) measure performance without tactile grounding. Tactile-conditioned variants receive the same tactile stream as input, testing whether direct tactile access is sufficient. exUMI [ 26 ] provides a predictive tactile representation baseline, where future tactile prediction im-proves the tactile encoder before policy learning. In contrast, our method uses future tactile outcomes to supervise an internal action representation. To isolate this representation-alignment effect, we also evaluate interface-controlled variants that attach the same tactile prediction loss to the vision-language backbone output, the final action state, or the diagnosed intermediate action-expert feature. Finally, multi-interface grounding variants add tactile losses to multiple layers, testing whether performance comes from alignment rather than loss accumulation. 
+
+Training protocol. Unless otherwise specified, all methods are trained with the same demonstra-tions, observation streams, tactile inputs when applicable, and action representation. For SmolVLA-based methods, we use a batch size of 64, train for 200K steps, and set the learning rate to 1 × 10 −4.For π0-based methods, we follow the standard LoRA fine-tuning protocol under the same data setting. Baseline implementations follow their default training configurations when available. 7Plug I nsertion                
+
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> USB Drive Insertion Whiteboard Wiping
+> Deformable Object Grasping
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> success rate  100%
+> 75%
+> 50%
+> 25%
+> 0%
+> Light Bulb Unscrewing Avera ge
+> Pi0 +Tactile +VLM P red +AE F inal P red +Ours
+> 73
+> 59 58 54
+> 40
+> 90
+> 80
+> 70 70
+> 60
+> 90
+> 70 75 70
+> 50
+> 70
+> 50 45 40
+> 25 20
+> 40 45 40 50 45 50 50 55 65
+
+Figure 6: Success rates with the π0 backbone on five real-world contact-rich manipulation tasks. 
+
+We compare the standard π0 policy, tactile-conditioned π0, two less-aligned future tactile prediction interfaces (VLM Pred. and AE Final Pred.), and our representation-aligned tactile grounding under the same task setting. 
+
+Evaluation protocol. We evaluate each method with 20 real-world trials per task and report task success rate as the main metric. Success is judged by task-specific criteria, including correct insertion, sufficient wiping coverage with stable contact, lifting without visible deformation, and successful unscrew engagement and tightening. 
+
+4.2 Main Results Representation-aligned tactile grounding improves contact-rich manipulation. Fig. 5 compares different uses of tactile information in SmolVLA policies. Input-level tactile conditioning and external tactile representation learning improve over the vision-language-action baseline, but remain below representation-aligned grounding. The key comparison is among future tactile prediction interfaces: VLM-level prediction and final-action-state prediction achieve 58% and 62% average success, whereas grounding the intermediate action-expert representation reaches 74%. This ordering indicates that future tactile prediction is not effective merely because it adds an auxiliary objective; its benefit depends on applying the supervision to a representation aligned with action-conditioned contact dynamics. The task-wise results show that the improvement is not driven by a single task: our method is best on four tasks and ties for best on Deformable Object Grasping. Plug Insertion is especially informative: VLM-level prediction outperforms final-action-state prediction, while intermediate grounding remains best, suggesting that tactile prediction does not simply improve by moving closer to the motor output. USB Drive Insertion remains the hardest task, but our method still achieves the highest success rate. These patterns support the representation-alignment interpretation behind the aggregate improvement. 
+
+Generalization to a different VLA backbone. We further evaluate our grounding objective with the π0 backbone under LoRA fine-tuning. Since this adaptation protocol differs from the SmolVLA setting, we focus on relative gains within the π0 family rather than absolute comparison across backbones. As shown in Fig. 6, we additionally include two interface-controlled prediction baselines, which attach the same future tactile prediction objective to the VLM-side representation or the final action-expert state. Under the same contact-rich manipulation setting, the standard π0 policy achieves 40% average success, and tactile conditioning improves it to 54% within this controlled evaluation. VLM-side and final-action prediction further reach 58% and 59%, respectively, but still remain below our representation-aligned grounding, which achieves 73% average success with clear gains across the task suite. This suggests that the diagnosed intermediate action-expert interface is not an artifact of a single backbone: future tactile prediction is most effective when applied to an action-conditioned 8Method Plug USB Wipe Deformable Bulb Avg.                               
+
+> None 30 20 45 50 60 41 Multi-A 20 20 45 45 60 38 Multi-B 30 25 55 55 70 48 Multi-C 50 30 60 70 90 60 Ours 80 40 70 80 100 74
+
+Figure 7: Ablation results on multi-layer grounding applied to SmolVLA across all tasks. None adds tactile input without future tactile prediction. Multi-A predicts from all action-expert features, Multi-B predicts from every two action-expert layers (0/2/4/...), and Multi-C predicts from the middle layers 4–11 of the 16-layer SmolVLA action expert. representation aligned with contact dynamics, rather than simply added to the policy or attached to less aligned interfaces. 
+
+4.3 Ablation Studies Latent Prediction. We first ablate the form of the future tactile target. Replacing compact tac-tile latents with direct raw tactile prediction reduces Plug Insertion success from 80% to 55%. 
+
+Target Success Rate 
+
+Raw 55 Ours 80 This result suggests that predicting future tactile signals in a compact latent space provides a stronger grounding signal than predicting raw tactile observations. Direct raw prediction can force the grounding loss to account for sensor-level details, which may include measure-ment noise, calibration bias, and local contact artifacts. Such low-level variations can provide a less suitable constraint for shaping action-conditioned representations. In contrast, the encoder-produced tactile latents offer a compact future-contact target, making the grounding objective more focused on action-relevant contact outcomes rather than raw signal recovery. 
+
+Effect of supervision scope. We next test whether future tactile prediction can simply be applied broadly across the action pathway, instead of using a diagnosed grounding interface. A natural alternative is to apply the same future tactile prediction loss to multiple points in the action pathway. As shown in Fig. 7, we extend this ablation to all five tasks. SmolVLA with tactile input but without future tactile prediction (None) achieves 41% average success. Applying the loss more broadly is consistently suboptimal: grounding all candidate representations (Multi-A), every two layers (Multi-B), or multiple middle representations (Multi-C) reaches 38%, 48%, and 60% average success, respectively, while our single aligned interface achieves 74%. These results show that the gain is not explained by broadly adding more tactile prediction losses. Applying the same contact-dynamic target to representations with different roles can introduce mismatched supervision, whereas the diagnosed interface provides a cleaner grounding signal for action generation across the task suite. 
+
+## 5 Conclusion 
+
+We presented representation-aligned tactile grounding for contact-rich robotic manipulation. Rather than treating future tactile prediction as a generic auxiliary loss, we showed that its effectiveness depends on which policy representation it supervises. Frozen linear probes identify intermediate action-expert representations as the most tactile-predictive interface, and our Latent Tactile Predictor uses compact future tactile latents to ground this representation during training without changing inference. Real-world experiments on five contact-rich manipulation tasks show consistent gains across SmolVLA and π0, outperforming less aligned interfaces, raw tactile prediction, and multi-interface grounding. Overall, our results indicate that future tactile prediction benefits VLA policies most when used as representation-aligned grounding, rather than as tactile supervision alone. 9References 
+
+[1] M. J. Kim et al. OpenVLA: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 , 2024. URL https://arxiv.org/abs/2406.09246 .[2] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Hausman, B. Ichter, J. Jakubczak, T. Jones, L. Ke, S. Levine, Z. Li-Bell, S. Mothukuri, S. Nair, K. Pertsch, F. Xia, U. Zhilinsky, et al. π0: A vision-language-action flow model for general robot control. 
+
+arXiv preprint arXiv:2410.24164 , 2024. URL https://arxiv.org/abs/2410.24164 .[3] M. Shukor et al. SmolVLA: A vision-language-action model for affordable and efficient robotics. 
+
+arXiv preprint arXiv:2506.01844 , 2025. URL https://arxiv.org/abs/2506.01844 .[4] C. Higuera et al. Tactile beyond pixels: Multisensory touch representations for robot manipula-tion. arXiv preprint arXiv:2506.14754 , 2025. URL https://arxiv.org/abs/2506.14754 .[5] V. Pattabiraman et al. Learning precise, contact-rich manipulation through uncalibrated tactile skins. arXiv preprint arXiv:2410.17246 , 2024. URL https://arxiv.org/abs/2410.17246 .[6] P. Hao et al. TLA: Tactile-language-action model for contact-rich manipulation. arXiv preprint arXiv:2503.08548 , 2025. URL https://arxiv.org/abs/2503.08548 .[7] J. Huang et al. Tactile-VLA: Unlocking vision-language-action model’s physical knowledge for tactile generalization. arXiv preprint arXiv:2507.09160 , 2025. URL https://arxiv.org/ abs/2507.09160 .[8] K. Zhang et al. TacVLA: Contact-aware tactile fusion for robust vision-language-action manipulation. arXiv preprint arXiv:2603.12665 , 2026. URL https://arxiv.org/abs/ 2603.12665 .[9] Y. Li et al. ForceVLA2: Unleashing hybrid force-position control with force awareness for contact-rich manipulation. arXiv preprint arXiv:2603.15169 , 2026. URL https://arxiv. org/abs/2603.15169 .[10] H. Liu, C. Li, Q. Wu, and Y. J. Lee. Visual instruction tuning. In Advances in Neural Information Processing Systems (NeurIPS) , 2023. [11] S. Karamcheti, S. Nair, A. Balakrishna, T. Kollar, P. Liang, and D. Sadigh. Prismatic VLMs: Investigating the design space of visually-conditioned language models. In International Conference on Machine Learning (ICML) , 2024. [12] A. Marafioti, O. Zohar, M. Farré, M. Noyan, E. Bakouch, P. Cuenca, C. Zakka, L. Ben Allal, A. Lozhkov, N. Tazi, V. Srivastav, J. Lochner, H. Larcher, M. Morlon, L. Tunstall, L. von Werra, and T. Wolf. SmolVLM: Redefining small and efficient multimodal models. arXiv preprint arXiv:2504.05299 , 2025. [13] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Haus-man, A. Herzog, J. Hsu, J. Ibarz, B. Ichter, A. Irpan, T. Jackson, S. Jesmonth, N. J. Joshi, R. Julian, D. Kalashnikov, Y. Kuang, I. Leal, K.-H. Lee, S. Levine, Y. Lu, U. Malla, D. Manju-nath, I. Mordatch, O. Nachum, C. Parada, J. Peralta, E. Perez, K. Pertsch, J. Quiambao, K. Rao, M. Ryoo, G. Salazar, P. Sanketi, K. Sayed, J. Singh, S. Sontakke, A. Stone, C. Tan, H. Tran, V. Vanhoucke, Q. Vuong, S. Vega, F. Xia, T. Xiao, P. Xu, S. Xu, T. Yu, and B. Zitkovich. RT-1: Robotics transformer for real-world control at scale. In Robotics: Science and Systems (RSS) ,2023. [14] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, X. Chen, K. Choromanski, T. Ding, D. Driess, A. Dubey, C. Finn, P. Florence, C. Fu, M. Gonzalez Arenas, K. Gopalakrishnan, K. Han, K. Hausman, A. Herzog, J. Hsu, B. Ichter, A. Irpan, N. Joshi, R. Julian, D. Kalashnikov, Y. Kuang, I. Leal, L. Lee, T.-W. E. Lee, S. Levine, Y. Lu, H. Michalewski, I. Mordatch, 10 K. Pertsch, K. Rao, K. Reymann, M. Ryoo, G. Salazar, P. Sanketi, P. Sermanet, J. Singh, A. Singh, R. Soricut, H. Tran, V. Vanhoucke, Q. Vuong, A. Wahid, S. Welker, P. Wohlhart, J. Wu, F. Xia, T. Xiao, P. Xu, S. Xu, T. Yu, and B. Zitkovich. RT-2: Vision-language-action models transfer web knowledge to robotic control. In Proceedings of the 7th Conference on Robot Learning (CoRL) , volume 229 of Proceedings of Machine Learning Research , pages 2165–2183, 2023. [15] Octo Model Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari, J. Hejna, T. Kreiman, C. Xu, J. Luo, Y. L. Tan, L. Y. Chen, P. Sanketi, Q. Vuong, T. Xiao, D. Sadigh, C. Finn, and S. Levine. Octo: An open-source generalist robot policy. In Robotics: Science and Systems (RSS) , 2024. URL https://arxiv.org/abs/2405.12213 .[16] Physical Intelligence, K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, et al. π0.5: A vision-language-action model with open-world generalization. arXiv preprint arXiv:2504.16054 ,2025. URL https://arxiv.org/abs/2504.16054 .[17] X. Zhu et al. Touch in the wild: Learning fine-grained manipulation with a portable visuo-tactile gripper. arXiv preprint arXiv:2507.15062 , 2025. URL https://arxiv.org/abs/ 2507.15062 .[18] C. Zhang et al. VTLA: Vision-tactile-language-action model with preference learning for insertion manipulation. arXiv preprint arXiv:2505.09577 , 2025. URL https://arxiv.org/ abs/2505.09577 .[19] Z. Cheng et al. OmniVTLA: Vision-tactile-language-action model with semantic-aligned tactile sensing. arXiv preprint arXiv:2508.08706 , 2025. URL https://arxiv.org/abs/2508. 08706 .[20] J. Bi et al. VLA-Touch: Enhancing vision-language-action models with dual-level tactile feedback. arXiv preprint arXiv:2507.17294 , 2025. URL https://arxiv.org/abs/2507. 17294 .[21] J. Yu, H. Liu, Q. Yu, J. Ren, C. Hao, H. Ding, G. Huang, G. Huang, Y. Song, P. Cai, C. Lu, and W. Zhang. ForceVLA: Enhancing vla models with a force-aware MoE for contact-rich manipulation. arXiv preprint arXiv:2505.22159 , 2025. URL https://arxiv.org/abs/2505. 22159 .[22] C. Morissette et al. TacFiLM: Tactile modality fusion for vision-language-action models. arXiv preprint arXiv:2603.14604 , 2026. URL https://arxiv.org/abs/2603.14604 .[23] K. Gubernatorov et al. HapticVLA: Contact-rich manipulation via vision-language-action model without inference-time tactile sensing. arXiv preprint arXiv:2603.15257 , 2026. URL 
+
+https://arxiv.org/abs/2603.15257 .[24] Y. Huang et al. TaF-VLA: Tactile-force alignment in vision-language-action models for force-aware manipulation. arXiv preprint arXiv:2601.20321 , 2026. URL https://arxiv.org/ abs/2601.20321 .[25] Liu et al. Mla: A multisensory language-action model for robotic manipulation. arXiv preprint arXiv:2509.26642 , 2025. URL https://arxiv.org/abs/2509.26642 .[26] Xu et al. Action-aware pretraining for tactile representations: Tpp / exumi. In Conference on Robot Learning (CoRL) , 2025. URL https://arxiv.org/abs/2509.14688 .[27] C. Higuera et al. Visuo-tactile world models. arXiv preprint arXiv:2602.06001 , 2026. URL 
+
+https://arxiv.org/abs/2602.06001 .[28] G. Ye et al. Learning to feel the future: DreamTacVLA for contact-rich manipulation. arXiv preprint arXiv:2512.23864 , 2025. URL https://arxiv.org/abs/2512.23864 .11 Appendix 
+
+A Implementation Details 
+
+For clarity, we summarize the training protocols used in our experiments in Tables 1 and 2. We train tactile-supervised policies on two architectures, SmolVLA and π0, using datasets stored in the LeRobot format. Unless otherwise noted, both settings use a latent action dimension of 7 and a tactile supervision weight of 1. The remaining architecture-specific choices, optimizer settings, learning rate schedules, batch sizes, and training durations are reported in the corresponding tables. Table 1: Training hyperparameters for SmolVLA. 
+
+## Parameter Value 
+
+## Latent action dim 7Tactile supervision weight λ 1Training steps 200k Batch size 64 Chunk size 16 Cosine learning rate schedule 1.0×10 −4 → 2.5×10 −6
+
+## Optimizer AdamW Weight decay 1.0×10 −10 
+
+Table 2: Training hyperparameters for π0 LoRA. 
+
+## Parameter Value 
+
+## Latent action dim 7Tactile supervision weight λ 1Training steps 30k Batch size 64 Chunk size 16 Cosine learning rate schedule 1.0×10 −4 → 1.0×10 −5
+
+## Optimizer AdamW Weight decay 0
+
+## LoRA rank 16 
+
+12 B Qualitative Results of Real-world Experiments 
+
+## (a) Plug Insertion : Plug the power cord into the socket. 
+
+## (b) USB Drive Insertion : Insert the USB drive into the slot. 
+
+## (c) Whiteboard Wiping : Erase the words on the whiteboard. 
+
+## (d) Deformable Object Grasping : Gently clamp the clay ball onto the plate. 
+
+## (e) Light Bulb Unscrewing : Pull the bulb out of the base. 
+
+Figure 8: Qualitative examples of successful real-world rollouts. Uniformly sampled frames from successful rollouts of Plug Insertion, USB Drive Insertion, Whiteboard Wiping, Deformable Object Grasping, and Light Bulb Unscrewing are arranged chronologically to illustrate the execution process. 13

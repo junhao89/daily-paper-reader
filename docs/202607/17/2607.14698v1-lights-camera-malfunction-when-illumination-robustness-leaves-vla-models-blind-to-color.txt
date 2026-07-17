@@ -1,0 +1,292 @@
+Title: Lights, Camera, Malfunction: When Illumination Robustness Leaves VLA Models Blind to Color
+
+URL Source: https://arxiv.org/pdf/2607.14698v1
+
+Published Time: Fri, 17 Jul 2026 01:10:15 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# Lights, Camera, Malfunction: When Illumination Robustness Leaves VLA Models Blind to Color 
+
+Marino Watanabe Takami Sato Kentaro Yoshioka 
+
+Keio University 
+
+Abstract: Vision-Language-Action (VLA) models have emerged as a powerful paradigm for general-purpose robot manipulation; however, their transition to real-world environments reveals vulnerabilities to minor environmental perturba-tions. We propose FLARE, an optimized physical spotlight attack framework that exploits these vulnerabilities via targeted illuminations, dropping baseline task success rates to zero without any access to model internals. While adversar-ial training is the standard countermeasure, we identify a critical and previously underestimated defensive pitfall: naive data augmentations incorrectly condition VLA models to discard color as noise, collapsing their visual perception into a purely shape-biased processor. We expose this degradation through a diagnostic grayscale evaluation, in which the defended model maintains high success rates on grayscale inputs, while its success rate on benign, color-dependent real-world tasks drops to at most 47.5%, well below the undefended baseline. To address this, we propose ChromaGuard, a chroma-preserving adversarial training method. On a physical 6-DoF robotic platform, we demonstrate that ChromaGuard achieves 97.5% and 92.5% success rates in benign and attacked color-dependent tasks, re-spectively. 
+
+Keywords: Policy evaluation, adversarial scenarios generation, and red teaming, Vision-Language-Action Models, Adversarial Robustness 
+
+## 1 Introduction 
+
+Vision-language-action (VLA) models extend large-scale vision-language learning to robot control, offering a promising route toward general-purpose robot manipulation [1, 2, 3, 4]. This integration empowers robotic agents to generalize a wide variety of dynamic tasks in diverse domains, such as household manipulation [5], autonomous driving [6], and industrial automation [7]. However, as VLAs increasingly transition from controlled laboratory environments to safety-critical, real-world deployments, their tightly coupled multimodal architectures expose them to novel security vulnera-bilities [8, 9]. While recent research has highlighted the vulnerability of VLAs to advanced threats, such as physical sensor attacks [10], adversarial attacks [11, 12], and training-time backdoor in-jections [13], we find that the underlying vulnerability often stems from poor generalizability rather than security flaws requiring advanced attacker knowledge. To highlight this fundamental weakness, we systematically demonstrate that state-of-the-art VLA models fail on standard benchmarks when subjected to minor physical environmental variations, such as a slight shift in lighting conditions caused by a targeted physical spotlight. Adversarial training is widely recognized as an effective countermeasure for improving the gener-alizability of VLA models in prior literature [10]. However, we find that naive adversarial training does not consistently yield genuine robustness; rather, it often conditions VLA models to entirely ignore the visual features that were perturbed during the training process. For example, when ap-plying broad HSV-space data augmentation to the training data, the resulting VLA model behaves similarly to one trained exclusively on grayscale images. Consequently, the model loses the capacity to solve semantic tasks where fine-grained color information plays a critical role. arXiv:2607.14698v1 [cs.RO] 16 Jul 2026 FLARE Framework: Vulnerability to Lighting Conditions 
+
+Defense Dilemma & Our Solution              
+
+> Optimized Parameters:
+> 𝜽 =[ℎ,𝑠 ,𝑣 ,𝐼 ,𝑧 ,𝛼 ]
+> Wrist
+> camera
+> 3rd -person
+> camera
+> VLA
+> Model Crash!
+> Naive Augmentation Proposed: ChromaGuard
+> Under Attack
+> Benign
+> Success
+> Success
+> Selects
+> Wrong Object
+> Augmented
+> Inputs
+> Color -
+> Distorted
+> Pick up
+> red ball
+> Pick up
+> red ball
+> Color -
+> Preserved
+> Illumination
+> Attack
+> Robust but Color -Blind Robust and Color -Aware
+> …
+> …
+
+Figure 1: Full Pipeline of Our Proposed FLARE Framework and ChromaGuard Defense. Top: Our FLARE framework optimizes spotlight parameters to induce catastrophic trajectory deviations in VLA models. Bottom: The defense dilemma where naive color augmentation degrades task success on color-dependent tasks, which is resolved by our proposed ChromaGuard approach. To resolve this defense dilemma, we introduce ChromaGuard, as depicted in Fig. 1, a chroma-preserving adversarial training methodology. We demonstrate that our approach not only provides robust defensive capabilities against severe lighting attacks but also maintains high performance in benign, color-dependent operations. Our findings highlight a critical lesson for embodied AI: standard handcrafted countermeasures can introduce biases that override fundamental semantic sig-nals, particularly in VLAs, where specific elements of the visual observation dictate safety-critical actions. The major contributions of this study are as follows: • We systematically expose a generalization vulnerability in state-of-the-art VLAs by propos-ing FLARE. This optimized physical spotlight attack framework degrades task success to 0.0% while inducing trajectory deviations of up to 115.5 cm in simulation. • We identify a critical defensive trap in standard adversarial training methods, such as naive HSV transformation. Through diagnostic validation, we demonstrate that naive augmentations inadvertently condition the model to discard color cues. While the model retains up to 90.5% success on purely grayscale inputs, this conditioning translates to a steep performance drop to no more than 47.5% success in real-world semantic tasks requiring color differentiation. • We propose ChromaGuard, a novel augmentation architecture designed to preserve texture and hue. We empirically prove that this method achieves state-of-the-art resilience against dynamic lighting attacks, reaching 70.0% success in color-invariant tasks. Furthermore, it strictly retains the perceptual capabilities necessary for complex physical manipulation by yielding success rates of 97.5% and 92.5% in benign and attacked color-dependent scenarios, respectively. 
+
+## 2 Background 
+
+2.1 Security and Robustness of VLA Models against Physical Attacks 
+
+The multimodal nature of VLAs exposes a wide variety of attack channels [8, 9] such as training-time backdoor attacks [13, 14], inference-time adversarial attacks [11, 15, 12]. Meanwhile, these advanced attacks naturally extend the prior attacks effective against general DNN models. The ma-2jor contributions of these previous works are in overcoming the major challenges in triggering the vulnerabilities in their VLA domains. In this work, we highlight that VLA models are indeed vul-nerable to these kinds of attacks, but the current state-of-the-art VLA models are poorly generalized and are just vulnerable to physical environmental variations, rather than particularly vulnerable to these advanced attacks. LIBERO-PRO [16] also reports that four major state-of-the-art VLA mod-els easily collapse under small task and position perturbations on the LIBERO [17], one of the most popular VLA benchmarks. All models achieve ≥90% success rates on the original LIBERO tasks but fall to nearly 0% under the perturbations, showing poor generalizability. Under these circum-stances, any attacks may succeed. This motivates us to start by investigating the impact of lighting conditions, which can be perturbed in normal benign scenarios. 
+
+2.2 Defenses for VLA Models 
+
+To handle the vulnerability of VLA systems, recent research has explored both runtime guardrails [18, 19] and training-time regularization [10]. To directly address the generalizability of DNN models, adversarial training [20, 10] has been widely adopted not only in VLA [10] but also in many other application domains [21, 22, 23]. However, we find that the naive use of adversarial training may expose a critical backfire on the model’s generalizability. To be robust against lighting conditions changes, a naive approach is to apply color jittering for input images, also known as one of the data augmentation techniques [24]. As our study demonstrates, this inadvertently conditions the VLA to discard essential color and texture cues, effectively degrading its visual encoder into a purely shape-biased, grayscale processor. In complex manipulation tasks where color differentiation is critical to object interaction, this loss of semantic fidelity translates to tangible task failures. Con-sequently, there is an urgent need for a defensive framework that simultaneously achieves robustness against dynamic illumination while strictly preserving the integrity of critical chroma features. 
+
+## 3 Methodology 
+
+3.1 Threat Model 
+
+We follow the common threat model adopted in prior work [10], which assumes a strict black-box setup, i.e., the adversary has no access to the target model’s internal architecture, weights, gradient information, or training datasets. As depicted in Fig. 1, the adversary can deploy physical lighting fixtures within the robot’s workspace. When they place the light, they can control the spatial place-ment, illumination footprint, intensity, and the specific chromatic properties (hue, saturation, and lightness) of the emitted light. However, they cannot dynamically change the light once deployed; the parameters remain fixed across all evaluation episodes. 
+
+3.2 FLARE Framework: Optimized Physical Spotlight Attack 
+
+We propose the Framework for Lighting Adversarial Robustness Evaluation (FLARE), illustrated in Fig. 2, to generate worst-case lighting scenarios. We consider a black-box adversary that can place and adjust a spotlight in the workspace. The attack is physically plausible: it does not modify the robot, camera, or target objects, and operates exclusively through illumination. In simulation, the spotlight is rendered directly to optimize these parameters; on hardware, the same parameterization corresponds to a physical lamp whose pose and output can be adjusted within safe bounds. We parameterize the spotlight by: 
+
+θ = [ hlight , s light , v light , I, z light , α cutoff ], (1) where hlight , s light , v light denote the hue, saturation, and value of the light source, I is the light inten-sity, zlight is the spatial height (z-coordinate), and αcutoff represents the spotlight’s cutoff angle. Given a clean observation ot, the attacked observation is produced by a lighting operator oadv  
+
+> t
+
+=
+
+A(ot; θ), which alters illumination while preserving physical scene geometry and object layout. The attack objective follows the intuition that dangerous failures are not only unsuccessful but also 3Attacked v iews     
+
+> 3rd -person
+> Wrist
+> Search
+> parameters Attacked Env .
+> (Simulation)
+> 3rd -person
+> camera
+> Wrist
+> camera
+> # Failure
+> Average
+> Trajectory
+> Error
+> Trajectory
+> Error at Final
+> Time Step
+> =𝜆 2×
+> +𝜆 1×
+> +
+> Objective Score
+
+Episode Execution 
+
+(Illumination Attack) 
+
+Objective 
+
+Calculation 
+
+Bayesian 
+
+Optimization  
+
+> 𝜽 =
+> ℎ𝑙𝑖𝑔ℎ𝑡
+> 𝑠 𝑙𝑖𝑔ℎ𝑡
+> 𝑣 𝑙𝑖𝑔ℎ𝑡
+> 𝐼
+> 𝑧 𝑙𝑖𝑔ℎ𝑡
+> 𝛼 𝑐𝑢𝑡𝑜𝑓𝑓
+
+Feedback (Maximize the objective score)   
+
+> Average Traj .
+> Error
+> Max Traj .
+> Error
+> Success Rate
+
+Robustness 
+
+Evaluation 
+
+> Success /
+> Failure
+> Worst -case
+> Parameters
+
+VLA 
+
+Model Figure 2: Overview of the FLARE (Framework for Lighting Adversarial Robustness Evaluation). The framework utilizes Bayesian Optimization to sample worst-case physical spotlight parameters, systematically evaluating VLA robustness based on trajectory deviations and task failure rates. catastrophically distant from the intended trajectory. For episode i, we score a spotlight parameter by combining trajectory deviation and task failure: 
+
+Li(θ) = 1
+
+S
+
+> S
+
+X
+
+> t=1
+
+∥P(i) 
+
+> t
+
+− P′(i) 
+
+> t
+
+∥2 + λ1∥P(i) 
+
+> T
+
+− P′(i) 
+
+> T
+
+∥2 + λ2I(i) 
+
+> f
+
+, (2) where S is the maximum number of steps, P(i) 
+
+> t
+
+and P′(i) 
+
+> t
+
+are the clean and attacked end-effector positions respectively, I(i) 
+
+> f
+
+∈ { 0, 1} indicates a binary task failure, and λ1, λ 2 are weighting hyperpa-rameters. We aim to maximize the average objective score over N episodes: J(θ) = 1
+
+> N
+
+PNi=1 Li(θ).Because physical and simulated rollouts are expensive and internal model gradients are unavailable, we employ Bayesian Optimization to efficiently search the continuous spotlight parameter space for values that maximize J(θ). Specifically, we utilize the Optuna [25] with a Tree-structured Parzen Estimator (TPE) sampler. While conventional Gaussian Process-based Bayesian Optimization (GP-BO) is widely used, its computational overhead increases significantly with the number of trials. In our context demanding hundreds of iterations of high-cost robot rollouts involving multi-modal VLA inference and physical simulation, this overhead presents a severe bottleneck. To avoid this problem, we select the TPE sampler because its computational cost is substantially lower than that of GP-BO, making it highly suitable for high-dimensional continuous search spaces under a limited time budget. Furthermore, evaluating all 10 tasks within a single LIBERO task suite at every iteration is computationally impractical in terms of total execution time. To balance computational efficiency with the discovery of truly universal adversarial parameters, we evaluate the tasks in alternating subsets. At each optimization iteration, the task suite is partitioned into two distinct subsets of 5
+
+tasks, which are alternately evaluated to compute the trial score. This evaluation protocol prevents the optimization from overfitting to specific scenarios within a constrained computational budget. 
+
+3.3 ChromaGuard: Hue-Preserving Adversarial Training 
+
+Naive lighting augmentation typically perturbs all color channels indiscriminately, often through aggressive hue, saturation, or texture-distorting transforms. We first introduce a typical naive data augmentation (we call this baseline Naive-Aug ) which is a standard combination of color and sharp-ness jittering. We denote the augmentation parameters as ϕ = [ h, s, v, c, γ ]⊤, representing per-turbations on hue, saturation, brightness, contrast, and sharpness, respectively. These parameters are randomly sampled from uniform distributions. While this approach improves general visual robustness, unconstrained hue variations ( h̸ = 0 ) can alter intrinsic object colors, inadvertently confounding performance on strictly color-dependent tasks. To isolate illumination effects, ChromaGuard restricts the augmentation parameter space. Specifi-cally, it allows bounded perturbations to saturation, brightness, contrast, and sharpness, but explic-4itly fixes the hue perturbation to zero ( h = 0 ). We use this constrained parameter space, denoted as ΦCG , to simulate challenging lighting conditions via a standard adversarial objective. Given a task loss function L, an input image x with label y, and a model fw subject to transformations T ,we optimize the network against the worst-case illumination within this hue-constrained space, i.e., 
+
+min w Ex,y [max ϕ∈ΦCG L(fw(T (x; ϕ)) , y )] .
+
+## 4 Simulator Experiments: Exposing Vulnerability against Spotlight Attack 
+
+We evaluate the performance of our VLA model against spotlight attacks within a simulated envi-ronment. In this section, we demonstrate that (1) even state-of-the-art VLA models can be easily compromised by simple spotlight illumination, and (2) a high degree of robustness against this attack can be seemingly achieved through naive data augmentation, to motivate the real-world experiments (§5), which reveal that naive augmentation merely causes the model to ignore color information. 
+
+4.1 Experimental Setup 
+
+We conduct experiments within the LeRobot framework [26], utilizing the widely adopted LIBERO multi-task manipulation benchmark [17]. We train the SmolVLA architecture [3] for 200,000 steps. While the vision and language backbones utilize standard pre-trained weights, the action expert is trained from scratch. In this configuration, we train a Baseline model with no data augmentation and a Naive-Aug model with data augmentation that perturbs input images across multiple visual properties: specifically, ±180 ◦ in hue, [0 .0, 4.0] in saturation, [0 .2, 3.0] in value, [0 .8, 1.2] in con-trast, and [0 .5, 1.5] in sharpness. We then evaluate these models across three diverse task suites: LIBERO-Spatial, LIBERO-Object, and LIBERO-10, conducting 500 evaluation episodes for each suite. The spotlight attack is optimized in a continuous parameter space spanning spatial height (zlight ∈ [0 .5, 3.0] ), full HSV color bounds, illumination intensity, and cutoff angles, with shad-ows simulated by the MuJoCo physics engine [27]. For the random attack, parameters are sampled uniformly at random for each of the 500 evaluation episodes per suite. 
+
+Evaluation Metric. We quantify model robustness using two metrics. The Task Success Rate (SR) 
+
+measures the proportion of successfully completed episodes, serving as the baseline for operational reliability. To capture the severity of adversarial deviations, we measure the Trajectory Error (TE) 
+
+defined as the Euclidean distance between the nominal execution path (benign) and the perturbed path under attack. We report both the Average Trajectory Error (TE-Avg) across the entire episode and the Maximum Trajectory Error (TE-Max), which serves as a critical safety proxy for worst-case physical collisions. To ensure that the trajectory metrics reflect pure adversarial influence rather than inherent model incompetence, TE is strictly computed over episodes where the baseline model succeeds but fails under attack. 
+
+4.2 Results and Implications 
+
+Table 1 shows the results of the spotlight attack against the baseline and the naively data-augmented model. As shown, the spotlight attack significantly degrades the SR of the baseline model to entirely zero. Even random spot lighting can drop the SR by less than half of the standard laboratory lighting (Benign) scenarios, where the SmolVLA-Baseline model achieves a high 83.0%/89.4%/58.4% suc-cess rates for each task suite. Beyond mere task failure, the attack induces severe physical hazards: the maximum trajectory error (TE-Max) reaches ≤115.5 cm, forcing the robotic arm far outside its intended operational envelope. We also conduct an ablation study of our object function design. Details are in the supplementary material. Based on the results, the naive data augmentation looks seemingly sufficient to defend against the spotlight attack. In the next section, we will demonstrate that this numerical resilience is highly deceptive, i.e., the VLA effectively degrades into a shape-biased, grayscale processor. By indis-criminately perturbing color channels during training, the augmentation forces the model to bypass the illumination challenge by discarding essential color cues. 5Table 1: Quantitative evaluation of the FLARE spotlight attack across three LIBERO simulation suites. The optimized attack completely compromises the Baseline model, dropping its success rate to 0.0% while inducing severe trajectory deviations of up to 115.5 cm.                                                                                
+
+> Task Suite Model Attack SR (%) TE-Avg (cm) TE-Max avg (cm) TE-Max (cm)
+> LIBERO-Spatial Baseline Benign 83.0 –––Random 15.4 12.0 21.7 37.6 Optimized 0.0 22.3 50.5 67.6 Naive-Aug Benign 79.4 –––Random 77.4 4.28 16.9 33.1 Optimized 78.8 4.23 17.8 40.3 LIBERO-Object Baseline Benign 89.4 –––Random 7.8 18.3 44.6 54.7 Optimized 029.1 75.2 88.3 Naive-Aug Benign 89.8 –––Random 91.6 7.90 29.3 56.0 Optimized 93.2 4.99 19.6 41.8 LIBERO-10 Baseline Benign 58.4 –––Random 22.4 18.5 37.0 61.6 Optimized 0.0 36.3 83.8 115.5 Naive-Aug Benign 50.2 –––Random 49.2 9.02 39.0 61.5 Optimized 47.2 9.0 40.3 64.0
+
+## 5 Real-World Experiments 
+
+To validate the practical implications of our simulated findings, we deploy the VLA models onto a physical robotic platform. In this section, we first provide diagnostic evidence of the semantic degradation caused by naive data augmentation. We then evaluate the models across both color-invariant and color-dependent physical manipulation tasks to demonstrate that our ChromaGuard can effectively address the limitation. 
+
+5.1 Experimental Setup 
+
+As illustrated in Fig. 3, our experimental setup employs a 6-DoF SO-101 Arm Pro manipulator [28] equipped with a dual-camera perception system, comprising a wrist-mounted camera and a static third-person camera. To synthesize the spotlight attack, an external, programmable RGB spotlight is positioned outside the camera’s field of view. We define two task configurations: a color-invariant task (e.g., picking a red ball and placing it into a black bin) and a highly color-dependent task (e.g., selecting between structurally identical red and blue balls based on language commands). Detailed task descriptions are in the supplementary material. To perform these tasks, we train both the SmolVLA [3] and π0.5 [29] architectures by fine-tuning the lerobot/smolvla base and lerobot/pi05 base checkpoints, respectively. Both models are fine-tuned for 100,000 steps using our collected real-world demonstrations, comprising 50 episodes for the color-invariant task and 240 episodes for the color-dependent task. As our adversarial training approach, ChromaGuard fixes hue and perturbs [0 .0, 4.0] in saturation, [0 .2, 3.0] in value, [0 .8, 1.2] 
+
+in contrast, and [0 .5, 1.5] in sharpness during the model training. We use the same parameters for the Baseline and Naive-Aug as those used in §4.1. For the spotlight attack generation, we first generate several attack candidates in the simulator with our FLARE optimization while limiting our available colors (red, blue, and green), and then we select the most effective attack in the real-world. We evaluate the trained models by conducting 20 trials for the color-invariant task. For the color-dependent task, we conduct a total of 40 trials, consisting of 20 trials for each language instruction. 
+
+5.2 Evaluation of Color Reliance via Grayscale Inference 
+
+To systematically verify whether the augmented model loses its reliance on color information, we first conduct a grayscale diagnostic evaluation. We convert the input images to grayscale during 6SO -ARM101             
+
+> Pro
+> Wrist
+> Camera
+> 3rd -person
+> Camera
+> Spotlight
+> (i) Real world experimental setup
+> Color -Dependent Task
+> (iii) Task configuration
+> (ii) Visual input
+> Color -Invariant Task
+> Instruction: Pick up red ball Instruction: Pick up blue ball Instruction: Pick up red ball
+> Grasp Box Wrong Obj Aimless
+> Benign Attacked
+> 3rd -person 3rd -person
+> Wrist Wrist
+
+Figure 3: Real-world Experimental Setup. (i) The physical workspace featuring a 6-DoF robotic arm, dual-camera system, and adjustable spotlight. (ii) Examples of visual inputs from 3rd-person and wrist cameras under benign and attacked illumination. (iii) Task configurations comparing color-invariant and color-dependent manipulation instructions. Table 2: Grayscale diagnostic evaluation. The high success rate of Naive-Aug on artificially desatu-rated images shows an over-reliance on shape biases, indicating semantic degradation of color cues. 
+
+Task Suite Model Task Success Rate (%) Benign (RGB) Grayscale 
+
+LIBERO-Spatial Baseline 81.2 0Naive-Aug 79.4 80.1 LIBERO-Object Baseline 89.4 10 Naive-Aug 89.8 90.5 LIBERO-10 Baseline 58.4 0Naive-Aug 50.2 47.8 
+
+inference across three different LIBERO task suites. As shown in Table 2, the baseline model, which naturally learned color features during training, suffers a significant drop, its success rates falling to near zero across the suites. In contrast, the Naive-Aug model maintains almost identical performance on grayscale inputs as on standard RGB, e.g., 90.5% vs. 89.8% SR on LIBERO-Object. This phenomenon exposes a critical flaw in naive data augmentation. Because tasks rarely require disambiguating identically shaped objects solely by color in standard benchmarks, the Naive-Aug model learns to discard color channels entirely as noisy variables. It bypasses the illumination challenge not by learning robust color representations, but by collapsing its perception into a purely shape- and position-biased state, effectively ignoring semantic color cues. 
+
+5.3 Evaluation of Color-Dependent and Color-Invariant Tasks 
+
+To assess the practical impact of augmentation-induced perceptual degradation, we evaluated the models on physical hardware across invariant and color-dependent tasks. Table 3 shows the success rates of the color-invariant and color-dependent tasks for each model. As shown, in the color-invariant scenario, our ChromaGuard and Naive-Aug model defended against the spotlight attack as expected based on the results in §4. The success rates of the SmolVLA and π0.5 improve from 0% to 70% and from 30% to 75% under attack, respectively. However, in the color-dependent scenario, where resolving the semantic instruction relies entirely on visual color cues, the Naive-Aug model generalized poorly. Even under benign laboratory light-7Table 3: Real-world evaluation of model robustness. Unlike naive augmentation, ChromaGuard maintains high perceptual fidelity in benign scenarios while ensuring robustness against targeted physical spotlight attacks. Numbers in parentheses indicate the percentage of total failures caused by grasping incorrectly colored objects.                                   
+
+> Base Model Model Color-Invariant Task SR Color-Dependent Task SR Benign Attack Benign Attack
+> SmolVLA Baseline 70.0 0.0 77.5 (11.1) 27.5 (24.1) Naive-Aug 80.0 70.0 47.5 (85.7) 40.0 (83.3)
+> ChromaGuard (Ours) 80.0 70.0 97.5 (0) 92.5 (66.7)
+> π0.5
+> Baseline 75.0 30.0 47.5 (66.7) 12.5 (25.7) Naive-Aug 75.0 75.0 40.0 (79.2) 47.5 (85.7)
+> ChromaGuard (Ours) 70.0 75.0 55.0 (100) 70.0 (83.3)
+
+ing, its success rate dropped to 47.5% compared to the Baseline’s 77.5%, as the robot frequently struggled to distinguish between the identical red and blue objects. This confirms that defense tech-niques relying on indiscriminate color perturbation can severely degrade the semantic grounding of color information required for complex real-world tasks. ChromaGuard resolves this trade-off by decoupling illumination variations from chroma features during training. As shown in Table 3, ChromaGuard matches the robustness of Naive-Aug in the color-invariant setting ( ≥70% SR under attack) while demonstrating substantial improvements in the color-dependent setting. Specifically, it successfully preserves semantic fidelity: SmolVLA achieves a 97.5% SR under benign conditions and 92.5% under attack, while π0.5 yields 55.0% and 70.0% SR, respectively. We consider that the limited color discrimination of π0.5, even under benign conditions, stems from the pre-training of its foundation model rather than the augmentation strategy. As evidence, π0.5 frequently grasps objects of the incorrect color even in benign scenarios. This factor accounts for 66.7% of all failure cases, which is a rate six times higher than the corresponding failure rate (11.1%) observed in SmolVLA; furthermore, ChromaGuard improves the benign success rate to 55.0% and achieves 70.0% under attack, surpassing its performance in benign scenarios. 
+
+## 6 Limitations 
+
+Although our FLARE and ChromaGuard demonstrate substantial attack and mitigation capabili-ties on spotlight attacks, we do not intend to serve them as definitive attack and defense methods. Instead, they serve as analytical tools to expose the acute vulnerability of VLA models to subtle environmental perturbations. Our analysis reveals that naive data augmentation fails to resolve these vulnerabilities, merely discarding color features rather than learning robust representations. Further-more, these tools do not yet explore temporal dynamics, such as time-varying lighting or closed-loop adaptive attacks. Our primary objective is to expose the critical robustness crisis facing current VLA models, rather than to engineer an exhaustive adversarial attack or an impenetrable defense. 
+
+## 7 Conclusion 
+
+We investigated the robustness of Vision-Language-Action (VLA) models under targeted physical illumination variations. Utilizing our proposed FLARE evaluation framework, we demonstrated that optimized spotlight perturbations can reliably degrade baseline VLA performance to a 0.0% success rate while inducing substantial trajectory deviations. Furthermore, we identified a practical limita-tion in standard color data augmentations: while they successfully improve robustness to lighting changes, they inadvertently bias the model to discard semantic color cues, leading to performance degradation in physical tasks that rely on color discrimination. To address this limitation, we intro-duced ChromaGuard, a hue- and texture-preserving augmentation strategy. Our physical evaluations on a 6-DoF manipulator indicate that ChromaGuard effectively balances robustness and perceptual fidelity, maintaining reliable success rates under targeted lighting attacks without compromising the visual acuity necessary for semantic manipulation. These findings emphasize the urgent necessity of achieving a certain level of generalizability of the current state-of-the-art VLA models before diving too deeply into their security. 8References 
+
+[1] B. Z. et al. RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Con-trol. In PMLR , volume 229, pages 2165–2183, 2023. [2] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. Foster, G. Lam, P. Sanketi, et al. Openvla: An open-source vision-language-action model. arXiv preprint arXiv:2406.09246 , 2024. [3] M. Shukor, D. Aubakirova, F. Capuano, P. Kooijmans, S. Palma, A. Zouitine, M. Aractingi, C. Pascal, M. Russi, A. Marafioti, et al. Smolvla: A vision-language-action model for afford-able and efficient robotics. arXiv preprint arXiv:2506.01844 , 2025. [4] K. B. et al. π0: A Vision-Language-Action Flow Model for General Robot Control, 2024. URL https://arxiv.org/abs/2410.24164 .[5] Y. Jiang, Y. Ze, Z. Jiang, S. Song, and J. Wu. BEHAVIOR Robot Suite: Streamlining Real-World Whole-Body Manipulation for Everyday Household Activities. In 9th Annual Confer-ence on Robot Learning (CoRL) , 2025. [6] S. Jiang, Z. Huang, K. Qian, Z. Luo, T. Zhu, Y. Zhong, Y. Tang, M. Kong, Y. Wang, S. Jiao, et al. A Survey on Vision-Language-Action Models for Autonomous Driving. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 4524–4536, 2025. [7] S. Li, Y. Chen, D. Li, S. Liu, D. Lan, Y. Liu, and Z. Pang. Transferring Vision-Language-Action Models to Industry Applications: Architectures, Performance, and Challenges. In 2025 7th International Conference on Industrial Artificial Intelligence (IAI) , pages 1–6. IEEE, 2025. [8] Q. Li, B. Yin, W. Huang, R. Liu, B. Zou, R. Yu, J. Ye, W. Yu, and X. Wang. Vision-Language-Action Safety: Threats, Challenges, Evaluations, and Mechanisms, 2026. [9] B. Ma, H. Guo, P. Lv, M. Xu, X. Dai, Y. Zhang, Y. Yang, and Y. Zhang. What Breaks Embodied AI Security: LLM Vulnerabilities, CPS Flaws, or Something Else?, 2026. [10] X. Lu, J. Chen, S. Xiao, Z. Jin, Z. Chen, H. Yu, B. Qian, R. Zhou, X. Ji, and W. Xu. Phantom menace: Exploring and enhancing the robustness of vla models against physical sensor attacks. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 40, pages 35689– 35697, 2026. [11] H. Xu, Y. S. Koh, S. Huang, Z. Zhou, D. Wang, J. Sakuma, and J. Zhang. Model-Agnostic Adversarial Attack and Defense for Vision-Language-Action Models, 2025. [12] X. Wang, J. Li, Z. Weng, Y. Wang, Y. Gao, T. Pang, C. Du, Y. Teng, Y. Wang, Z. Wu, et al. FreezeVLA: Action-Freezing Attacks Against Vision-Language-Action Models, 2025. [13] X. Zhou, G. Tie, G. Zhang, H. Wang, P. Zhou, and L. Sun. Badvla: Towards backdoor attacks on vision-language-action models via objective-decoupled optimization. Advances in Neural Information Processing Systems , 38:127496–127523, 2026. [14] J. Zhou, Y. Wei, R. Zhen, B. Zhao, X. Xia, R. Shao, X. Su, and S. Yang. Inject Once Survive Later: Backdooring Vision-Language-Action Models to Persist Through Downstream Fine-Tuning, 2026. [15] N. Zhang, W. Tao, X. Xiao, Q. Sun, Y. Zheng, W. Mo, P. Wang, and N. Zhang. Attention-Guided Patch-Wise Sparse Adversarial Attacks on Vision-Language-Action Models, 2025. [16] X. Zhou, Y. Xu, G. Tie, Y. Chen, G. Zhang, D. Chu, P. Zhou, and L. Sun. LIBERO-PRO: To-wards Robust and Fair Evaluation of Vision-Language-Action Models Beyond Memorization. 
+
+arXiv preprint arXiv:2510.03827 , 2025. 9[17] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone. LIBERO: Benchmarking knowledge transfer for lifelong robot learning. Advances in Neural Information Processing Systems , 36:44776–44791, 2023. [18] D. Y. G. Orjuela, L. Scappatura, V. Di Gennaro, R. A. Izzo, G. Bardaro, and M. Matteucci. Im-proving Robustness of Vision-Language-Action Models by Restoring Corrupted Visual Inputs, 2026. [19] J. Guo, Z. Wu, C. Tu, Y. Ma, X. Kong, Z. Liu, J. Ji, S. Zhang, Y. Chen, K. Chen, et al. On Robustness of Vision-Language-Action Model Against Multi-Modal Perturbations, 2025. [20] A. Madry, A. Makelov, L. Schmidt, D. Tsipras, and A. Vladu. Towards Deep Learning Models Resistant to Adversarial Attacks. arXiv preprint arXiv:1706.06083 , 2017. [21] S. Xhonneux, A. Sordoni, S. G¨ unnemann, G. Gidel, and L. Schwinn. Efficient Adversarial Training in LLMs with Continuous Attacks. Advances in Neural Information Processing Sys-tems , 37:1502–1530, 2024. [22] Y. Ganin, E. Ustinova, H. Ajakan, P. Germain, H. Larochelle, F. Laviolette, M. March, and V. Lempitsky. Domain-Adversarial Training of Neural Networks. Journal of machine learning research , 17(59):1–35, 2016. [23] A. Hanif, M. Naseer, S. Khan, M. Shah, and F. S. Khan. Frequency Domain Adversarial Train-ing for Robust Volumetric Medical Segmentation. In International Conference on Medical Image Computing and Computer-Assisted Intervention , pages 457–467. Springer, 2023. [24] S. Yang, W. Xiao, M. Zhang, S. Guo, J. Zhao, and F. Shen. Image Data Augmentation for Deep Learning: A Survey. arXiv preprint arXiv:2204.08610 , 2022. [25] T. Akiba, S. Sano, T. Yanase, T. Ohta, and M. Koyama. Optuna: A Next-Generation Hyper-parameter Optimization Framework. In Proceedings of the 25th ACM SIGKDD international conference on knowledge discovery & data mining , pages 2623–2631, 2019. [26] LeRobot: An open-source library for end-to-end robot learning. arXiv preprint arXiv:2602.22818 , 2026. [27] E. Todorov, T. Erez, and Y. Tassa. MuJoCo: A physics engine for model-based control. In 
+
+2012 IEEE/RSJ international conference on intelligent robots and systems , pages 5026–5033. IEEE, 2012. [28] R. Knight, P. Kooijmans, R. Cadene, S. Alibert, M. Aractingi, D. Aubakirova, A. Zouitine, R. Martino, S. Palma, C. Pascal, and T. Wolf. Standard Open SO-100 & SO-101 Arms. URL 
+
+https://github.com/TheRobotStudio/SO-ARM100 .[29] P. Intelligence, K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, et al. π0.5: a Vision-Language-Action Model with Open-World Generaliza-tion. arXiv preprint arXiv:2504.16054 , 2025. 10
