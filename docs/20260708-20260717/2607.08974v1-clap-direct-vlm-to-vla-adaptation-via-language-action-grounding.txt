@@ -1,0 +1,438 @@
+Title: CLAP: Direct VLM-to-VLA Adaptation via Language-Action Grounding
+
+URL Source: https://arxiv.org/pdf/2607.08974v1
+
+Published Time: Mon, 13 Jul 2026 00:26:19 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# CLAP: Direct VLM-to-VLA Adaptation via Language-Action Grounding 
+
+Yuri Ishitoya ∗
+
+, †
+
+Ochanomizu University 
+
+Jeremy Siburian ∗
+
+, †
+
+University of Tokyo 
+
+Masashi Hamaya 
+
+OMRON SINIC X Corp. 
+
+Kuniaki Saito 
+
+OMRON SINIC X Corp. 
+
+Cristian C. Beltran-Hernandez 
+
+OMRON SINIC X Corp. 
+
+Mai Nishimura ∗
+
+OMRON SINIC X Corp. 
+
+{masashi.hamaya, kuniaki.saito, cristian.beltran, mai.nishimura }@sinicx.com 
+
+Abstract: Vision-language-action models (VLAs) inherit semantic capabilities from pretrained VLMs, yet large-scale post-training on robot data and architec-tural modifications can reshape the backbone so extensively that it becomes diffi-cult to isolate what the VLM contributes to control. Directly converting pretrained VLMs into VLAs with minimal architectural change offers a more transparent path to understanding how VLM capabilities transfer across model scales. The core obstacle is output-distribution mismatch: predicting actions as bare numeric token sequences moves generation away from the VLM’s pretrained language dis-tribution, degrading the capabilities we seek to preserve. To address this, we pro-pose CLAP (Causal Language-Action Prediction), which prepends each numeric action sequence with a natural-language action description, causally conditioning precise action-token prediction on a language-action plan without modifying the backbone architecture. With single-epoch fine-tuning alone, 2B CLAP achieves 90.8% on LIBERO (+14.9 pt over VLA-0) and improves robustness on LIBERO-PRO under language, object, and spatial perturbations. We release CLAP at 0.8B, 2B, and 4B as an open-weight, multi-scale compact VLA family from a single VLM lineage, enabling controlled analysis of VLM-to-VLA capability transfer. 
+
+Keywords: Vision-Language-Action Models, Robot Manipulation 
+
+## 1 Introduction 
+
+Rapid progress in vision-language models (VLMs) continually expands the capabilities of robot 
+
+perception and reasoning , yet transferring these capabilities to robot control remains dispropor-tionately difficult. Vision-language-action models (VLAs), which sit at the intersection of vision-language modeling and robot learning, pursue this transfer by fine-tuning pretrained VLMs on robot demonstrations [1, 2, 3]. Recent systems have improved action prediction through discretized action tokens, learned action experts, or diffusion action heads [1, 4], but each addition moves the VLA further from its underlying VLM in both architecture and training distribution. This architectural and data complexity makes it difficult to isolate what the pretrained VLM actually contributes to control, limiting both systematic capability analysis and the transfer of advances from the broader VLM community. What would it take to make VLA research as accessible as VLM research? 
+
+A central source of complexity in VLM-to-VLA adaptation is an output-distribution mismatch : stan-dard VLA fine-tuning trains a VLM pretrained to generate semantically structured language to in-stead emit bare action-token sequences such as 4 12 98 3 0 0 . These tokens carry little of the 
+
+> ∗
+
+Equal contribution. 
+
+> †
+
+Work done as an intern at OMRON SINIC X Corporation. arXiv:2607.08974v1 [cs.RO] 9 Jul 2026 Figure 1: CLAP converts a pretrained VLM directly into a deployable VLA by prepending a natural-language action description to numeric action tokens, keeping every prediction step closer to the VLM pretraining distribution. CLAP requires no action expert or architectural change. linguistic or spatial structure seen during pretraining, so learning to act can degrade the represen-tations that support semantic generalization. This unresolved mismatch is especially important for 
+
+compact VLAs, which use lightweight VLM backbones for efficient deployment but may be more sensitive to distribution shift during fine-tuning [5, 6]. Recent architecture-free VLM-to-VLA work provides cleaner settings for studying this issue by avoiding separate action experts, but existing approaches either predict bare action tokens [7] or replace numeric actions with language-only de-scriptions [8]. These choices leave a trade-off between direct executability and alignment with the VLM’s pretrained language distribution. To address this mismatch, we propose CLAP (Causal Language-Action Prediction), a lightweight VLM-to-VLA fine-tuning recipe that reformulates action prediction as language-conditioned ac-tion generation . Instead of predicting bare action tokens directly or replacing actions with language-only descriptions, CLAP generates both in a single autoregressive sequence: before predicting dis-crete numeric action tokens, the model first generates a natural-language action description, such as 
+
+“move forward, tilt right, and close the gripper” . Because the full sequence is generated autoregres-sively, causal attention conditions the numeric action tokens on the preceding language description, making it a conditioning intermediate rather than an auxiliary prediction. CLAP requires no action expert, vocabulary modification, architectural change, or manual annotation , while retaining executable numeric action tokens for precise control. We evaluate CLAP across manipulation, robustness, and capability-transfer analysis using com-pact Qwen3.5 backbones at 0.8B, 2B, and 4B parameters [9]. On LIBERO, 2B CLAP achieves 90.8% success with a single fine-tuning epoch, outperforming VLA-0 by +14.9 percentage points under identical conditions and approaching fully-trained VLA-0’s performance, showing that the language-action prefix substantially improves learning efficiency. On LIBERO-PRO, CLAP im-proves robustness under instruction, object, and spatial perturbations, suggesting that the prefix helps beyond in-distribution imitation. On VLABench, the 2B backbone performs strongest across most capability dimensions and also yields the strongest CLAP policy, indicating that parameter count alone does not determine transfer quality in the compact regime. Together, these evaluations suggest that CLAP provides not only an efficient compact VLA recipe, but also a controlled setting for studying how VLM capabilities transfer to robot control. In summary, our main contribution is CLAP : a minimal VLM-to-VLA recipe that changes only the output representation, jointly generating language-action descriptions and action tokens without an action expert, vocabulary modification, or architectural change. Consistent with the lightweight design, CLAP reaches ≈ 90% success rate on LIBERO within 6.5 hours on 8 GPU, across 0.8B, 2B, and 4B model sizes. We will release weights and code upon publication. 
+
+## 2 Related Work 
+
+Vision-language-action models and action representations. Vision-language-action (VLA) models adapt pretrained vision-language models (VLMs) [10, 11, 12] to robot control by com-bining internet-scale vision-language pretraining with behavioral cloning on robot demonstra-2tions [13, 14, 15]. A central design choice is how to represent low-level actions within or alongside the VLM. One strategy discretizes continuous actions into tokens, casting robot control as autore-gressive next-token prediction [4, 7, 16]. Another adds dedicated diffusion or flow-matching action heads to generate continuous actions directly [1, 2, 17]. CLAP builds on the autoregressive direc-tion, but changes the output representation itself: instead of predicting bare discrete action tokens, it inserts a language-action prefix before the action tokens without adding an action expert. 
+
+Language grounding and intermediate reasoning. Prior work has used language, affordances, and intermediate reasoning traces to make robot policies more semantically structured. One line of work conditions manipulation policies or high-level plans on natural language, often grounding instructions through learned affordances or embodied multimodal representations [18, 19, 20, 21]. More recent VLA methods move language or trace-like intermediates closer to action prediction. VLM2VLA [8] represents actions directly as natural-language text, improving alignment with the VLM pretraining distribution but limiting low-level control precision. Embodied reasoning meth-ods such as ECoT [22], ECoT-Lite [23], and TraceVLA [24] rely on auxiliary intermediate repre-sentations, including reasoning tokens and visual traces, before action generation, but often incur additional supervision, prompting, or inference-time overhead. LAP [3] uses language-action de-scriptions as a pretraining signal, but still relies on an action expert for final action generation. By contrast, CLAP places the language-action description directly in the final autoregressive policy output, where it conditions subsequent discrete action tokens while preserving executable numeric control. 
+
+Capability preservation. Fine-tuning VLMs on robot action data can disrupt pretrained repre-sentations, degrading capabilities such as multimodal understanding, spatial reasoning, and gener-alization [25, 26]. One line of work addresses this by insulating or preserving the VLM during policy learning. Knowledge Insulation [25] blocks gradients from the action expert, FLOWER [27] decouples action generation from the VLM via an intermediate-fusion Flow Transformer, and Gen-VLA [26] uses a dual-encoder design with vision-language co-training. These methods improve preservation, but introduce additional modules, training objectives, gradient-blocking schemes, or co-training data. CLAP instead asks whether capability-preserving VLM-to-VLA adaptation can be improved by changing only the output representation while keeping the VLM architecture and training objective unchanged. 
+
+Compact VLAs. Capability preservation is especially important for compact VLAs, where effi-cient deployment must be balanced against limited model capacity. SmolVLA [5], TinyVLA [6], and VLA-Adapter [28] improve efficiency through lightweight backbones, adapter-based tuning, or specialized policy modules. However, they either focus on a specific model scale or rely on addi-tional policy/action components. In contrast, CLAP applies the same architecture-preserving recipe across 0.8B, 2B, and 4B Qwen3.5 backbones, enabling controlled analysis of VLM-to-VLA transfer across compact scales. 
+
+## 3 Preliminaries 
+
+Given an image observation o and a natural-language instruction l, an autoregressive VLA models a robot policy πθ by predicting an action sequence. Each h-step action chunk a = ( a1, . . . , a h)
+
+consists of h sequential 7-DoF commands, where each at ∈ R7 encodes end-effector translation, rotation, and gripper state. Following prior work [7], each action dimension is discretized into 
+
+K = 1000 integer bins and represented as text tokens using the VLM’s existing vocabulary. The policy predicts the flattened action-token sequence autoregressively: 
+
+πθ (a | o, l ) = 
+
+> 7h
+
+Y
+
+> i=1
+
+πθ (a(i) | a(<i ), o, l ), (1) where a(i) denotes the i-th token in the flattened action sequence and a(<i ) denotes all preceding action tokens. The VLM backbone is thus fine-tuned with the same next-token prediction objective 3Figure 2: Overview of CLAP. CLAP changes only the target output sequence for VLA fine-tuning. During training, the language-action description ˜d is generated from the ground-truth action chunk by a fixed template ˜d = T(a). At inference time, both language-action description d and the numeric action tokens a are generated autoregressively by the model. Because generation is causal, each action token conditions on the preceding language-action description. as language pretraining, while its outputs can be directly decoded into robot commands. However, the fine-tuning targets are bare integer sequences that lack the semantic structure of natural language, diverging from the distribution the backbone was pretrained to generate. We refer to this shift as 
+
+output-distribution mismatch [3, 8]. CLAP mitigates this mismatch by incorporating a language-grounded action description into the autoregressive output. 
+
+## 4 CLAP: Causal Language-Action Prediction 
+
+We use the output-distribution mismatch introduced in Section 3 to design a simple training recipe for compact VLA policies. Our goal is to retain the semantic generalization of the pretrained VLM while producing directly executable low-level robot actions, without requiring an action expert, vocabulary extension, or large-scale robot pretraining. Figure 2 provides an overview. 
+
+Language-action representation. The central design question in converting a pretrained VLM into a VLA is what action representation to use. Representing actions as bare numeric tokens yields compact, directly executable outputs, but moves generation away from the VLM’s pretrained language distribution. A promising alternative, introduced by LAP [3], is to express actions as natural-language descriptions, preserving closer alignment with the VLM’s pretrained generation behavior. However, language-only action descriptions are too verbose to specify precise low-level commands efficiently, and still require an external action generator to produce executable robot actions [3, 25]. CLAP addresses this trade-off by prepending a short language-action description to the numeric action tokens within a single autoregressive sequence, extending Eq. 1 as 
+
+πθ (d, a | o, l ) = 
+
+> |d|
+
+Y
+
+> j=1
+
+πθ
+
+ d(j) | d(<j ), o, l | {z }
+
+> language-action prefix
+
+·
+
+> 7h
+
+Y
+
+> i=1
+
+πθ
+
+ a(i) | a(<i ), d, o, l | {z }
+
+> numeric action tokens
+
+, (2) where d is a natural-language description of the action chunk a. During training, the description is generated deterministically from the ground-truth action chunk ˜a by a fixed template as ˜d =
+
+T(˜a). At inference time, the model generates both d and a autoregressively. This representation satisfies three desiderata: (i) semantic alignment with the VLM’s pretrained distribution, (ii) direct executability without an external action generator, and (iii) token efficiency for real-time control. 
+
+Template-based language-action prefix. We instantiate the language component of this repre-sentation with a deterministic template. For each h-step action chunk, CLAP prepends a compact natural-language summary of the intended motion, such as "move forward 3 cm, tilt right 1 degree, close gripper" . This prefix summarizes the chunk-level translation, rotation, and 4System Message:          
+
+> Analyze the input image and predict robot actions for the next 8 timesteps. Each action has 7 dimensions. First describe the motion in natural language inside <think >... </think >.Then output exactly 56 integers (0-1000 each), space-separated, for the discretized actions in timestep order. Nothing else.
+> User Instruction: grasp cube and drop it onto the plate.
+> Language-Action Prediction:
+> <think >move back 0.5 cm, move up 3.5 cm, move left 0.4 cm, tilt left 1 degrees, tilt back 1 degrees, rotate counterclockwise 3 degrees, open gripper
+> </think >
+> 408 980 166 319 505 491 1000 407 980 159 312 496 486 1000 406 980 152 303 486 479 1000 406 981 150 300 489 480 1000 407 980 149 294 484 483 1000 408 980 146 289 482 480 1000 410 979 144 287 486 483 1000 412 978 137 277 484 479 1000
+
+Table 1: Example CLAP output sequence. Given an instruction, system message, and image observations, CLAP first generates a fixed-template language-action prefix that summarizes the intended h-step motion, then generates discrete numeric action tokens for execution. The pre-fix provides a structured intermediate conditioned on the observation and instruction, while the numeric tokens encode the precise 7-DoF command for each step. gripper command, while the following numeric tokens encode precise low-level action values. Be-cause the prefix is generated from the ground-truth action chunk using a fixed template, CLAP requires no manual annotation beyond the original robot demonstrations. Table 1 shows an example output sequence generated from an input image observation and language instruction. 
+
+Joint generation and training. Given the template-derived prefix, CLAP trains the model to pre-dict a single concatenated sequence: language-action description tokens followed by numeric action tokens. We optimize the standard autoregressive cross-entropy objective 
+
+LCLAP = −E(o,l,a )∼D 
+
+h
+
+log πθ ( ˜d | o, l ) + log πθ (˜ a | o, l, ˜d)
+
+i
+
+, (3) where D is the robot demonstration dataset and T is the fixed template. Because the sequence is gen-erated autoregressively, each action token causally attends to the preceding language-action prefix, making the prefix a conditioning intermediate rather than an independent auxiliary output. CLAP uses the same VLM backbone, tokenizer, output head, and cross-entropy loss for both language and action tokens, introducing no action expert, auxiliary head, or vocabulary extension. 
+
+Action masking augmentation. We consider an optional augmentation that changes the teacher-forced input context without changing the CLAP target sequence. Specifically, we randomly replace a subset of input action tokens with a “ ?” placeholder while keeping the original tokens as prediction targets. The model must therefore infer the masked values from the image observation, instruction, language-action prefix, and remaining action context. For each sample, the masking fraction is drawn from Uniform(0 , p max ), with a 40% probability of applying no masking. Full details are provided in Appendix. We study the effect of masking in Section 5.2; unless otherwise stated, CLAP uses the unmasked configuration. 
+
+## 5 Experiments 
+
+5.1 Experimental Setup Benchmarks. We evaluate CLAP on three benchmarks targeting complementary aspects of VLA performance: (1) in-distribution manipulation, (2) out-of-distribution robustness, and (3) VLM ca-pability analysis. LIBERO [29] evaluates in-distribution manipulation under the standard simulated benchmark protocol; we report results on the four LIBERO suites, covering spatial reasoning, object manipulation, goal-conditioned behavior, and long-horizon tasks. LIBERO-PRO [30] evaluates out-5Table 2: LIBERO benchmark ( h=8 ). Best result per VLA-0 vs. CLAP pair under the same number of gradient steps. Gray rows are prior work under their original training protocols (contextual refs).                                                                                            
+
+> Model Backbone Size VLA Pretrain Spatial ↑Object ↑Goal ↑Long ↑Avg ↑
+> Ours (1 epoch, identical protocol)
+> VLA-0 (repro.) Qwen3.5 0.8B –77.6 87.8 78.4 60.6 76.1 CLAP (Ours) Qwen3.5 0.8B –92.6 97.8 88.4 79.6 89.6 (+13.5)
+> VLA-0 (repro.) Qwen3.5 2B –77.8 86.6 77.0 62.4 75.9 CLAP (Ours) Qwen3.5 2B –93.0 97.4 90.8 82.0 90.8 (+14.9)
+> VLA-0 (repro.) Qwen3.5 4B –37.6 84.8 85.8 48.6 64.2 CLAP (Ours) Qwen3.5 4B –88.0 97.4 86.6 67.6 84.9 (+20.7)
+> Prior work (full training protocol)
+> SmolVLA †SmolVLM2 2.25B –93.0 94.0 91.0 77.0 88.8 VLA-0 ‡Qwen2.5-VL 3B –97.0 97.8 96.2 87.6 94.7
+> π0.5PaliGemma 3B ✓98.8 98.2 98.0 92.4 96.85 OpenVLA Prismatic 7B ✓84.7 88.4 79.2 53.7 76.5
+> †SmolVLA uses community-scale robot pretraining; all sizes in Appendix. ‡Original VLA-0 uses Qwen2.5-VL-3B and 8 epochs [7].
+
+of-distribution robustness by perturbing the original LIBERO tasks, including novel visual object in-stances, object relocation, instruction rephrasing, and task-configuration changes. VLABench [31] evaluates language-conditioned robot reasoning capabilities; we use it to measure the base Qwen3.5 backbone’s planning and spatial reasoning capabilities before robot fine-tuning, and to analyze how these capabilities relate to downstream VLA performance. Full benchmark details are provided in Appendix. 
+
+Comparisons. Our primary baseline is VLA-0, reproduced using the same Qwen3.5 backbones, LIBERO training data, and number of gradient steps. This matched comparison isolates the effect of the language-action prefix. We also report results from large robot-pretrained VLAs, including OpenVLA [4], π0 [2], and SmolVLA [5], as contextual reference points. The gray rows in Table 2 indicate methods evaluated under different backbones, training budgets, or robot-pretraining data, and therefore should not be interpreted as matched comparisons. 
+
+Implementation. We instantiate CLAP with Qwen3.5 backbones at 0.8B, 2B, and 4B parameters. All models are trained for one epoch on the LIBERO demonstration data across all four suites with full-parameter fine-tuning, using the same action discretization and fine-tuning protocol as VLA-0. Unless otherwise stated, CLAP uses the language-action prefix without additional augmentation. We study random action masking as an optional augmentation in Section 5.2; the unmasked variant is used as the default configuration. Full hyperparameters are provided in Appendix. 
+
+5.2 Learning Efficiency Results Does the language-action prefix improve learning efficiency? Table 2 evaluates performance after one training epoch, isolating the effect of the output representation under matched backbones, data, and training budget. CLAP consistently improves over VLA-0 across all model sizes, with average gains of +13.5, +14.9, and +20.7 points at 0.8B, 2B, and 4B, respectively. At 2B parameters, CLAP achieves the best overall result, reaching 90.8% average success and outperforming VLA-0 by +14.9 points . The gains are broad across task suites: 2B CLAP improves Spatial from 77.8% to 93.0%, Object from 86.6% to 97.4%, Goal from 77.0% to 90.8%, and Long from 62.4% to 82.0%. For context, 2B CLAP also exceeds the reported averages of SmolVLA and OpenVLA and approaches stronger robot-pretrained systems such as π0.5, although these comparisons are not controlled for backbone, data, training budget, or pretraining. These gains come from changing the output representation rather than adding data, model capacity, or architectural components. VLA-0 learns a direct mapping from image-language inputs to bare integer action tokens, which provide precise supervision but little semantic structure. CLAP instead inserts a language-action description before the numeric tokens, giving the model an intermediate target closer to its pretrained generation behavior. 6Table 3: Action masking ablation on LIBERO (1 epoch, h=8 ). We highlight the best per size group. ✓ indicates action masking; – indicates no masking.                                                
+
+> Model Backbone Size Masking Spatial ↑Object ↑Goal ↑Long ↑Avg ↑
+> CLAP Qwen3.5 0.8B –92.6 97.8 88.4 79.6 89.6
+> ✓87.6 95.4 90.0 69.8 85.7 ( −3.9)CLAP Qwen3.5 2B –93.0 97.4 90.8 82.0 90.8
+> ✓94.8 96.8 91.6 73.2 89.1 ( −1.7)CLAP Qwen3.5 4B –88.0 97.4 86.6 67.6 84.9
+> ✓91.6 92.2 89.8 78.8 88.1 (+3.2)
+
+Table 4: LIBERO-PRO OOD generalization across task suites and perturbation types. Results are suite-level average success rates. Obj : novel visual instances; Pos : object relocation; Sem :instruction rephrasing; Task : task-configuration change. We highlight the best and second-best results in each column. All models use Qwen3.5 and are trained for one epoch with h=8 .                                                                                                                                                                              
+
+> Spatial Object Goal Long Model Size Obj Pos Sem Task Obj Pos Sem Task Obj Pos Sem Task Obj Pos Sem Task Avg
+> VLA-0 (repro.) 0.8B 70.2 9.4 59.2 50.4 84.4 0.0 85.8 4.6 34.6 0.0 65.6 13.2 27.8 0.0 38.0 9.0 34.5 2B 67.4 0.6 51.4 44.8 80.6 0.0 74.8 3.4 44.0 1.8 49.4 8.0 31.8 0.0 60.6 8.6 32.9 4B 39.8 0.0 32.6 31.8 81.0 0.0 86.8 5.4 52.6 0.0 59.2 12.0 34.4 0.0 45.8 8.8 30.6 CLAP w/o masking (Ours) 0.8B 90.0 2.4 68.0 53.8 91.2 0.0 89.0 5.4 44.4 0.2 54.4 13.2 52.0 0.0 64.4 11.2 40.0 2B 92.6 8.4 66.4 65.8 92.4 0.0 95.8 5.4 57.6 1.8 76.6 14.4 48.2 0.0 68.2 10.2 44.0 4B 82.4 8.4 81.0 53.2 91.4 0.0 98.8 5.4 38.2 1.0 68.0 17.2 39.8 0.2 64.2 15.4 41.5 CLAP w/ masking (Ours) 0.8B 75.4 0.0 48.4 52.2 93.8 0.0 82.0 5.2 52.6 0.8 56.8 16.4 38.6 0.0 27.2 7.6 34.8 2B 93.8 6.6 75.4 52.2 91.6 0.0 91.4 3.8 46.0 0.6 71.8 10.4 40.2 0.2 68.4 13.2 41.6 4B 94.2 10.4 88.2 64.8 87.2 0.0 91.2 4.8 56.6 0.0 79.4 11.4 42.0 0.0 72.2 15.0 44.8
+
+Does action masking provide additional gains? Table 3 ablates whether action masking im-proves over the language-action prefix alone. Masking is not uniformly beneficial: it reduces aver-age success by 3.9 points at 0.8B and 1.7 points at 2B, but improves the 4B model by 3.2 points, from 84.9% to 88.1%. The drop at smaller scales is mainly due to lower Long-horizon performance, suggesting that 0.8B and 2B models benefit from direct access to the full action-token context. In contrast, the 4B model appears better able to exploit the additional reconstruction constraint imposed by masking. These results suggest that action masking should be treated as a validation-dependent augmentation rather than a core component of CLAP. 
+
+5.3 Generalization and Capability Transfer Results Do CLAP’s learning gains transfer out of distribution? Table 4 assesses CLAP’s robustness to out-of-distribution perturbations on LIBERO-Pro. CLAP consistently improves over VLA-0 across model scales, with average OOD gains of +5.5, +11.1, and +10.9 points for unmasked CLAP at 0.8B, 2B, and 4B, respectively. The most striking improvement appears on the Spatial suite with novel visual instances. For 4B models, unmasked CLAP improves over VLA-0 by +42.6 pt , while the masked variant improves by +54.4 pt . These results suggest that CLAP improves OOD robust-ness beyond what is captured by standard in-distribution evaluation on LIBERO. Notably, action masking substantially enhances OOD robustness at 4B scale, despite providing only mixed benefits on LIBERO. This suggests that masking can reduce reliance on action-token shortcuts that become brittle under distribution shift. 
+
+Does bigger VLM capability mean better transfer? Figure 3 presents VLABench performance of Qwen3.5 backbones prior to robot fine-tuning, evaluated under 1-shot prompting with and without Chain-of-Thought (CoT) [32]. Across most categories, performance generally improves with model size. However, on Complex and Physics Law tasks, the 0.8B and 2B models match or exceed the 4B model under both prompting conditions. This non-monotonic trend persists downstream: CLAP 2B also outperforms CLAP 4B on LIBERO (Table 2). Base VLM capability thus influences VLA performance, yet parameter count alone does not determine transfer quality in the compact regime. 7Common Sense              
+
+> Spatial
+> Mesh & Texture
+> Complex
+> Physics Law
+> Semantic
+> 10 20 30 40 50 60
+> Common Sense
+> Spatial
+> Mesh & Texture
+> Complex
+> Physics Law
+> Semantic
+> 10 20 30 40 50 60
+> 0.8B 2B 4B
+> 1-shot / without CoT 1-shot / with CoT
+
+Figure 3: VLABench capability profiles before robot fine-tuning. We evaluate Qwen3.5 0.8B, 2B, and 4B under 1-shot prompting, comparing non-CoT prompting on the left with Chain-of-Thought (CoT) prompting on the right. The 2B model shows balanced performance across most dimensions, while CoT primarily improves the 4B model on Spatial and Mesh & Texture tasks. These trends motivate CLAP’s language-action design for compact VLA fine-tuning. 
+
+Does reasoning help compact VLAs? Reading the same evaluation along the CoT axis, we find that removing CoT improves performance in most settings; on Physics Law tasks, the 0.8B model even exceeds the larger 2B and 4B models. Output analysis suggests that longer reasoning traces can introduce format violations or loops that diverge from actionable predictions, consistent with recent reports that extended reasoning may weaken visual grounding [33]. CLAP avoids relying on free-form reasoning at inference time: its structured language-action template provides a compact intermediate representation before numeric action prediction, keeping smaller variants competitive and the approach attractive for compact, deployment-friendly settings. 
+
+## 6 Conclusion 
+
+We presented CLAP, a minimal VLM-to-VLA fine-tuning recipe that addresses output-distribution mismatch by prepending a natural-language action description to each numeric action sequence. With single-epoch training on a single 8-GPU node (under 6.5 hours for all model sizes), 2B CLAP achieves 90.8% on LIBERO, outperforming size-matched VLA-0 by +14.9 points, while also im-proving OOD robustness on LIBERO-PRO. Multi-scale evaluation across 0.8B, 2B, and 4B reveals that parameter count alone does not determine VLM-to-VLA transfer quality, with the 2B backbone consistently outperforming the 4B variant. We believe making VLA fine-tuning as lightweight and transparent as standard VLM fine-tuning is a necessary step toward bringing the VLM community’s rapid progress to robot learning. 
+
+## 7 Limitations 
+
+We limit our study to a single VLM family and limited benchmark suites. Generalization to other backbones, embodiments, and real-world settings remains to be validated. On the inference side, autoregressive token generation is inherently slower than parallel action decoding (e.g. diffusion or flow-matching heads), but deployment techniques in the LLM community, such as speculative decoding and quantization, are directly applicable and remain unexplored in this work. As CLAP preserves the VLM backbone unchanged, VLM-side advances such as distillation, quantization, and new backbone architectures can be incorporated without redesigning the action pipeline. 8References 
+
+[1] NVIDIA, :, J. Bjorck, F. Casta˜ neda, N. Cherniadev, X. Da, R. Ding, L. J. Fan, Y. Fang, D. Fox, F. Hu, S. Huang, J. Jang, Z. Jiang, J. Kautz, K. Kundalia, L. Lao, Z. Li, Z. Lin, K. Lin, G. Liu, E. Llontop, L. Magne, A. Mandlekar, A. Narayan, S. Nasiriany, S. Reed, Y. L. Tan, G. Wang, Z. Wang, J. Wang, Q. Wang, J. Xiang, Y. Xie, Y. Xu, Z. Xu, S. Ye, Z. Yu, A. Zhang, H. Zhang, Y. Zhao, R. Zheng, and Y. Zhu. Gr00t n1: An open foundation model for generalist humanoid robots, 2025. URL https://arxiv.org/abs/2503.14734 .[2] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Haus-man, B. Ichter, S. Jakubczak, T. Jones, L. Ke, S. Levine, A. Li-Bell, M. Mothukuri, S. Nair, K. Pertsch, L. X. Shi, J. Tanner, Q. Vuong, A. Walling, H. Wang, and U. Zhilinsky. π0: A vision-language-action flow model for general robot control, 2024. URL https://arxiv. org/abs/2410.24164 .[3] L. Zha, A. J. Hancock, M. Zhang, T. Yin, Y. Huang, D. Shah, A. Z. Ren, and A. Majumdar. Lap: Language-action pre-training enables zero-shot cross-embodiment transfer, 2026. URL 
+
+https://arxiv.org/abs/2602.10556 .[4] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. P. Foster, P. R. Sanketi, Q. Vuong, T. Kollar, B. Burchfiel, R. Tedrake, D. Sadigh, S. Levine, P. Liang, and C. Finn. Openvla: An open-source vision-language-action model. In P. Agrawal, O. Kroemer, and W. Burgard, editors, Proceedings of the Conference on Robot Learning , volume 270 of 
+
+Proceedings of Machine Learning Research , pages 2679–2713. PMLR, 06–09 Nov 2025. URL 
+
+https://proceedings.mlr.press/v270/kim25c.html .[5] M. Shukor, D. Aubakirova, F. Capuano, P. Kooijmans, S. Palma, A. Zouitine, M. Aractingi, C. Pascal, M. Russi, A. Marafioti, S. Alibert, M. Cord, T. Wolf, and R. Cadene. Smolvla: A vision-language-action model for affordable and efficient robotics, 2025. URL https: //arxiv.org/abs/2506.01844 .[6] J. Wen, Y. Zhu, J. Li, M. Zhu, Z. Tang, K. Wu, Z. Xu, N. Liu, R. Cheng, C. Shen, et al. Tinyvla: Towards fast, data-efficient vision-language-action models for robotic manipulation. 
+
+IEEE Robotics and Automation Letters , 2025. [7] A. Goyal, H. Hadfield, X. Yang, V. Blukis, and F. Ramos. Vla-0: Building state-of-the-art vlas with zero modification, 2025. URL https://arxiv.org/abs/2510.13054 .[8] A. J. Hancock, X. Wu, L. Zha, O. Russakovsky, and A. Majumdar. Actions as language: Fine-tuning vlms into vlas without catastrophic forgetting. In Proceedings of the International Con-ference on Learning Representations , 2026. URL https://arxiv.org/abs/2509.22195 .[9] Qwen Team. Qwen3.5: Towards native multimodal agents, February 2026. URL https: //qwen.ai/blog?id=qwen3.5 .[10] S. Karamcheti, S. Nair, A. Balakrishna, P. Liang, T. Kollar, and D. Sadigh. Prismatic vlms: Investigating the design space of visually-conditioned language models. In Proceedings of the International Conference on Machine Learning , 2024. [11] H. Liu, C. Li, Q. Wu, and Y. J. Lee. Visual instruction tuning. In Proceedings of the Conference on Neural Information Processing Systems , pages 34892–34916, 2023. [12] L. Beyer, A. Steiner, A. S. Pinto, A. Kolesnikov, X. Wang, D. Salz, M. Neumann, I. Al-abdulmohsin, M. Tschannen, E. Bugliarello, T. Unterthiner, D. Keysers, S. Koppula, F. Liu, A. Grycner, A. Gritsenko, N. Houlsby, M. Kumar, K. Rong, J. Eisenschlos, R. Kabra, M. Bauer, M. Boˇ snjak, X. Chen, M. Minderer, P. Voigtlaender, I. Bica, I. Balazevic, J. Puigcerver, P. Pa-palampidi, O. Henaff, X. Xiong, R. Soricut, J. Harmsen, and X. Zhai. Paligemma: A versatile 3b vlm for transfer, 2024. URL https://arxiv.org/abs/2407.07726 .9[13] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Haus-man, A. Herzog, J. Hsu, J. Ibarz, B. Ichter, A. Irpan, T. Jackson, S. Jesmonth, N. Joshi, R. Ju-lian, D. Kalashnikov, Y. Kuang, I. Leal, K.-H. Lee, S. Levine, Y. Lu, U. Malla, D. Manjunath, I. Mordatch, O. Nachum, C. Parada, K. Pertsch, J. Redmond, K. Rao, M. Ryoo, G. Salazar, P. Sanketi, P. Sermanet, J. Singh, A. Singh, R. Soricut, H. Tran, V. Vanhoucke, Q. Vuong, F. Xia, T. Xiao, P. Xu, S. Xu, T. Yu, and B. Zitkovich. Rt-1: Robotics transformer for real-world control at scale, 2022. URL https://arxiv.org/abs/2212.06817 .[14] B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid, et al. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In 
+
+Proceedings of the Conference on Robot Learning , pages 2165–2183. PMLR, 2023. [15] O. M. Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari, J. Hejna, T. Kreiman, C. Xu, J. Luo, Y. L. Tan, L. Y. Chen, P. Sanketi, Q. Vuong, T. Xiao, D. Sadigh, C. Finn, and S. Levine. Octo: An open-source generalist robot policy, 2024. URL https: //arxiv.org/abs/2405.12213 .[16] K. Pertsch, K. Stachowicz, B. Ichter, D. Driess, S. Nair, Q. Vuong, O. Mees, C. Finn, and S. Levine. FAST: Efficient action tokenization for vision-language-action models. 2025. URL 
+
+https://arxiv.org/abs/2501.09747 .[17] K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. R. Equi, C. Finn, N. Fusai, M. Y. Galliker, et al. π0.5: a vision-language-action model with open-world gener-alization. In Proceedings of the Conference on Robot Learning , pages 17–40, 2025. [18] S. Stepputtis, J. Campbell, M. Phielipp, S. Lee, C. Baral, and H. Ben Amor. Language-conditioned imitation learning for robot manipulation tasks. In Proceedings of the Conference on Neural Information Processing Systems , pages 13139–13150, 2020. [19] A. Brohan, Y. Chebotar, C. Finn, K. Hausman, A. Herzog, D. Ho, J. Ibarz, A. Irpan, E. Jang, R. Julian, et al. Do as i can, not as i say: Grounding language in robotic affordances. In 
+
+Proceedings of the Conference on Robot Learning , pages 287–318. PMLR, 2023. [20] W. Huang, F. Xia, T. Xiao, H. Chan, J. Liang, P. Florence, A. Zeng, J. Tompson, I. Mordatch, Y. Chebotar, et al. Inner monologue: Embodied reasoning through planning with language models. In Proceedings of the Conference on Robot Learning , pages 1769–1782. PMLR, 2023. [21] D. Driess, F. Xia, M. S. M. Sajjadi, C. Lynch, A. Chowdhery, B. Ichter, A. Wahid, J. Tompson, Q. Vuong, T. Yu, W. Huang, Y. Chebotar, P. Sermanet, D. Duckworth, S. Levine, V. Vanhoucke, K. Hausman, M. Toussaint, K. Greff, A. Zeng, I. Mordatch, and P. Florence. Palm-e: An embodied multimodal language model, 2023. URL https://arxiv.org/abs/2303.03378 .[22] M. Zawalski, W. Chen, K. Pertsch, O. Mees, C. Finn, and S. Levine. Robotic control via embodied chain-of-thought reasoning. In Proceedings of the Conference on Robot Learning ,pages 3157–3181. PMLR, 2025. [23] W. Chen, S. Belkhale, S. Mirchandani, K. Pertsch, D. Driess, O. Mees, and S. Levine. Train-ing strategies for efficient embodied reasoning. In Proceedings of the Conference on Robot Learning , pages 365–391. PMLR, 2025. [24] R. Zheng, Y. Liang, S. Huang, J. Gao, H. Daum´ e III, A. Kolobov, F. Huang, and J. Yang. Tracevla: Visual trace prompting enhances spatial-temporal awareness for generalist robotic policies. In Proceedings of the International Conference on Learning Representations , volume 2025, pages 54277–54296, 2025. [25] D. Driess, J. T. Springenberg, brian ichter, L. YU, A. Li-Bell, K. Pertsch, A. Z. Ren, H. Walke, Q. Vuong, L. X. Shi, and S. Levine. Knowledge insulating vision-language-action models: 10 Train fast, run fast, generalize better. In Proceedings of the Conference on Neural Information Processing Systems , 2026. URL https://openreview.net/forum?id=cb0xbZ3APM .[26] S. Grover, A. Gopalkrishnan, B. Ai, H. I. Christensen, H. Su, and X. Li. Enhancing general-ization in vision-language-action models by preserving pretrained representations, 2025. URL 
+
+https://arxiv.org/abs/2509.11417 .[27] M. Reuss, H. Zhou, M. R¨ uhle, O. E. Ya˘ gmurlu, F. Otto, and R. Lioutikov. Flower: Democra-tizing generalist robot policies with efficient vision-language-flow models. In J. Lim, S. Song, and H.-W. Park, editors, Proceedings of the Conference on Robot Learning , volume 305 of 
+
+Proceedings of Machine Learning Research , pages 3736–3761. PMLR, 27–30 Sep 2025. URL 
+
+https://proceedings.mlr.press/v305/reuss25a.html .[28] Y. Wang, P. Ding, L. Li, C. Cui, Z. Ge, X. Tong, W. Song, H. Zhao, W. Zhao, P. Hou, et al. Vla-adapter: An effective paradigm for tiny-scale vision-language-action model. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 40, pages 18638–18646, 2026. [29] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone. Libero: Benchmarking knowl-edge transfer for lifelong robot learning. In Proceedings of the Conference on Neural Informa-tion Processing Systems , pages 44776–44791, 2023. [30] X. Zhou, Y. Xu, G. Tie, Y. Chen, G. Zhang, D. Chu, P. Zhou, and L. Sun. Libero-pro: Towards robust and fair evaluation of vision-language-action models beyond memorization, 2026. URL 
+
+https://arxiv.org/abs/2510.03827 .[31] S. Zhang, Z. Xu, P. Liu, X. Yu, Y. Li, Q. Gao, Z. Fei, Z. Yin, Z. Wu, Y.-G. Jiang, and X. Qiu. Vlabench: A large-scale benchmark for language-conditioned robotics manipulation with long-horizon reasoning tasks. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 11142–11152, October 2025. [32] J. Wei, X. Wang, D. Schuurmans, M. Bosma, B. Ichter, F. Xia, E. H. Chi, Q. V. Le, and D. Zhou. Chain-of-thought prompting elicits reasoning in large language models. In Proceedings of the Conference on Neural Information Processing Systems , NIPS ’22, Red Hook, NY, USA, 2022. Curran Associates Inc. ISBN 9781713871088. [33] S. Raghu and S. Pandey. Don’t blink: Evidence collapse during multimodal reasoning, 2026. URL https://arxiv.org/abs/2604.04207 .11 Appendix A Multimedia Material 
+
+Please see the video with audio alongside with this PDF. We enclose multimedia material consisting of a graphical abstract summarizing the CLAP framework and real-robot (UR5e) rollouts. 
+
+## B Real-Robot Deployment 
+
+The main experiments evaluate CLAP on simulated benchmarks (LIBERO [29], LIBERO-PRO [30]). Here we provide a preliminary assessment of whether our direct VLM-to-VLA recipe transfers to a physical robot. We deploy CLAP on a UR5e manipulator for cluttered pick-and-place, fine-tuning on a limited real-robot demonstration set to examine how model scale affects task per-formance in real-world scenarios. 
+
+Figure 4: Real-Robot Setup. A UR5e arm with a Robotiq 2F-85 gripper performs pick-and-place tasks in cluttered tabletop scenes. Cam1 (fixed side view) and cam2 (wrist-mounted) provide the two RGB observations used as model input. Insets show example frames from each camera. 
+
+B.1 Real-Robot Setup 
+
+Figure 4 shows a real-robot setup to validate our model. We use a UR5e collaborative robot arm equipped with a Robotiq 2F-85 parallel gripper. A wrist-mounted RealSense D435 provides an eye-in-hand view, and a second RealSense D435 provides a fixed third-person view. CLAP runs on a workstation with an NVIDIA GeForce RTX 4090 GPU, served via FastAPI, and queried by a ROS client at inference time. The ROS client runs a synchronous observe-query-act loop, at each query, the current side- and wrist-camera images and the language instruction are sent to the inference server via an HTTP POST request, which returns an eight-step action chunk. Each action encodes a Cartesian end-effector delta (position, axis-angle orientation, and gripper state). The client executes each eight-step action chunk in open loop before re-querying the VLA. At the controller’s 15 Hz rate, this yields an effective query rate of ∼ 1.9 Hz. 
+
+B.2 Data Collection. 
+
+During data collection, we collect demonstrations on the UR5e via VR controller-based teleoper-ation. The operator controls the robot using an HTC Vive controller, whose motion is mapped to Cartesian end-effector delta commands at 50 Hz. Data is recorded from two RGB camera streams, consisting of a fixed external camera and a wrist-mounted camera, together with the end-effector pose, gripper state, and a natural-language instruction at each timestep. Each episode lasts up to 12 Figure 5: Pick-and-Place Task in Cluttered Scene. Left three: pick-and-place tasks in cluttered scenes with randomized object layouts. Right: an out-of-distribution scenario with unseen objects. 1500 steps. For each episode, the scene layout is generated from a seeded episode plan. All three objects (a carrot, a tomato, and a cube) are present simultaneously and are placed at three of five discrete table positions. We use 50 distinct object-to-position assignments from this layout space. Before each demonstration, the operator arranges the scene according to the pre-generated layout. We collect 120 demonstrations in total, with 40 episodes for each target object. The instruction tem-plate is randomized per episode from four templates: “place {target } on the plate,” “put {target }
+
+onto the plate,” “pick up {target } and place it on the plate,” and “grasp {target } and drop it onto the plate.” 
+
+B.3 Training Protocol 
+
+We fine-tune Qwen3.5-0.8B and 2B directly from their pretrained VLM checkpoints using the CLAP framework on the 120 real-robot demonstrations. Notably, we do not initialize from the LIBERO-finetuned models used in the main experiments: because the base VLMs are pretrained on real im-ages, we focus on assessing how much performance can be extracted from VLM-to-VLA adaptation using only real-world data, without an intermediate simulation fine-tuning stage. 
+
+B.4 Task Design and Evaluation 
+
+We evaluate pick-and-place tasks with three training objects (carrot, cube, tomato) under multiple instruction templates. Table 5 summarizes all objects used in the evaluation. Each model is tested under two conditions: • In-domain (ID): Object sets and layouts seen during training. • Out-of-domain (OOD): Unseen distractor objects (a silver watering can, an orange toy car) are introduced into the scene. Table 5: Objects used in real-robot evaluation. Seen objects appear in the training demonstrations as pick targets. Unseen objects are introduced as distractors only and are never picked.         
+
+> Category Object Description Seen (pick target)
+> Carrot Orange toy carrot; elongated shape
+> Cube Plain yellow wooden cube; uniform color and geometry
+> Tomato Red toy tomato; spherical shape Unseen (distractor) Silver watering can Geometrically complex (spout, handle), dissimilar to any training object
+> Orange toy car Orange color visually confusable with the carrot, testing robustness to appearance-similar distractors
+
+Table 6 reports success rates over 20 trials per condition. The 2B model achieves the highest success rate (60%) followed by 0.8B (35%), consistent with simulation results where the 2B backbone also outperforms the 0.8B model. The overall success rates are substantially lower than in simulation, reflecting the additional complexity of real-world perception and control with only 120 training 13 demonstrations. Under OOD conditions with unseen distractor objects, the 2B model maintains its in-domain success rate (60%), while the 0.8B model drops substantially to 10%, suggesting that the larger backbone is more robust to visual distractors. This capacity gap is substantially wider than observed on LIBERO (0.8B: 89.6%, 2B: 90.8%), suggesting that simulation benchmarks may underestimate the benefit of model capacity, and that real-world task complexity may correlate more strongly with backbone size. Table 6: Real-robot pick-and-place success rates (%). 20 trials per condition. Model Backbone Size ID (%) OOD (%) CLAP Qwen3.5 0.8B 35.0 10.0 CLAP Qwen3.5 2B 60.0 60.0 The results suggest two complementary directions for future work. The first is to further explore the minimal-recipe regime: improving real-world performance with limited demonstrations through better data augmentation, input robustness, or more effective use of the pretrained VLM’s capabili-ties, without introducing additional architectural components. The second is to scale up robot data while retaining the language-action representation [33], and investigating whether CLAP’s zero-modification architecture benefits similarly from larger data remains an open question. 
+
+## C Inference Latency 
+
+Table 7 reports end-to-end inference latency per policy query, measured as the mean over ten con-secutive queries after one warm-up query on an RTX 4090. The 0.8B and 2B models exhibit near-identical latency, indicating that inference time is dominated by token generation overhead rather than model size at these scales. The 4B model is moderately slower ( ∼6.0 s). With h=8 (open-loop execution of the full action chunk), effective control rates range from 1.3 to 1.9 Hz. Comparing CLAP 0.8B against VLA-0 0.8B on the same backbone isolates the overhead of the language-action prefix: CLAP adds approximately 1.0 s per query (+32%), corresponding to the ad-ditional ∼149 tokens generated for the prefix. GPU memory consumption is identical, confirming that the prefix introduces no architectural overhead.As CLAP preserves the VLM backbone un-modified, standard LLM acceleration techniques such as speculative decoding and quantization are directly applicable and could substantially reduce this overhead. Table 7: Inference latency per policy query (action horizon h = 8 , RTX 4090). Model Backbone Size Latency (s) Eff. Hz ( k=8 ) Peak GPU Memory (GiB) VLA-0 [7] Qwen3.5 0.8B 3.205 2.50 3.9 CLAP Qwen3.5 0.8B 4.233 1.89 3.9 CLAP Qwen3.5 2B 4.307 1.86 9.1 CLAP Qwen3.5 4B 6.013 1.33 18.0 
+
+## D Training Details 
+
+D.1 Training Hyperparameters 
+
+In Section 5 of the main manuscript, we fine-tune Qwen3.5-0.8,2,4B VLM with full-parameter up-dates on 8 × NVIDIA H200 GPUs. Each GPU processes a micro-batch of 16, yielding a global ef-fective batch size of 128 per optimizer step. We define one epoch as a single pass over the LIBERO-spatial, object, goal, long training set under our augmentation pipeline, which in our configuration corresponds to 17,000 gradient steps (about 2.18M training samples). 14 Table 8: Training hyperparameters shared across all CLAP and VLA-0 experiments. 
+
+Hyperparameter Value 
+
+Optimizer AdamW Training steps 17,000 Learning rate 5.0 × 10 −6 (constant schedule) Weight decay 10 −10 
+
+Effective batch size 128 (16 per GPU × 8 GPUs, DDP) Mixed precision bfloat16 Attention Flash Attention 2 Image augmentation Random crop (scale 0.875), color jitter Action masking rate 0.4 
+
+D.2 Loss Convergence vs. Task Saturation 
+
+Section 5.2 of the main text reports LIBERO performance after a single training epoch (approx-imately four hours). In extended runs up to six epochs, fig. 6 demonstrates that the closed-loop success saturates at roughly 90% after the first epoch; subsequent epochs continue to reduce training loss but do not improve task success, suggesting overfitting to the demonstration distribution. We therefore adopt the single-epoch checkpoint throughout. 92.8 90.6 88.2 88.8                             
+
+> 12345
+> 70
+> 75
+> 80
+> 85
+> 90
+> 95
+> 100
+> 94.6 97.6 98.2 97.2
+> 12345
+> 91.0 92.4 92.0 93.6
+> 12345
+> 75.0 86.4 86.6 87.6
+> 12345
+> CLAP @Qwen3.5-2B
+> epochs epochs epochs epochs
+> success rate [%]
+> LIBERO-Spatial LIBERO-Object LIBERO-Goal LIBERO-Long
+
+Figure 6: LIBERO Success Rate of CLAP@Qwen3.5-2B across training epochs on the four LIBERO suites. Success exceeds 90% on Spatial, Object, and Goal already at epoch 1, while Long benefits from one additional epoch before saturating. 
+
+## E Evaluation Protocol 
+
+Each observation encodes two camera views (agentview and wrist) tiled into a single 224 ×224 image. The model produces the full <think> . . . </think> action tokens sequence in one autoregressive pass using Qwen3.5’s built-in extended-thinking mode ( enable thinking=True ); only the 56 in-teger tokens after the closing </think> tag are forwarded to the robot controller. All eight predicted action steps execute open-loop before the model is re-queried (action horizon h=8 ). 
+
+## F CLAP Language Target Construction 
+
+During training, the language-action prefix is generated deterministically from each ground-truth action chunk using a fixed template-based method [3] that summarizes steps of numerical actions into a short natural-language summary. 
+
+Inputs. Let a ∈ R7×h denote an action chunk of horizon h, where each at =(δx t, δy t, δz t, δϕ t, δθ t, δψ t, g t) contains end-effector translational deltas in meters, rotational deltas in radians (roll, pitch, yaw), and a gripper state gt ∈ { 0, 1}.15 Aggregation. We sum the per-step deltas across the chunk and convert to human-readable units: 
+
+∆x = round 100 
+
+> h
+
+X
+
+> t=1
+
+δx t
+
+!
+
+[cm] , and analogously for ∆y, ∆z, (4) 
+
+∆ϕ = round 10 
+
+180 
+
+π
+
+> h
+
+X
+
+> t=1
+
+δϕ t
+
+!
+
+[deg] , and analogously for ∆θ, ∆ψ, (5) where round 10 rounds to the nearest multiple of 10 ◦. The gripper bit is taken from the last step, 
+
+gH ≥ 0.5 ⇒ open , otherwise close .
+
+Phrasing. Each non-zero aggregated component is mapped to a phrase whose direction word is selected by the sign of the underlying delta:                                           
+
+> Axis Sign >0Sign <0∆xmove forward |∆x|cm move back |∆x|cm
+> ∆ymove left |∆y|cm move right |∆y|cm
+> ∆zmove up |∆z|cm move down |∆z|cm
+> ∆ϕtilt left |∆ϕ|degrees tilt right |∆ϕ|degrees
+> ∆θtilt back |∆θ|degrees tilt forward |∆θ|degrees
+> ∆ψrotate counterclockwise |∆ψ|degrees rotate clockwise |∆ψ|degrees
+
+The selected phrases, followed by the gripper phrase, are joined with ", " into a single sentence d.
+
+Final target. The CLAP target is the language summary wrapped in <think>...</think> tags and followed by the same discretised numeric action tokens used by VLA-0: 
+
+<think> d </think> n1 n2 . . . n 7·h
+
+where ni are the per-dimension action bin indices. Concretely, for h = 8 with a small forward and downward motion and the gripper closing, the target looks like 
+
+> <think>move forward 3 cm, move down 2 cm, close gripper</think> 17 13 ... 0
+
+At inference, the prefix up to and including the last </think> is stripped and the remaining numeric tokens are decoded back to a continuous action chunk. 
+
+## G Action Masking Details 
+
+Following prior work [7], each action chunk is discretized into 1000 bins per dimension and se-rialized as space-separated integers. Cross-entropy loss is computed only over the assistant turn; all prompt-side tokens (system message, images, instruction, and padding) are masked out. As an optional augmentation, a random fraction of input action tokens are replaced with a ? placeholder while keeping the original values as prediction targets, forcing the model to reconstruct masked actions from visual and linguistic context. For each sample, the masking fraction is drawn from 
+
+Uniform(0 , p max ) with pmax =0 .4. For CLAP, this augmentation is restricted to the numeric tail following </think > to avoid misalignment within the language-action prefix. At inference, a logits processor constrains generation to digits, spaces, and eos ; in CLAP mode this constraint is suspended during the <think > span and re-enabled for the numeric tail. 
+
+## H Benchmark Details 
+
+LIBERO. LIBERO [29] is a simulated manipulation benchmark comprising four task suites: Spa-tial, Object, Goal, and Long. Each suite contains 10 tasks with 50 demonstrations per task. We follow the standard evaluation protocol and report success rates averaged over 20 rollouts per task. 16 Common Sense              
+
+> Spatial
+> Mesh & Texture
+> Complex
+> Physics Law
+> Semantic
+> 10 20 30 40 50 60
+> Common Sense
+> Spatial
+> Mesh & Texture
+> Complex
+> Physics Law
+> Semantic
+> 10 20 30 40 50 60
+> 0.8B 2B 4B
+> 0-shot / without CoT 0-shot / with CoT
+
+Figure 7: VLABench capability profiles under 0-shot prompting. Same evaluation as Figure 3 in the main paper (1-shot) but without an in-context example. The overall capability ranking across model scales is consistent with the 1-shot setting, with the 4B model showing balanced performance across most dimensions. However, Physical Law accuracy, which remains modest but nonzero under 1-shot prompting (Figure 3 in the main paper), drops to near zero for all three scales without the in-context example, suggesting that even this limited performance relies on the provided demonstration. 
+
+LIBERO-PRO. LIBERO-PRO [30] extends LIBERO with four perturbation types designed to stress-test out-of-distribution robustness. Obj replaces objects with novel visual instances of the same category. Pos relocates objects to positions unseen during training. Sem rephrases task in-structions while preserving semantics. Task modifies the task configuration itself (e.g., goal location or object arrangement), representing the hardest perturbation type. All four perturbation types are applied to each of the four LIBERO suites. 
+
+VLABench. VLABench [31] evaluates task planning across 45 tasks covering six capability di-mensions: Common Sense & World Knowledge (background knowledge about object properties and everyday scenarios), Spatial Understanding (precise spatial reasoning about object positions and orientations), Mesh & Texture Understanding (distinguishing objects by shape or surface appear-ance), Semantic Understanding (language-grounded category-level reasoning), Physics Law (tasks governed by physics constraints such as gravity, support, and rigidity), and Complex (multi-step in-ference combining multiple dimensions). Each dimension covers 100 episodes; results are averaged over all episodes within each dimension. The main paper reports 1-shot evaluation of the Qwen3.5 backbones before robot fine-tuning. We repeat the evaluation under 0-shot prompting (Figure 7) and find that the overall capability ranking is consistent, although Physical Law accuracy drops to near zero without the in-context example. 
+
+## I SmolVLA Full Size Comparison 
+
+Table 9 reports all three SmolVLA sizes alongside CLAP for reference. SmolVLA uses community-scale robot pretraining, whereas CLAP uses no robot pretraining beyond the LIBERO demonstra-tions. Despite this difference, CLAP 0.8B and 2B match or exceed all three SmolVLA scales on average success rate with single-epoch training, while CLAP 4B falls below SmolVLA 2.25B, con-sistent with the non-monotonic scaling observed in the main paper. 17 Table 9: SmolVLA all sizes vs. CLAP on LIBERO (1 epoch, h=8 ). Gray rows show SmolVLA under its full training protocol (contextual reference only). 
+
+Model Backbone Size VLA Pretrain Spatial ↑ Object ↑ Goal ↑ Long ↑ Avg ↑
+
+Ours (1 epoch, identical protocol) 
+
+CLAP Qwen3.5 0.8B – 92.6 97.8 88.4 79.6 89.6 CLAP Qwen3.5 2B – 93.0 97.4 90.8 82.0 90.8 CLAP Qwen3.5 4B – 88.0 97.4 86.6 67.6 84.9 
+
+SmolVLA (full training protocol) 
+
+SmolVLA † SmolVLM2 0.24B – 87.0 93.0 88.0 63.0 82.8 SmolVLA † SmolVLM2 0.45B – 90.0 96.0 92.0 71.0 87.3 SmolVLA † SmolVLM2 2.25B – 93.0 94.0 91.0 77.0 88.8 
+
+† SmolVLA uses community-scale robot pretraining. 
+
+18

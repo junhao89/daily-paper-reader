@@ -1,0 +1,343 @@
+Title: VistaVLA: Geometry- and Semantic-Aware 3D Gaussian-Grounded VLA for Robotic Manipulation
+
+URL Source: https://arxiv.org/pdf/2607.12356v2
+
+Published Time: Fri, 17 Jul 2026 00:36:49 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# VistaVLA: Geometry- and Semantic-Aware 3D Gaussian-Grounded VLA for Robotic Manipulation 
+
+Mohan Liu 1, Zhihao Gu 1, Xuanyu Chen 1, Haitian Zhang 1, Kaimin Mao 1
+
+Yan Wu 2, Wei-Yun Yau 2, Lin Wang 1,† 
+
+> 1
+
+EmPACT Lab, Nanyang Technological University, Singapore  
+
+> 2
+
+Institute for Infocomm Research (I2R), A*STAR, Singapore 
+
+> †
+
+Corresponding Author Real -World Tasks             
+
+> Train Test
+> Spatial Variance Tasks
+> (b) Performance
+> }}}
+> VLA with only 2D Inputs VLA with 3D Inputs Our Proposed VistaVLA
+> Geometric Structure Understanding
+> (a) Comparison with Current VLA
+> Train Test
+> “Pick up the spoon behind the mug and place it into the bowl.”
+> Real -World S.R. Spatial Variance S.R.
+> Semantic -aware 3D Cognitive Scene Representation
+
+Figure 1: VistaVLA bridges 3D geometric structure and semantic grounding for VLA manip-ulation. (a) We compare current VLA paradigms: 2D-input VLAs lack explicit 3D structure, while existing 3D-input VLAs mainly provide geometric cues without sufficient semantic grounding in 3D space. VistaVLA addresses both aspects by constructing semantically grounded 3D Gaussian scene representations for policy learning. (b) This design improves real-world manipulation performance and robustness under spatial variations compared with strong 2D and 3D VLA baselines. 
+
+Abstract: Vision-Language-Action (VLA) models have emerged as a powerful end-to-end paradigm for robotic manipulation by mapping language instructions and 2D visual inputs directly to actions. However, these models lack an ex-plicit, scene-level 3D representation, limiting their ability to reason over spatial layouts and geometric constraints. While recent efforts incorporate explicit 3D cues, such as depth maps or point clouds, to improve geometric awareness, they primarily capture low-level structures and lack high-level semantic grounding in 3D space . In human cognition, interaction with the physical world relies on a 
+
+3D semantic cognitive map – an internal mental model that integrates spatial lay-outs with semantic context to enable persistent, viewpoint-invariant reasoning. In light of this, we present VistaVLA , a novel two-stage framework that constructs a geometry- and semantics-aware 3D cognitive representation from 3D Gaus-sian primitives and grounds it as compact context tokens for VLA policy learning. Specifically, VistaVLA lifts multi-view vision-language features into 3D Gaussian primitives, forming geometry-anchored semantic tokens that align view-consistent spatial grounding with 2D visual feature spaces. To make this 3D representation computationally tractable for effective VLA control, we introduce Merge-then-Query (MtQ) , a token summarization mechanism. MtQ compresses dense Gaus-sian primitives into a highly compact set of spatially informative tokens, achieving a 99% token reduction while preserving action-relevant 3D layouts and semantic context. Extensive evaluations in both simulated and real-world environments demonstrate the effectiveness of VistaVLA. Notably, in real-world scenarios, Vis-taVLA improves success rates by 22.8% across seven real-world tasks and by 
+
+30.0% over the VLA-Adapter baseline on challenging out-of-distribution tasks. 
+
+## 1 Introduction 
+
+Vision-Language-Action (VLA) models [1–9] have recently emerged as a powerful paradigm, shift-ing robot learning away from isolated task-specific policies toward generalist robotic intelligence. arXiv:2607.12356v2 [cs.RO] 16 Jul 2026 By training directly on large-scale multi-modal datasets, VLA models possess the unique ability to translate high-level natural language instructions and diverse visual observations directly into low-level robotic control commands. This capacity to unify open-vocabulary semantic reasoning with direct motor control makes VLA models a cornerstone for next-generation embodied AI, promis-ing a path toward robots that can seamlessly understand and interact with complex, real-world en-vironments. However, because these models rely primarily on 2D image observations without an explicitM spatial anchor, their ability to reason over complex geometric constraints remains severely limited, often leading to manipulation failures during precise or contact-rich actions. Recent efforts attempt to address this bottleneck by incorporating explicit 3D cues into VLA pipelines, such as depth maps, point clouds, or sparse 3D coordinates [10–14]. While these methods successfully enhance basic geometric awareness, they primarily encode low-level structural geome-try and fundamentally lack high-level, open-vocabulary semantic features grounded in the 3D space ,as depicted in Fig. 1(a) . In human cognition, physical interaction does not rely on raw, unstructured geometric data alone; instead, it depends on an internal 3D semantic cognitive map – a mental model that unifies continuous spatial topology with functional meaning to enable persistent, viewpoint-invariant reasoning [15–19]. Because current 3D VLA methods generate observation-centric rather than scene-level representations, they fail to bind rich multi-modal semantics to physical spatial structures. As a result, VLA policies lack a compact, action-relevant 3D context, rendering dense 3D reasoning computationally intractable for real-time robotic manipulation. In light of this, we present VistaVLA , a novel two-stage framework that constructs a geometric-and semantic-aware 3D cognitive representation from Gaussian primitives [20], grounding them into compact, policy-facing tokens for VLA policy learning, as depicted in Fig. 1(a) . Specifically, in Stage I , VistaVLA lifts open-vocabulary, language-aligned features into 3D Gaussians, yield-ing a scene-level representation that natively couples dense 3D geometry with high-level semantic features (Sec. 3.1). In Stage II , these Gaussian primitives are constructed online at each control step from the latest RGB observations and calibrated camera poses, allowing the underlying 3D cognitive representation to capture real-time variations in scene layout and object configurations without relying on a persistent pre-built scene map. To ensure that reasoning over this dense 3D representation remains computationally tractable for effective control, our VistaVLA introduces a 
+
+Merge-then-Query (MtQ) mechanism (Sec. 3.2). MtQ compresses hundreds of thousands dense Gaussian primitives into a highly optimized, fixed set of compact scene-level 3D tokens. These tokens are then seamlessly integrated into the VLA via cross-attention, providing a structured, spa-tially anchored context for downstream action prediction. Overall, VistaVLA achieves consistent improvements over existing 2D and 3D VLA baselines in both real-world and simulation experiments. In real-world manipulation, VistaVLA achieves a 
+
+22.8-point gain over the baseline across seven tasks, as shown in Fig. 1(b) Under spatial varia-tions, VistaVLA improves depth-perturbation success from 6/10 to 9/10 over the baseline. It also improves position-perturbation success from 0/10 to 3/10 , where all baselines fail. In simulation, VistaVLA reaches 96 .05% average success on standard LIBERO and improves LIBERO-Pro-Swap from 1.7% to 12 .2% over the baseline. In summary, our contributions are three-fold: ( I) We introduce VistaVLA , a novel framework that mimics biological spatial cognitive awareness by bridging semantically grounded 3D Gaussians with image-based policy networks through compact, spatially anchored context tokens; ( II ) We present Merge-then-Query (MtQ) mechanism, an efficient token compression strategy that distills dense, unstructured Gaussian primitives from ∼ 10 5 elements down to just 64 summary tokens—achieving a 99% token reduction while fully retaining action-relevant 3D layouts and semantic consistency. and ( III ) We conduct extensive real-world, simulation, and ablation studies for robotic manipulation. Results demonstrate that VistaVLA yields substantial improvements in spatial grounding, token efficiency, and robust out-of-distribution generalization capacity. 22 Related Works 
+
+3D VLA Models. Vision-Language-Action (VLA) models achieve strong performance in language-conditioned manipulation [1, 2, 5–9, 21–31]. However, these methods rely on 2D scene representa-tion and fail to explicitly capture 3D scene structure and spatial relations [1–3, 8, 9, 21–28, 32–34]. Recent efforts to improve spatial awareness in VLAs mainly follow two directions. One line injects explicit geometric cues, such as point clouds, 3D coordinates, or depth, into the policy pipeline [10, 12, 13, 35–45]. Although effective, these approaches typically rely on a single 3D structural signal. Such signals are often poorly matched to the representations expected by 2D-input VLM/LLM backbones and lack rich semantic content [12, 13, 36, 38, 41, 43–47]. Another line im-proves spatial reasoning more implicitly through 3D-aware alignment or spatially informed pretrain-ing [14, 48–53]. However, strong alignment may disturb the native pretrained feature space [48, 54– 57]. By constrast, our VistaVLA constructs geometric- and semantic-aware 3D Gaussian primitives to establish 3D cognitive spatial representation. It provides compact, multi-view-consistent, and semantic 3D scene tokens that can be seamlessly integrated with subsequent VLA backbones. 
+
+3D Gaussian Splatting (3D GS) for Robotics and Embodied Perception. 3DGS was introduced for efficient and high-fidelity novel view synthesis [20]. It was later extended to feed-forward 3D reconstruction from sparse observations [58–60]. Subsequent work augments Gaussian primitives with semantic or visual features. This enables Gaussian primitives to encode geometry and seman-tics in a spatially aligned and multi-view-consistent form [61–64]. Gaussian representations have also been explored in robotics for grasping, world modeling, and SLAM [65–74].However, feature Gaussian splatting remains largely unexplored as a policy-facing representation for VLA control. 
+
+Different from these works, our method introduces the semantic gaussian primitives as 3D cognitive representation on VLA Policy control tasks. 
+
+Token Compression for Policy Learning. Efficient token processing has been widely explored in transformer-based perception and vision-language models. Existing methods reduce visual re-dundancy through adaptive token selection, dynamic pruning, or token merging [75–77], while query-based bottlenecks summarize dense visual features into compact interfaces for language back-bones [78, 79]. However, these approaches mainly operate on 2D patch tokens and do not explicitly preserve 3D geometry, multi-view consistency, or scene-level spatial grounding, which are criti-cal for robotic manipulation. In parallel, Gaussian compression methods improve the storage and rendering efficiency of 3D Gaussian primitives [80–82], and semantic Gaussian representations dis-till language-aligned or foundation-model features into 3D scenes [61, 62]. Different from these works, our goal is to construct compact context tokens for VLA policy learning. Specifically, we distill foundation 2D semantic features into 3D Gaussian primitives and further compress dense Gaussian tokens with the proposed Merge-then-Query mechanism, producing spatially grounded, action-relevant context tokens that can be efficiently consumed by VLA models. 
+
+## 3 Methods 
+
+Overview. Previous VLA models often lack explicit 3D understanding for geometry-aware spatial localization in manipulation. To this end, we aim to build a VLA framework that uses a semantic Gaussian field as a spatial context for geometry-aware manipulation, as depicted in Fig. 2 . This requires addressing two key challenges: (1) how to learn Gaussian features that are both compact and spatially grounded, and (2) how to efficiently interface the large and redundant set of GS tokens with downstream VLA backbones. To address the first challenge, we learn a semantic Gaussian field through self-supervised RGB-D feature rendering and formulate its latent features as 3D-grounded GS tokens (Sec. 3.1). For the second challenge, we introduce a Merge-then-Query (MtQ) module that compresses dense GS tokens into a compact set of scene-level 3D tokens (Sec. 3.2). 
+
+3.1 Stage I: 3D Gaussian-Grounded Cognitive Representation Compact teacher feature space. Directly assigning high-dimensional foundation features to all Gaussian primitives is computationally expensive, as a scene typically contains a large number of primitives. We therefore first build a compact teacher feature space for Gaussian feature rendering. 3… 
+
+> Embeddings of Gaussian
+> Primitives
+> Multi -view Images
+> >100 K
+> Tokens
+> Sampling Episode
+> Images
+
+…
+
+> Encoder
+> Decoder
+> MSE LOSS
+
+…
+
+> Feature Rendering
+> RGB -D
+> Supervision
+> Supervision
+> Morton Ordering Classify
+> LLM -0.5B
+> LoRA
+
+# … …   
+
+> 𝐗 𝐠𝐬 𝐗 #$% 𝐗 &'( 𝐗 $)*
+
+…
+
+…
+
+… …
+
+> Stride
+> Pooling
+
+…     
+
+> Token
+> Summarization
+> 𝐗 𝐠𝐬
+> …
+> Non -Anchor Sets Anchor Sets
+> …
+> Query Based Transformer
+> Query Tokens
+> ×64
+> Input to VLA
+> ……
+> 𝐗 𝐠𝐬
+> Merged Tokens
+> ×N
+
+… ~7K   
+
+> Tokens
+> GS Tokens
+> ×64
+> Similarity -based Token
+> Merge
+> Until N<N’
+> ～7K
+> Tokens
+> Stage II (Sec. 3.2)
+> Stage I (Sec. 3.1)
+> Action Head
+> Foundation Visual
+> Encoders
+> GS
+> Encoder
+> 3D Gaussian
+> Primitives
+> Selection
+> Selective Output
+
+Figure 2: Overview of VistaVLA. Stage I: Semantic Gaussian field training distills foundation visual features under RGB-D rendering supervision. Stage II: Merge-then-Query compresses dense Gaussian primitives into compact 3D summary tokens. These tokens are finally injected into the VLA policy with instruction and wrist-image tokens for spatially grounded action prediction. For each training frame, we extract dense SigLIP2 [83] and DINOv2-Large [84] features, which provide complementary language-aligned semantics and robust visual descriptors. A lightweight auto-encoder is trained once to reconstruct its concatenated features from a shared bottleneck, com-pressing the original 2176 -dimensional feature into a 128 -dimensional latent code. This compact code is used as the teacher feature in the subsequent Gaussian feature rendering stage. 
+
+Two-stage Gaussian feature rendering. Building on DepthSplat [60], we represent the scene as a set of Gaussian primitives G = {gi}Ni=1 . Each primitive is augmented with a learnable semantic feature, i.e., gi = ( μi, Σi, α i, ci, zi), where zi ∈ R128 . Here, μi, Σi, αi, and ci denote its center, covariance, opacity, and color, respectively. Given a camera viewpoint v, the renderer predicts RGB, depth, and feature maps as (ˆIv , ˆDv , ˆFv ) = R(G, v ), where ˆFv ∈ RH×W ×128 . We train the Gaussian field in two stages. The first stage uses Lstage1 = λrgb Lrgb + λdep Ldep to establish stable scene geometry. The second stage keeps the RGB-D rendering objectives and adds teacher-feature supervision, using Lstage2 = λrgb Lrgb + λdep Ldep + λfeat Lfeat , which distills compact semantic features into the Gaussian primitives without relaxing the geometric constraints. Here, 
+
+Lrgb supervises RGB reconstruction, Ldep constrains the rendered and intermediate depth, and Lfeat 
+
+distills compact teacher features into Gaussian primitives. 
+
+3D-grounded GS tokenization. After training the Gaussian field, we use the latent semantic feature attached to each Gaussian primitive as its token value. This yields the token set Tgs = {zi}Ni=1 ,where zi ∈ Rd and d = 128 . Although zi is represented as a compact feature vector, it is not an isolated 2D patch descriptor; instead, it is associated with an underlying 3D Gaussian primitive. This grounding can be seen from the feature rendering process. For a target viewpoint v, the rendered feature at pixel p follows the same alpha-compositing rule as 3D Gaussian Splatting [20]: 
+
+ˆFv (p) = X 
+
+> i∈N (p)
+
+Ri(v, p )zi, Ri(v, p ) = T vi (p)αvi (p). (1) where N (p) denotes the set of projected Gaussians covering pixel p. Here, αvi (p) is the opacity-weighted Gaussian footprint after projecting the 3D primitive to viewpoint v, and T vi (p) =Q
+
+> j<i
+
+(1 − αvj (p)) is the accumulated transmittance over Gaussians sorted by depth. Thus, Ri(v, p )
+
+is determined by the Gaussian projection, opacity, depth ordering, and camera parameters. The rendered feature is supervised by the compact teacher feature: 
+
+Lfeat = X
+
+> v∈V
+
+X
+
+> p∈Ω
+
+ˆFv (p) − Fv
+
+> teacher
+
+(p) 22
+
+, (2) where V denotes the set of target viewpoints and Ω denotes the image pixel domain. Since this objective aggregates supervision over multiple viewpoints, each zi is optimized from the teacher features observed at all pixels where the corresponding Gaussian contributes, i.e., {Fv
+
+> teacher
+
+(p) |
+
+Ri(v, p ) > 0}. Therefore, zi remains aligned with the 2D teacher feature space, while its supervi-sion and correspondence are governed by the geometry and visibility of the underlying 3D primitive. 4(5) P lace Sponge into Container (6) Throw Trash and Close Can 
+
+(7) Rotate the Wand and Use Cup to Collect then Place Cup Back 
+
+(2) Stack Three Boxes (1) P lace the Sponge into Box 
+
+(3) Stack Big Bowl on Small Bowl (4) Organize the Plate and Place Well Figure 3: Illustration of real-world tasks. Each row shows keyframes of the corresponding manip-ulation trajectory, covering diverse object arrangements, interaction patterns, and temporal horizons. This makes each GS token a multi-view semantic descriptor grounded in 3D space. During train-ing, we use two calibrated RGB-D views as context and render the third view as a novel target to enforce cross-view consistency. At inference, VistaVLA builds the 3D Gaussian field online from the policy’s live RGB observations and calibrated poses, without depth input or third view. 
+
+3.2 Stage II: Compact GS Token Summarization and Policy Injection 
+
+The semantic Gaussian field typically contains N0 ∼ 10 5 primitives, making it impractical for downstream VLA models to process under real time constraints. To make GS tokens tractable, we introduce a Merge-then-Query (MtQ) module that converts dense Gaussian tokens into a compact fixed-length representation. MtQ first parameter-freely merges redundant GS tokens into N ′ tokens, and then summarizes them into Nq query tokens for downstream action prediction. 
+
+Parameter-free compression. We first reduce the dense GS token set with a parameter-free com-pression procedure. Specifically, we reshape the dense GS tokens into per-view grids and apply stride-4 average pooling to both the semantic features and their associated 3D centers, coarsely re-ducing the token count to roughly 7K before Morton-guided merging, followed by Morton-guided token merging. Each current token maintains a semantic feature z, a spatial center μ ∈ R3, and an aggregation size s. During compression, μ is used as auxiliary geometric metadata for spatial partitioning, while z is used for semantic similarity matching. Specifically, we sort the current tokens by the Morton codes [85] of their centers and split the ordered sequence alternately into an anchor set A and a non-anchor set B. This produces two spatially distributed subsets without the iterative distance updates required by FPS-style partitioning. Each non-anchor token u ∈ B is then matched to its most similar anchor in the semantic feature space: 
+
+a∗(u) = arg max 
+
+> a∈A
+
+⟨zu, za⟩∥zu∥ ∥ za∥ , u ∈ B . (3) We rank non-anchor tokens by their matching similarities and merge only the top 50% matches, avoiding forced merges between semantically dissimilar tokens. For each anchor a, let Ma =
+
+{u ∈ B top | a∗(u) = a} denote the selected non-anchor tokens assigned to it. We update the anchor by size-weighted averaging: with the total aggregation size Sa = sa + P 
+
+> u∈M a
+
+su, we set 
+
+z′ 
+
+> a
+
+= ( saza + P 
+
+> u∈M a
+
+suzu)/S a, μ′ 
+
+> a
+
+= ( saμa + P 
+
+> u∈M a
+
+suμu)/S a, and s′ 
+
+> a
+
+= Sa. Tokens not selected for merging are kept unchanged. We repeat this process until the token count is less than target N ′, where N ′ ≪ N0. In our implementation, N ′ = 1000 .5Wand& Cup OrganizeSponge PlacePlate  
+
+> PlaceSponge StackBoxes ThrowTrash
+> StackBowls
+> SR (%) SR (%)
+> Average Result
+
+Figure 4: Real-world results. All policies are trained or fine-tuned on the same task-specific demon-strations. Our method consistently achieves the highest success rates across all tasks, with especially large gains on spatially demanding manipulation scenarios. Results are reported as success rates (%). 
+
+Query-based GS summarization. After parameter-free compression, we further summarize the compressed GS tokens into a fixed-length representation for downstream VLA inference. Let 
+
+Z′ ∈ RB×N ′×d denote the compressed tokens, where B is the batch size, N ′ is the number of com-pressed tokens, and d is the feature dimension. We project Z′ into key and value features, and use 
+
+Nq = 64 learnable query tokens Q ∈ RB×Nq ×d to attend to them through a two-layer Transformer decoder. The decoder output is then projected to the hidden dimension dllm of the downstream VLA backbone, producing Xgs = Proj llm (Dec gs (Q, Z′)) , where Xgs ∈ RB×Nq ×dllm . The resulting Xgs 
+
+serves as a compact set of 3D-grounded context tokens for downstream action prediction. 
+
+Action generation. Following VLA-Adapter [7], we formulate continuous action prediction as causal sequence modeling, while injecting the GS summary tokens as additional 3D context. Specif-ically, we concatenate 2D visual tokens, language instruction tokens, GS summary tokens, and ac-tion query tokens as X = [ Xvis , Xlang , Xgs , Xact ]. This ordering makes the GS context language-conditioned before action decoding, while allowing the action query tokens to attend to all preceding visual, language, and 3D-grounded context tokens. The action head predicts the next K continuous actions as ˆa1: K = H(Hact , Hctx , s), where s denotes the proprioceptive state, and Hact and Hctx 
+
+denote the hidden states of the action queries and context tokens, respectively. We train the policy with the regression objective Lact = PKt=1 ∥ˆat − at∥1. During real-robot inference, we execute the first Kexec = 4 predicted actions before replanning with the latest observations, reducing inference frequency while limiting open-loop error accumulation. 
+
+## 4 Experiments 
+
+4.1 Real-World Experiments Tasks. We construct seven real-world manipulation tasks to evaluate the efficacy of our method. These tasks span a wide spectrum of real-world manipulation challenges, including simple pick-and-place and stacking behaviors, container organization, articulated-object interaction, and longer-horizon multi-stage operations. Concretely, the benchmark includes: (1) PlaceSponge ,(2) StackBoxes , (3) StackBowls , (4) PlacePlate , (5) OrganizeSponge , (6) ThrowTrash , and (7) Wand&Cup .To further assess the robustness of the learned policy to unseen spatial configurations, we addition-ally introduce perturbed test variants for PlaceSponge and OrganizeSponge by modifying both the object depth and its 2D position. Fig. 3 .
+
+Setup and Baselines. All methods are evaluated on an Agile-Piper manipulation platform using the same task-specific demonstrations and evaluation protocol. Each method is tested for 10 trials per task, with the same initial pose and the objects restored before each trial. All VLA-based methods are trained or fine-tuned under a matched effective training budget on four RTX 5090 GPUs to 6Table 2: Simulation Tasks Evaluation. (a): evaluation on LIBERO PRO SWAP under spatial distribution shifts. (b): representative comparison on the standard LIBERO benchmark. S/O/G/L denote Spatial, Object, Goal, and Long, respectively. PT denotes pretraining on large-scale robot action datasets. All metrics are average success rates (%).                                                                                                               
+
+> (a) LIBERO PRO SWAP
+> Method PT SOGLAvg. OpenVLA [2] ✓0.0 0.0 0.0 0.0 0.0 UniVLA [89] ✓10.0 0.0 10.0 0.0 5.0
+> π0[5] ✓0.0 0.0 0.0 0.0 0.0 Baseline [7] ✗6.8 0.0 0.0 0.0 1.7
+> 3D input methods
+> OpenVLA-SF [14] ✓0.0 0.0 3.6 0.0 0.9 Q-Depth VLA [11] ✓0.2 1.2 0.0 0.0 0.35
+> Vista-VLA ✗24.0 10.0 10.0 4.8 12.2 (b) Standard LIBERO
+> Method PT SOGLAvg. OpenVLA [2] ✓84.7 88.4 79.2 53.7 76.5
+> π0[5] ✓96.8 98.8 95.8 85.2 94.2 MolmoAct [90] ✓87.0 95.4 87.6 77.2 86.6 GR00T N1 [91] ✓94.4 97.6 93.0 90.6 93.9 CoT-VLA [92] ✓87.5 91.6 87.6 69.0 81.1 SmolVLA [86] ✓93.0 94.0 91.0 77.0 88.8 WorldVLA [93] ✗87.6 96.2 83.4 60.0 81.8 Baseline [7] ✗91.7 97.2 96.6 91.0 94.1
+> Vista-VLA ✗95.6 99.0 98.2 91.4 96.05
+
+ensure a fair comparison. Our framework is built upon VLA-Adapter -0.5B [7], which also serves as our primary baseline. For a fair comparison, we equip the baseline with the same number of 2 fixed camera views required by our method. To provide a comparison with another 3D input modality, we further consider a depth-enhanced variant, VLA-Adapter+Depth [12], which augments the baseline with depth input following the depth integration strategy of SpatialVLA [12]. We also include π0.5-3B [6] and SmolVLA -0.5B [86] as two generalist VLA baselines at different model scales, both pretrained on large-scale robot datasets. 
+
+Real-World Comparison. As shown in Fig. 4 , our method achieves the highest average success rate, substantially outperforming the base VLA-Adapter policy and its depth-enhanced variant. The gains are particularly pronounced on spatially demanding tasks, where our method also sur-passes the strong generalist π0.5 policy despite using a much smaller VLA backbone. Notably, 
+
+VLA-Adapter+Depth provides only limited improvement over the RGB-only baseline. We hy-pothesize that raw depth mainly provides observation-level geometric cues, which are difficult to align with the semantic patch-token space of pretrained vision backbones under limited task-specific demonstrations. In contrast, our semantic Gaussian representation grounds visual semantics in 3D space, providing a coherent, action-relevant spatial context for downstream policy learning. These results suggest that the gains do not simply come from injecting geometric cues or adding more cam-era views, but from introducing a structured 3D Gaussian representation as a semantic 3D spatial interface for VLA control. 
+
+Performance under spatial variations. We further evaluate robustness under two task-specific spatial variation settings: height/depth variation on PlaceSponge and position variation on 
+
+OrganizeSponge . As shown in Table 1 , Vista-VLA achieves the best performance in both settings. Table 1: Spatial variation robustness. Depth: 
+
+PlaceSponge ; Pos.: OrganizeSponge .             
+
+> Method Depth Pos.
+> VLA-Adapter [7] 6/10 0/10 +Depth [12] 6/10 0/10 SmolVLA [86] 2/10 0/10
+> π0.5[6] 7/10 0/10
+> Vista-VLA 9/10 3/10
+
+On PlaceSponge with height/depth variation, Vista-VLA reaches 9/10 success, outperforming 
+
+VLA-Adapter , VLA-Adapter+Depth , and π0.5.On OrganizeSponge with position variation, Vista-VLA is the only method with non-zero suc-cess, improved robustness under challenging spa-tial shifts while also indicating that large position perturbations remain challenging. 
+
+4.2 Simulation Experiments Experiment Setup. We conduct simulation experiments on LIBERO [87] as a complement to our real-world evaluation. We evaluate on the four standard LIBERO suites, including Spatial , Object ,
+
+Goal , and Long . We further test zero-shot transfer on LIBERO-Pro-Swap [88], which introduces spatial out-of-distribution scene layouts. 
+
+Simulation Results. As shown in Table 2 , Vista-VLA maintains strong performance on the standard LIBERO benchmark, achieving the best average result among methods without large-scale action-data pretraining. More importantly, on LIBERO-Pro-Swap, Vista-VLA shows better spatial OOD robustness than both 2D-input baselines and explicit 3D-input methods. These results indicate that 7Table 3: Real-world ablations. (a) Camera/token ablation, where “Cam” counts both fixed and wrist cameras and 1Cam is wrist-only; (b) compression ablation; (c) query-token ablation. T1 = PlaceSponge, T2 = StackBoxes, T3 = StackBowls, T5 = OrganizeSponge, and T6 = ThrowTrash.                                               
+
+> (a) Camera/token ablation
+> Method Tokens T1 T2 T5 T6 Base-1Cam 256 4/10 2/10 3/10 1/10 Base-2Cam 512 5/10 1/10 3/10 2/10 Base-3Cam 768 8/10 4/10 6/10 5/10 Vista-VLA-3Cam 320 9/10 7/10 7/10 7/10 (b) Compression ablation
+> Variant T1 T2 T3 GS+FPS+Dec. 0/10 1/10 0/10 GS+Entropy+Dec. 4/10 0/10 0/10 GS+Merge+Linear 7/10 1/10 0/10 Vista-VLA (Full) 9/10 7/10 8/10 (c) Query-token ablation
+> Query Tokens T3 16 6/10 32 5/10 64 8/10 128 7/10 256 2/10
+
+the proposed method improves spatial generalization under constrained adaptation, while preserving competitive performance on standard simulation benchmarks. 
+
+4.3 Ablation Study Camera-view and token ablation. Table 3(a) examines whether the improvement is mainly caused by using more camera views or more visual tokens. We compare baseline variants that directly ap-pend 2D patch tokens from one, two, or three camera views to the downstream VLA. In contrast, Vista-VLA does not simply increase the number of 2D visual tokens; it converts multi-view observa-tions into a compact set of 3D-grounded GS summary tokens. The results show that adding more 2D views improves the baseline only moderately, while Vista-VLA achieves stronger performance with a smaller token budget, indicating that the gain comes from the proposed spatial-semantic interface rather than from additional image tokens. 
+
+Compression and summarization ablation. Table 3(b) evaluates the design of the GS token sum-marization module. GS+FPS+Dec. replaces our Morton-guided merging with FPS downsampling while keeping the same query decoder. GS+Entropy+Dec. uses entropy-based sampling instead of our merge strategy. GS+Merge+Linear keeps the proposed merge operation but removes the query decoder, replacing it with a linear projection. The full Vista-VLA performs best, suggesting that both geometry-aware token merging and query-based summarization are important for preserving task-relevant 3D information in a compact form. 
+
+Query-token ablation. Table 3(c) shows the number of query tokens on the T3. The best result is obtained with 64 query tokens, while increasing the number of queries does not yield consistent gains. Notably, 256 query tokens perform the worst. This suggests that, for our two-layer Trans-former network, an overly large query set introduces redundant learnable tokens and makes the summarization bottleneck harder to optimize, weakening the extraction of task-relevant 3D context. 
+
+## 5 Conclusion, Limitation, and Future Work 
+
+Conclusion. We presented VistaVLA, a two-stage VLA framework that constructs a geometry- and semantic-aware 3D cognitive representation from Gaussian primitives and grounds it into compact context tokens for robotic manipulation. By lifting multi-view vision-language features into 3D Gaussian fields and summarizing dense Gaussian tokens with Merge-then-Query, VistaVLA pro-vides a compact, scene-level spatial interface for VLA control. Experiments in both real-world and simulation settings show that this semantic 3D interface improves manipulation success and spatial generalization, especially under tasks requiring precise localization and geometry-aware reasoning. 
+
+Limitations and Future Work. Our evaluation is currently limited to tabletop manipulation with a fixed robot platform and calibrated multi-view cameras. Although this provides a controlled testbed for studying 3D-grounded VLA, broader deployment may involve larger workspace variations, dy-namic occlusions, less reliable camera poses, and different robot embodiments. Also, constructing the semantic Gaussian field still relies on posed observations. Future work could relax these assump-tions through weaker calibration requirements, manipulation-oriented feature teachers, and evalua-tion in more diverse real-world environments. Nevertheless, Vista-VLA offers a general interface for converting semantic Gaussian fields into compact policy-facing 3D context for robotic control. 8References 
+
+[1] O. M. Team, D. Ghosh, H. Walke, K. Pertsch, K. Black, O. Mees, S. Dasari, J. Hejna, T. Kreiman, C. Xu, J. Luo, Y. L. Tan, L. Y. Chen, P. Sanketi, Q. Vuong, T. Xiao, D. Sadigh, C. Finn, and S. Levine. Octo: An open-source generalist robot policy. 2024. URL 
+
+https://arxiv.org/abs/2405.12213 .[2] M. J. Kim, K. Pertsch, S. Karamcheti, T. Xiao, A. Balakrishna, S. Nair, R. Rafailov, E. Foster, G. Lam, P. Sanketi, Q. Vuong, T. Kollar, B. Burchfiel, R. Tedrake, D. Sadigh, S. Levine, P. Liang, and C. Finn. Openvla: An open-source vision-language-action model. 2024. URL 
+
+https://arxiv.org/abs/2406.09246 .[3] M. J. Kim, C. Finn, and P. Liang. Fine-tuning vision-language-action models: Optimizing speed and success. 2025. URL https://arxiv.org/abs/2502.19645 .[4] Z. Gu, M. Yang, D. Zou, and D. Xu. Learning diffusion policy from primitive skills for robot manipulation. In Proceedings of the AAAI Conference on Artificial Intelligence , page 18262–18270, 2026. [5] K. Black, N. Brown, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, L. Groom, K. Haus-man, B. Ichter, S. Jakubczak, T. Jones, L. Ke, S. Levine, A. Li-Bell, M. Mothukuri, S. Nair, K. Pertsch, L. X. Shi, J. Tanner, Q. Vuong, A. Walling, H. Wang, and U. Zhilinsky. π0: A vision-language-action flow model for general robot control, 2026. URL https://arxiv. org/abs/2410.24164 .[6] P. Intelligence, K. Black, N. Brown, J. Darpinian, K. Dhabalia, D. Driess, A. Esmail, M. Equi, C. Finn, N. Fusai, M. Y. Galliker, D. Ghosh, L. Groom, K. Hausman, B. Ichter, S. Jakubczak, T. Jones, L. Ke, D. LeBlanc, S. Levine, A. Li-Bell, M. Mothukuri, S. Nair, K. Pertsch, A. Z. Ren, L. X. Shi, L. Smith, J. T. Springenberg, K. Stachowicz, J. Tanner, Q. Vuong, H. Walke, A. Walling, H. Wang, L. Yu, and U. Zhilinsky. π0.5: a vision-language-action model with open-world generalization, 2025. URL https://arxiv.org/abs/2504.16054 .[7] Y. Wang, P. Ding, L. Li, C. Cui, Z. Ge, X. Tong, W. Song, H. Zhao, W. Zhao, P. Hou, S. Huang, Y. Tang, W. Wang, R. Zhang, J. Liu, and D. Wang. Vla-adapter: An effective paradigm for tiny-scale vision-language-action model, 2025. URL https://arxiv.org/abs/2509.09372 .[8] B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, F. Xia, J. Wu, P. Wohlhart, S. Welker, A. Wahid, et al. Rt-2: Vision-language-action models transfer web knowledge to robotic control. In 
+
+Proceedings of The 7th Conference on Robot Learning , volume 229 of Proceedings of Machine Learning Research , pages 2165–2183, 2023. [9] A. Brohan, N. Brown, J. Carbajal, Y. Chebotar, J. Dabis, C. Finn, K. Gopalakrishnan, K. Haus-man, A. Herzog, J. Hsu, et al. Rt-1: Robotics transformer for real-world control at scale. arXiv preprint arXiv:2212.06817 , 2022. [10] V. Bhat, Y.-H. Lan, P. Krishnamurthy, R. Karri, and F. Khorrami. 3d cavla: Leveraging depth and 3d context to generalize vision language action models for unseen tasks. 2025. URL 
+
+https://arxiv.org/abs/2505.05800 .[11] Y. Li, Y. Chen, M. Zhou, H. Li, Z. Zhang, and D. Zhao. Qdepth-vla: Quantized depth prediction as auxiliary supervision for vision-language-action models, 2025. URL https://arxiv. org/abs/2510.14836 .[12] D. Qu, H. Song, Q. Chen, Y. Yao, X. Ye, Y. Ding, Z. Wang, J. Gu, B. Zhao, D. Wang, and X. Li. Spatialvla: Exploring spatial representations for visual-language-action model. 2025. URL https://arxiv.org/abs/2501.15830 .[13] C. Li, J. Wen, Y. Peng, Y. Peng, F. Feng, and Y. Zhu. Pointvla: Injecting the 3d world into vision-language-action models. 2025. URL https://arxiv.org/abs/2503.07511 .9[14] F. Li, W. Song, H. Zhao, J. Wang, P. Ding, D. Wang, L. Zeng, and H. Li. Spatial forcing: Implicit spatial representation alignment for vision-language-action model. arXiv preprint arXiv:2510.12276 , 2025. [15] D. H. Clements and M. T. Battista. Geometry and spatial reasoning. 2006. [16] R. M. Byrne and P. N. Johnson-Laird. Spatial reasoning. Journal of memory and language , 28 (5):564–575, 1989. [17] B. D. Manh, S. Debnath, Z. Zhang, S. Damodaran, A. Kumar, Y. Zhang, L. Mi, E. Cambria, and L. Wang. Mind meets space: Rethinking agentic spatial intelligence from a neuroscience-inspired perspective. arXiv preprint arXiv:2509.09154 , 2025. [18] W. Zhang, M. Wang, G. Liu, X. Huixin, Y. Jiang, Y. Shen, G. Hou, Z. Zheng, H. Zhang, X. Li, et al. Embodied-reasoner: Synergizing visual search, reasoning, and action for embodied interactive tasks. arXiv preprint arXiv:2503.21696 , 2025. [19] S. Ruan, L. Wang, C. Kang, Q. Zhu, S. Liu, X. Wei, and H. Su. From reactive to cognitive: brain-inspired spatial intelligence for embodied agents. intelligence (AGI) , 3(9):10, 2025. [20] B. Kerbl, G. Kopanas, T. Leimk¨ uhler, and G. Drettakis. 3d gaussian splatting for real-time radiance field rendering. ACM Transactions on Graphics , 42(4):1–14, 2023. doi:10.1145/ 3592433. [21] P. Dong, K.-H. Hung, T. Gao, D. Sadigh, and C. Finn. Expo-ft: Sample-efficient reinforcement learning finetuning for vision-language-action models, 2026. URL https://arxiv.org/ abs/2605.25477 .[22] R. Jin and Z. Zhang. Agentic-vla: Efficient online adaptation for vision-language-action mod-els, 2026. URL https://arxiv.org/abs/2605.22896 .[23] Y. Fu, C. Zhang, S. Gong, Y. Deng, K. Sun, Q. Min, Q. Hou, Y. Tang, J. Wang, and D. Zhou. Stablevla: Towards robust vision-language-action models without extra data, 2026. URL 
+
+https://arxiv.org/abs/2605.18287 .[24] X. Guo, B. Xie, W. Chai, X. Deng, T. Wang, Z. Wu, and X. Chen. Priorvla: Prior-preserving adaptation for vision-language-action models, 2026. URL https://arxiv.org/abs/2605. 10925 .[25] Q. Li, X. Gong, X. Li, P. Li, Q. Zhou, H. Ye, J. Zhou, and Y. Mu. Rotvla: Rotational latent ac-tion for vision-language-action model, 2026. URL https://arxiv.org/abs/2605.13403 .[26] Z. Tang, H. Liu, X. Chang, C. Wu, D. Huo, Y. Yang, B. Liu, Z. Cai, F. Xiong, M. Xu, J. Luo, D. Ma, Z. Ma, and G. Pan. Alam: Algebraically consistent latent action model for vision-language-action models, 2026. URL https://arxiv.org/abs/2605.10819 .[27] Y. Jiang, J. Lu, X. Qin, X. Chen, K. Wang, F. Gao, and L. Zhao. Vla-gse: Boosting parameter-efficient fine-tuning in vla with generalized and specialized experts, 2026. URL https:// arxiv.org/abs/2605.06175 .[28] S. Lian, B. Yu, X. Lin, Z. Shen, L. T. Yang, Y. Jin, H. Liu, C. Wu, H. Yuan, C. Huang, and K. Chen. Intentvla: Short-horizon intent modeling for aliased robot manipulation, 2026. URL 
+
+https://arxiv.org/abs/2605.14712 .[29] S. Fan, K. Wu, Z. Che, X. Wang, D. Wu, F. Liao, N. Liu, Y. Zhang, Z. Zhao, Z. Xu, M. Li, Q. Liu, S. Zhang, M. Wan, and J. Tang. Xr-1: Towards versatile vision-language-action models via learning unified vision-motion representations, 2025. URL https://arxiv.org/abs/ 2511.02776 .10 [30] M. Koo, D. Choi, T. Kim, K. Lee, C. Kim, Y. Seo, and J. Shin. Hamlet: Switch your vision-language-action model into a history-aware policy, 2025. URL https://arxiv.org/abs/ 2510.00695 .[31] L. Xiao, J. Li, J. Gao, F. Ye, Y. Jin, J. Qian, J. Zhang, Y. Wu, and X. Yu. Ava-vla: Improving vision-language-action models with active visual attention, 2025. URL https://arxiv. org/abs/2511.18960 .[32] Y. Li, P. Tang, W. Zhang, C. Zhu, Y. Duan, W. Shi, X. Zhang, Z. Yang, J. Ji, and Y. Zhang. Favla: A force-adaptive fast-slow vla model for contact-rich robotic manipulation, 2026. URL 
+
+https://arxiv.org/abs/2602.23648 .[33] Z. Yang, Y. Qi, T. Xie, B. Yu, S. Liu, and M. Li. Dysl-vla: Efficient vision-language-action model inference via dynamic-static layer-skipping for robot manipulation, 2026. URL https: //arxiv.org/abs/2602.22896 .[34] L. Zhong, Y. Liu, Y. Wei, Z. Xiong, M. Yao, S. Liu, and G. Ren. Acot-vla: Action chain-of-thought for vision-language-action models, 2026. URL https://arxiv.org/abs/2601. 11404 .[35] H. Zhen, X. Qiu, P. Chen, J. Yang, X. Yan, Y. Du, Y. Hong, and C. Gan. 3d-vla: A 3d vision-language-action generative world model. 2024. URL https://arxiv.org/abs/ 2403.09631 .[36] L. Sun, B. Xie, Y. Liu, H. Shi, T. Wang, and J. Cao. Geovla: Empowering 3d representations in vision-language-action models. 2025. URL https://arxiv.org/abs/2508.09071 .[37] I. Singh, A. Goyal, S. Birchfield, D. Fox, A. Garg, and V. Blukis. Og-vla: Orthographic image generation for 3d-aware vision-language action model. 2025. URL https://arxiv.org/ abs/2506.01196 .[38] P. Li, Y. Chen, H. Wu, X. Ma, X. Wu, Y. Huang, L. Wang, T. Kong, and T. Tan. Bridgevla: Input-output alignment for efficient 3d manipulation learning with vision-language models. 2025. URL https://arxiv.org/abs/2506.07961 .[39] T. Yuan, Y. Liu, C. Lu, Z. Chen, T. Jiang, and H. Zhao. Depthvla: Enhancing vision-language-action models with depth-aware spatial reasoning. 2025. URL https://arxiv.org/abs/ 2510.13375 .[40] Z. Rao, W. Chen, L. Xie, X. Hua, D. Yin, Z. Tian, and F. R. Yu. Augvla-3d: Depth-driven feature augmentation for vision-language-action models. 2026. URL https://arxiv.org/ abs/2602.10698 .[41] T. Lin, Y. Du, J. Liu, N. Zhu, Y. Li, Y. Fu, Y. Chen, H. Cai, Z. Ye, B. Cheng, K. Ye, Y. Mao, Y. Zhong, M. Dong, J. Yan, G. Li, and B. Zhao. Evo-depth: A lightweight depth-enhanced vision-language-action model, 2026. URL https://arxiv.org/abs/2605.14950 .[42] H. Song and L. Le. Avi: Action from volumetric inference, 2025. URL https://arxiv. org/abs/2510.21746 .[43] Z. Zhang, H. Li, Y. Dai, Z. Zhu, L. Zhou, C. Liu, D. Wang, F. E. H. Tay, S. Chen, Z. Liu, Y. Liu, X. Li, and P. Zhou. From spatial to actions: Grounding vision-language-action model in spatial foundation priors, 2025. URL https://arxiv.org/abs/2510.17439 .[44] H. Huang, M. Cen, K. Tan, X. Quan, G. Huang, and H. Zhang. Graphcot-vla: A 3d spatial-aware reasoning vision-language-action model for robotic manipulation with ambiguous in-structions, 2025. URL https://arxiv.org/abs/2508.07650 .11 [45] J. Koo, T. Cho, H. Kang, E. Pyo, T. G. Oh, T. Kim, and A. J. Choi. Retovla: Reusing register tokens for spatial reasoning in vision-language-action models, 2025. URL https://arxiv. org/abs/2509.21243 .[46] C. Xu, S. Zhang, Y. Liu, B. Sun, W. Chen, B. Xu, Q. Liu, J. Wang, S. Wang, S. Luo, J. Peters, A. V. Vasilakos, S. Zafeiriou, and J. Deng. An anatomy of vision-language-action models: From modules to milestones and challenges. arXiv preprint arXiv:2512.11362 , 2025. [47] A.-C. Cheng, H. Yin, Y. Fu, Q. Guo, R. Yang, J. Kautz, X. Wang, and S. Liu. Spatialrgpt: Grounded spatial reasoning in vision language models. arXiv preprint arXiv:2406.01584 ,2024. [48] G. Sun, T. Du, K. Feng, C. Luo, X. Ding, Z. Shen, Z. Wang, Y. He, and A. Li. Rocket: Residual-oriented multi-layer alignment for spatially-aware vision-language-action models. 
+
+arXiv preprint arXiv:2602.17951 , 2026. [49] J. Zhang, S. Wu, X. Luo, H. Wu, L. Gao, H. T. Shen, and J. Song. Inspire: Vision-language-action models with intrinsic spatial reasoning, 2025. URL https://arxiv.org/abs/2505. 13888 .[50] Q. Li, Y. Deng, Y. Liang, L. Luo, L. Zhou, C. Yao, L. Zeng, Z. Feng, H. Liang, S. Xu, Y. Zhang, X. Chen, H. Chen, L. Sun, D. Chen, J. Yang, and B. Guo. Scalable vision-language-action model pretraining for robotic manipulation with real-life human activity videos, 2025. URL 
+
+https://arxiv.org/abs/2510.21571 .[51] Y. Ling, Q. Lian, J. Li, Q. Jiang, T. Zhang, X. Jiang, C. Liu, J. Liu, and L. Zhang. Guide, think, act: Interactive embodied reasoning in vision-language-action models, 2026. URL https: //arxiv.org/abs/2605.13632 .[52] W. Guo, Y. Wang, R. Zhou, Y. Zhang, R. Fang, Y. Pang, W. Xu, and G. Huang. Action with visual primitives, 2026. URL https://arxiv.org/abs/2605.22183 .[53] H. Liu, S. Ruan, J. Long, J. Wu, J. Hou, H. Tang, T. Jiang, W. Zhou, and W. Yao. Eva-vla: Evaluating vision-language-action models’ robustness under real-world physical variations, 2025. URL https://arxiv.org/abs/2509.18953 .[54] Y. Zhai, S. Tong, X. Li, M. Cai, Q. Qu, Y. J. Lee, and Y. Ma. Investigating the catastrophic forgetting in multimodal large language models. arXiv preprint arXiv:2309.10313 , 2023. [55] J. Wu, Y. Xiong, X. Li, Y. Xia, R. Wang, Y. Wang, T. Yu, S. Kim, R. A. Rossi, L. Yao, J. Shang, and J. McAuley. Mitigating visual knowledge forgetting in mllm instruction-tuning via modality-decoupled gradient descent. In Findings of the Association for Computational Linguistics: EMNLP 2025 , pages 2282–2295, Suzhou, China, 2025. Association for Compu-tational Linguistics. doi:10.18653/v1/2025.findings-emnlp.123. [56] S. Li, R. Lin, and S. Pei. Multi-modal preference alignment remedies degradation of visual instruction tuning on language models. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pages 14188–14200. Association for Computational Linguistics, 2024. doi:10.18653/v1/2024.acl-long.765. [57] Z. Yu and S. Ananiadou. Locate-then-merge: Neuron-level parameter fusion for mitigating catastrophic forgetting in multimodal llms. In Findings of the Association for Computational Linguistics: EMNLP 2025 . Association for Computational Linguistics, 2025. [58] D. Charatan, S. Li, A. Tagliasacchi, and V. Sitzmann. pixelsplat: 3d gaussian splats from image pairs for scalable generalizable 3d reconstruction, 2024. URL https://arxiv.org/ abs/2312.12337 .12 [59] Y. Chen, H. Xu, C. Zheng, B. Zhuang, M. Pollefeys, A. Geiger, T.-J. Cham, and J. Cai. Mvs-plat: Efficient 3d gaussian splatting from sparse multi-view images. In European conference on computer vision , pages 370–386. Springer, 2024. [60] H. Xu, S. Peng, F. Wang, H. Blum, D. Barath, A. Geiger, and M. Pollefeys. Depthsplat: Con-necting gaussian splatting and depth, 2025. URL https://arxiv.org/abs/2410.13862 .[61] M. Qin, W. Li, J. Zhou, H. Wang, and H. Pfister. Langsplat: 3d language gaussian splatting. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024. [62] S. Zhou, H. Chang, S. Jiang, Z. Fan, Z. Zhu, D. Xu, P. Chari, S. You, Z. Wang, and A. Kadambi. Feature 3dgs: Supercharging 3d gaussian splatting to enable distilled feature fields. In Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024. [63] X. Wang, C. Lan, H. Zhu, Z. Chen, and Y. Lu. Gsemsplat: Generalizable semantic 3d gaus-sian splatting from uncalibrated image pairs, 2024. URL https://arxiv.org/abs/2412. 16932 .[64] A. Thai, S. Peng, K. Genova, L. Guibas, and T. Funkhouser. Splattalk: 3d VQA with gaussian splatting. In Proceedings of the IEEE/CVF International Conference on Computer Vision ,2025. [65] Z. Zhang, Y. Jiang, Q. Cheng, S. Liu, D. Zhao, P. Luo, W. Zhou, and H. Yu. Gaussiandream: A feed-forward 3d gaussian world model for robotic manipulation, 2026. URL https:// arxiv.org/abs/2605.20752 .[66] Y. Zheng, X. Chen, Y. Zheng, S. Gu, R. Yang, B. Jin, P. Li, C. Zhong, Z. Wang, L. Liu, C. Yang, D. Wang, Z. Chen, X. Long, and M. Wang. GaussianGrasper: 3d language gaussian splatting for open-vocabulary robotic grasping. IEEE Robotics and Automation Letters , 9(9): 7827–7834, 2024. [67] M. Ji, R.-Z. Qiu, X. Zou, and X. Wang. GraspSplats: Efficient manipulation with 3d feature splatting. In Conference on Robot Learning , 2024. [68] J. Yu, X. Ren, Y. Gu, H. Lin, T. Wang, Y. Zhu, H. Xu, Y.-G. Jiang, X. Xue, and Y. Fu. Sparsegrasp: Robotic grasping via 3d semantic gaussian splatting from sparse multi-view rgb images, 2024. URL https://arxiv.org/abs/2412.02140 .[69] G. Lu, S. Zhang, Z. Wang, C. Liu, J. Lu, and Y. Tang. ManiGaussian: Dynamic gaussian splatting for multi-task robotic manipulation. In European Conference on Computer Vision ,2024. [70] G. Lu, B. Jia, P. Li, Y. Chen, Z. Wang, Y. Tang, and S. Huang. GWM: Towards scalable gaus-sian world models for robotic manipulation. In Proceedings of the IEEE/CVF International Conference on Computer Vision , 2025. [71] Y. Chai, L. Deng, R. Shao, J. Zhang, K. Lv, L. Xing, X. Li, H. Zhang, and Y. Liu. GAF: Gaus-sian action field as a 4d representation for dynamic world modeling in robotic manipulation. 
+
+arXiv preprint arXiv:2506.14135 , 2025. doi:10.48550/arXiv.2506.14135. [72] C. Yan, D. Qu, D. Xu, B. Zhao, Z. Wang, D. Wang, and X. Li. GS-SLAM: Dense visual slam with 3d gaussian splatting. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 19595–19604, June 2024. [73] N. Keetha, J. Karhade, K. M. Jatavallabhula, G. Yang, S. Scherer, D. Ramanan, and J. Luiten. SplaTAM: Splat, track & map 3d gaussians for dense rgb-d slam. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 21357– 21366, June 2024. 13 [74] H. Matsuki, R. Murai, P. H. Kelly, and A. J. Davison. Gaussian splatting slam. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 18039–18048, June 2024. [75] M. S. Ryoo, A. Piergiovanni, A. Arnab, M. Dehghani, and A. Angelova. Tokenlearner: Adap-tive space-time tokenization for videos. In Advances in Neural Information Processing Systems (NeurIPS) , 2021. [76] Y. Rao, W. Zhao, B. Liu, J. Lu, J. Zhou, and C.-J. Hsieh. Dynamicvit: Efficient vision trans-formers with dynamic token sparsification. In Advances in Neural Information Processing Systems (NeurIPS) , 2021. [77] D. Bolya, C.-Y. Fu, X. Dai, P. Zhang, C. Feichtenhofer, and J. Hoffman. Token merging: Your vit but faster. In International Conference on Learning Representations (ICLR) , 2023. [78] J.-B. Alayrac, J. Donahue, P. Luc, A. Miech, I. Barr, Y. Hasson, K. Lenc, A. Mensch, K. Milli-can, M. Reynolds, R. Ring, E. Rutherford, S. Cabi, T. Han, Z. Gong, S. Samangooei, M. Mon-teiro, J. Menick, S. Borgeaud, A. Brock, A. Nematzadeh, S. Sharifzadeh, M. Bi´ nkowski, R. Barreira, O. Vinyals, A. Zisserman, and K. Simonyan. Flamingo: A visual language model for few-shot learning. In Advances in Neural Information Processing Systems , 2022. [79] J. Li, D. Li, S. Savarese, and S. C. H. Hoi. BLIP-2: Bootstrapping language-image pre-training with frozen image encoders and large language models. In International Conference on Machine Learning , pages 19730–19742, 2023. [80] Z. Fan, K. Wang, K. Wen, Z. Zhu, D. Xu, and Z. Wang. Lightgaussian: Unbounded 3d gaussian compression with 15x reduction and 200+ FPS. In Advances in Neural Information Processing Systems , 2024. [81] J. C. Lee, D. Rho, X. Sun, J. H. Ko, and E. Park. Compact 3d gaussian representation for radiance field. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024. [82] Y. Wang, Z. Li, L. Guo, W. Yang, A. C. Kot, and B. Wen. ContextGS: Compact 3d gaussian splatting with anchor level context model. In Advances in Neural Information Processing Systems , 2024. [83] M. Tschannen, A. Gritsenko, X. Wang, M. F. Naeem, I. Alabdulmohsin, N. Parthasarathy, T. Evans, L. Beyer, Y. Xia, B. Mustafa, O. H´ enaff, J. Harmsen, A. Steiner, and X. Zhai. Siglip 2: Multilingual vision-language encoders with improved semantic understanding, localization, and dense features, 2025. URL https://arxiv.org/abs/2502.14786 .[84] M. Oquab, T. Darcet, T. Moutakanni, H. Vo, M. Szafraniec, V. Khalidov, P. Fernandez, D. Haz-iza, F. Massa, A. El-Nouby, M. Assran, N. Ballas, W. Galuba, R. Howes, P.-Y. Huang, S.-W. Li, I. Misra, M. Rabbat, V. Sharma, G. Synnaeve, H. Xu, H. Jegou, J. Mairal, P. Labatut, A. Joulin, and P. Bojanowski. Dinov2: Learning robust visual features without supervision, 2024. URL 
+
+https://arxiv.org/abs/2304.07193 .[85] G. M. Morton. A computer oriented geodetic data base and a new technique in file sequencing. Technical report, International Business Machines Company, Ottawa, Canada, 1966. [86] M. Shukor, D. Aubakirova, F. Capuano, P. Kooijmans, S. Palma, A. Zouitine, M. Aractingi, C. Pascal, M. Russi, A. Marafioti, S. Alibert, M. Cord, T. Wolf, and R. Cadene. Smolvla: A vision-language-action model for affordable and efficient robotics, 2025. URL https: //arxiv.org/abs/2506.01844 .[87] B. Liu, Y. Zhu, C. Gao, Y. Feng, Q. Liu, Y. Zhu, and P. Stone. Libero: Benchmarking knowledge transfer for lifelong robot learning, 2023. URL https://arxiv.org/abs/2306. 03310 .14 [88] X. Zhou, Y. Xu, G. Tie, Y. Chen, G. Zhang, D. Chu, P. Zhou, and L. Sun. Libero-pro: Towards robust and fair evaluation of vision-language-action models beyond memorization, 2025. URL 
+
+https://arxiv.org/abs/2510.03827 .[89] Q. Bu, Y. Yang, J. Cai, S. Gao, G. Ren, M. Yao, P. Luo, and H. Li. Univla: Learning to act anywhere with task-centric latent actions, 2025. URL https://arxiv.org/abs/2505. 06111 .[90] J. Lee, J. Duan, H. Fang, Y. Deng, S. Liu, B. Li, B. Fang, J. Zhang, Y. R. Wang, S. Lee, et al. Molmoact: Action reasoning models that can reason in space. arXiv preprint arXiv:2508.07917 , 2025. [91] NVIDIA, :, J. Bjorck, F. Casta˜ neda, N. Cherniadev, X. Da, R. Ding, L. J. Fan, Y. Fang, D. Fox, F. Hu, S. Huang, J. Jang, Z. Jiang, J. Kautz, K. Kundalia, L. Lao, Z. Li, Z. Lin, K. Lin, G. Liu, E. Llontop, L. Magne, A. Mandlekar, A. Narayan, S. Nasiriany, S. Reed, Y. L. Tan, G. Wang, Z. Wang, J. Wang, Q. Wang, J. Xiang, Y. Xie, Y. Xu, Z. Xu, S. Ye, Z. Yu, A. Zhang, H. Zhang, Y. Zhao, R. Zheng, and Y. Zhu. Gr00t n1: An open foundation model for generalist humanoid robots, 2025. URL https://arxiv.org/abs/2503.14734 .[92] Q. Zhao, Y. Lu, M. J. Kim, Z. Fu, Z. Zhang, Y. Wu, Z. Li, Q. Ma, S. Han, C. Finn, A. Handa, M.-Y. Liu, D. Xiang, G. Wetzstein, and T.-Y. Lin. Cot-vla: Visual chain-of-thought reasoning for vision-language-action models, 2025. URL https://arxiv.org/abs/2503.22020 .[93] J. Cen, C. Yu, H. Yuan, Y. Jiang, S. Huang, J. Guo, X. Li, Y. Song, H. Luo, F. Wang, D. Zhao, and H. Chen. Worldvla: Towards autoregressive action world model, 2025. URL https: //arxiv.org/abs/2506.21539 .15

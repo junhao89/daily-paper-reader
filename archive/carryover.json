@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-07-13T21:46:31.170961+00:00",
-  "updated_date": "20260713",
+  "generated_at": "2026-07-17T09:13:58.800178+00:00",
+  "updated_date": "20260708-20260717",
   "carryover_days": 9,
   "tag_states": {
     "Latent-VLA": {
-      "updated_date": "20260713",
+      "updated_date": "20260708-20260717",
       "carryover_days": 9,
       "items": []
     },
     "WAM-VLA": {
-      "updated_date": "20260713",
+      "updated_date": "20260708-20260717",
       "carryover_days": 9,
       "items": []
     },
@@ -17,6 +17,59 @@
       "updated_date": "20260713",
       "carryover_days": 9,
       "items": []
+    },
+    "vla-models": {
+      "updated_date": "20260708-20260717",
+      "carryover_days": 9,
+      "items": [
+        {
+          "id": "2607.12287v1",
+          "source": "arxiv",
+          "title": "Reducing Temporal Redundancy for Efficient Vision-Language-Action Inference",
+          "abstract": "Vision-Language-Action (VLA) models exhibit strong generalization for robotic manipulation, yet their high inference latency limits real time deployment. We identify two primary sources of temporal redundancy in existing VLA pipelines: repeated visual encoding of highly similar consecutive frames and multi step iterative sampling in diffusion based policies. To address this, we propose a system level acceleration strategy that reduces computation in both perception and action generation. On the perception side, we incrementally update only tokens corresponding to dynamic scene regions instead of re-encoding entire frames. On the policy side, we compress diffusion sampling into a compact 2-step schedule through efficiency oriented training while preserving action precision. Experiments on Libero, RobotWin, and Real Robot Platforms demonstrate over 2 times speedup while maintaining high performance, achieving up to 98% success rate on general manipulation benchmarks. Our codes will be released on Github.",
+          "authors": [
+            "Yuzhou Wu",
+            "Yuxin Zheng",
+            "Muchun Niu",
+            "Yishan Yang",
+            "Tianhao Liu",
+            "hanwen kang",
+            "Jiajian Jing",
+            "Linfeng Zhang",
+            "Chuan Wen"
+          ],
+          "primary_category": "cs.RO",
+          "categories": [
+            "cs.RO"
+          ],
+          "published": "2026-07-14T02:48:31+00:00",
+          "link": "https://arxiv.org/pdf/2607.12287v1",
+          "tags": [
+            "keyword:Latent-VLA",
+            "keyword:WAM-VLA",
+            "keyword:vla-models",
+            "query:Latent-VLA",
+            "query:WAM-VLA"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "reducing temporal redundancy for efficient VLA inference",
+          "llm_evidence_cn": "减少时间冗余以实现高效VLA推理",
+          "llm_evidence": "减少时间冗余以实现高效VLA推理",
+          "canonical_evidence": "减少时间冗余以实现高效VLA推理",
+          "llm_tldr_en": "This work accelerates VLA inference by incrementally updating visual tokens and compressing diffusion sampling to 2 steps, achieving significant speedup.",
+          "llm_tldr_cn": "VLA模型因高推理延迟难以实时部署。本文提出系统级加速策略：在感知端仅更新动态区域的token，在动作生成端将扩散采样压缩至2步。实验显示推理速度提升数倍，同时保持任务成功率。该工作为VLA模型的实际应用扫清了效率障碍。",
+          "llm_tldr": "VLA模型因高推理延迟难以实时部署。本文提出系统级加速策略：在感知端仅更新动态区域的token，在动作生成端将扩散采样压缩至2步。实验显示推理速度提升数倍，同时保持任务成功率。该工作为VLA模型的实际应用扫清了效率障碍。",
+          "llm_tags": [
+            "query:vla-models"
+          ],
+          "matched_query_tag": "query:vla-models",
+          "matched_query_text": "vision language action models for A100 GPU",
+          "matched_requirement_id": "req-21",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.12287v1",
+          "carry_days": 1
+        }
+      ]
     }
   }
 }
