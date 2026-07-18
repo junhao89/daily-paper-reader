@@ -1,0 +1,401 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-18T21:30:00.895788+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 1,
+    "deep_cap": 8,
+    "deep_selected": 1,
+    "quick_candidates": 8,
+    "quick_skim_target": 13,
+    "quick_selected": 8
+  },
+  "deep_dive": [
+    {
+      "id": "2607.13612v1",
+      "source": "arxiv",
+      "title": "The SIGReg Objective as Variational Free Energy: A Theoretical Active-Inference Account of JEPA World Models",
+      "abstract": "Joint-Embedding Predictive Architectures (JEPAs) are the dominant design for latent world models, yet they are usually justified by empirical performance rather than a normative principle. We show that the choice of anti-collapse regulariser determines whether a JEPA's training objective, a prediction loss plus a weighted embedding regulariser, is a valid Active Inference (AIF) variational free energy. We organise four non-contrastive regularisers (VICReg, LogDet, PairDist, and SIGReg) into an entropy-estimator hierarchy indexed by a prior-miscalibration gap, and show that the gap's sign, whether the estimator bounds the latent entropy from above or below, decides whether the AIF surprise bound survives: VICReg and LogDet are unsafe upper bounds, PairDist a safe lower bound, and SIGReg eliminates the gap. We then prove a correspondence theorem: under the standard constant-noise encoder model and successful SIGReg enforcement (isotropic-Gaussian embeddings), the gap vanishes, the objective becomes an exact information bottleneck, the surprise bound is preserved, and the latent goal cost becomes an exact proxy for AIF pragmatic value, whereas VICReg leaves an irreducible second-order anisotropy term. We extend the correspondence to multi-step expected free energy, ensemble epistemic value, and a learned-policy regime, and we identify the one AIF term no current JEPA world model computes: the state-epistemic value, a future-state coverage signal. The predictions differ in kind, not degree, and are stated here as theoretical consequences left for empirical test in separate work; full proofs are in Appendix A, and the algebraic core of every result is machine-verified in Lean 4 (Appendix D).",
+      "authors": [
+        "Fabio Arnez",
+        "Alexandra Gomez-Villa"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-15T08:59:36+00:00",
+      "link": "https://arxiv.org/pdf/2607.13612v1",
+      "tags": [
+        "keyword:Latent-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "theoretical analysis of joint-embedding predictive architectures for latent world models",
+      "llm_evidence_cn": "对联合嵌入预测架构（JEPA）用于潜在世界模型的理论分析",
+      "llm_evidence": "对联合嵌入预测架构（JEPA）用于潜在世界模型的理论分析",
+      "canonical_evidence": "对联合嵌入预测架构（JEPA）用于潜在世界模型的理论分析",
+      "llm_tldr_en": "This paper theoretically connects JEPA training objectives to Active Inference, showing how anti-collapse regularizers determine whether the objective is a valid variational free energy.",
+      "llm_tldr_cn": "联合嵌入预测架构（JEPA）在潜在世界模型中广泛应用，但缺乏理论依据。本文从主动推断角度证明，JEPA的训练目标（预测损失加正则项）在特定正则化下等价于变分自由能。通过分析四种非对比正则化器，揭示了它们与先验偏差的关系。该理论为理解和设计JEPA世界模型提供了规范基础，对发展更鲁棒的潜在表示学习具有指导意义。",
+      "llm_tldr": "联合嵌入预测架构（JEPA）在潜在世界模型中广泛应用，但缺乏理论依据。本文从主动推断角度证明，JEPA的训练目标（预测损失加正则项）在特定正则化下等价于变分自由能。通过分析四种非对比正则化器，揭示了它们与先验偏差的关系。该理论为理解和设计JEPA世界模型提供了规范基础，对发展更鲁棒的潜在表示学习具有指导意义。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "joint embedding predictive architecture for visual and action representation",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.12992v1",
+      "source": "arxiv",
+      "title": "ChunkFlow: Towards Continuity-Consistent Chunked Policy Learning",
+      "abstract": "Vision-language action (VLA) models increasingly adopt chunked action heads to satisfy real-time constraints; however, this introduces boundary jitter: overlapping regions between consecutive chunks often yield inconsistent predictions, degrading temporal coherence and the task success rate. Existing methods, such as inference-time blending, merely reweight mismatched proposals without correcting underlying errors, leading to residual accumulation under biased or noisy histories. We propose ChunkFlow, a seam-aware training-and-execution framework for chunked policies that aligns chunk structure with boundary execution. It partitions each chunk into frozen, editable, and future zones, applies deterministic overlap blending at execution, and trains raw predictions with seam and first- and second-order continuity losses. History corruption and scheduled sampling improve robustness to executed-history errors, while an AWAC fine-tuning stage adapts the policy without removing these structural regularizers. Under mild smoothness assumptions, pre-blending seam discrepancies provably decay with increasing overlap. Experiments on CALVIN, LIBERO, and real robots show an improved success-stability trade-off with low-latency inference. Project page: https://cytoderm-ai.github.io/chunkflow.",
+      "authors": [
+        "Zhao Yang",
+        "Yinan Shi",
+        "Mingyuan Yao",
+        "Wenyao Xue",
+        "Yawei Jueluo",
+        "Longjun Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-14T17:43:25+00:00",
+      "link": "https://arxiv.org/pdf/2607.12992v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Improves VLA chunked policy continuity for robotic manipulation",
+      "llm_evidence_cn": "改进VLA分块策略的连续性用于机器人操作",
+      "llm_evidence": "改进VLA分块策略的连续性用于机器人操作",
+      "canonical_evidence": "改进VLA分块策略的连续性用于机器人操作",
+      "llm_tldr_en": "ChunkFlow addresses boundary jitter in VLA models by partitioning chunks into zones and applying overlap blending, improving temporal coherence.",
+      "llm_tldr_cn": "VLA模型的分块动作头存在边界抖动问题，影响任务成功率。ChunkFlow将每个块划分为冻结、可编辑和未来区域，在训练和推理中强制边界对齐，并通过重叠混合消除不一致。实验表明该方法在多种机器人操作任务中显著提升连续性和成功率，无需额外推理成本。",
+      "llm_tldr": "VLA模型的分块动作头存在边界抖动问题，影响任务成功率。ChunkFlow将每个块划分为冻结、可编辑和未来区域，在训练和推理中强制边界对齐，并通过重叠混合消除不一致。实验表明该方法在多种机器人操作任务中显著提升连续性和成功率，无需额外推理成本。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.11167v1",
+      "source": "arxiv",
+      "title": "Pix2Act: Image-Space Manipulation Policies with Equivariant Augmentation",
+      "abstract": "Representing manipulation actions as 2D trajectories in the camera plane provides a compact and interpretable basis for learning complex 3D manipulation policies. However, it also creates challenges from out-of-frame trajectories and limited precision. We propose Pix2Act, an imitation learning method that addresses these challenges by generating continuous image-space keypoint trajectories in each camera plane and losslessly recovering end-effector poses via triangulation. This reformulates high-dimensional 3D control as a simpler, more learnable 2D prediction problem. Crucially, it aligns observations and actions in the same coordinate space, enabling equivariant transformations to jointly rotate individual camera images together with their image-space actions. We analyze the symmetry properties of this augmentation and design a network architecture that can fuse multiple camera views while respecting their per-view rotations. As a result, Pix2Act implicitly enlarges the support of the data distribution and learns invariant action structures across transformations, yielding improved generalization and overall performance. Across diverse simulated and real-world manipulation tasks, Pix2Act outperforms state-of-the-art baselines and remains robust under camera perturbations.",
+      "authors": [
+        "Haojie Huang",
+        "Linfeng Zhao",
+        "Haotian Liu",
+        "Zhang Ye",
+        "Si-Yuan Huang",
+        "Mingxi Jia",
+        "Boce Hu",
+        "Fangzhou Lin",
+        "Yu Qi",
+        "Dian Wang",
+        "Robin Walters",
+        "Robert Platt"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-13T07:03:29+00:00",
+      "link": "https://arxiv.org/pdf/2607.11167v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "joint observation-action space representation for manipulation",
+      "llm_evidence_cn": "联合观测-动作空间表示用于操作",
+      "llm_evidence": "联合观测-动作空间表示用于操作",
+      "canonical_evidence": "联合观测-动作空间表示用于操作",
+      "llm_tldr_en": "Pix2Act represents manipulation actions as 2D keypoint trajectories in the camera plane, aligning observations and actions in the same image space to enable equivariant data augmentation and simplify 3D control.",
+      "llm_tldr_cn": "针对图像空间动作表示存在出框和精度问题，提出Pix2Act，将操作动作表示为连续2D关键点轨迹，并通过三角测量无损恢复末端执行器位姿。该方法将观测和动作对齐到相同坐标空间，支持等变数据增强，简化了3D控制学习。实验表明其有效提升了操作策略的泛化性和精度。",
+      "llm_tldr": "针对图像空间动作表示存在出框和精度问题，提出Pix2Act，将操作动作表示为连续2D关键点轨迹，并通过三角测量无损恢复末端执行器位姿。该方法将观测和动作对齐到相同坐标空间，支持等变数据增强，简化了3D控制学习。实验表明其有效提升了操作策略的泛化性和精度。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "joint embedding predictive architecture for visual and action representation",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.13154v1",
+      "source": "arxiv",
+      "title": "Worlds in One Demo: A Synthetic Data Engine for Learning Open-World Mobile Manipulation",
+      "abstract": "Learning open-world mobile manipulation policies requires vast data to achieve spatial generalization, long-horizon robustness, and scene generalization. Current prevailing data collection paradigms, teleoperation and UMI, demand prohibitive human effort and cost at scale. To scale beyond the limits of manual data collection, we seek to maximize the value of each human demonstration by scalable data generation. To this end, we introduce WANDA: learning open-World mobile mANipulation from one demonstration via a synthetic DAta engine. WANDA first reconstructs background Gaussian splats and robot-object interaction trajectories from source RGBD observations, as a world substrate for later planning and rendering. It then rearranges contact-rich robot-object interaction segments into extensive spatial configurations, utilizing whole-body motion planning to chain them into new trajectories. To enhance long-horizon robustness, it applies Corrective State Expansion to increase the robot and object state diversity at different stages of mobile manipulation. To unlock cross-environment generalization, trajectories are synthesized on diverse generated 3D worlds from everyday photos. Furthermore, we synthesize photo-realistic observations by compositing rendered robot and object meshes with Gaussian splatting backgrounds. We evaluate our approach on extensive simulation and real-world tasks in various scenes. Experiments show that policies trained with WANDA achieve long-horizon robustness, broad spatial generalization and cross-environment generalization from one real demonstration. Moreover, WANDA naturally supports cross-embodiment data generation, validated by zero-shot deployment on another mobile manipulator with a distinct morphology.",
+      "authors": [
+        "Lingxiao Guo",
+        "Huanyu Li",
+        "Guanya Shi"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-14T18:04:58+00:00",
+      "link": "https://arxiv.org/pdf/2607.13154v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Synthetic data engine with world substrate for mobile manipulation",
+      "llm_evidence_cn": "具有世界基底的合成数据引擎用于移动操作",
+      "llm_evidence": "具有世界基底的合成数据引擎用于移动操作",
+      "canonical_evidence": "具有世界基底的合成数据引擎用于移动操作",
+      "llm_tldr_en": "WANDA generates synthetic data from one demo using Gaussian splats and interaction trajectories for open-world mobile manipulation.",
+      "llm_tldr_cn": "开放世界移动操作需要海量数据，而手动采集成本高昂。WANDA从单个人工演示中重建背景高斯Splat和交互轨迹作为世界基底，然后通过重排接触点生成大量多样化场景。实验表明该方法能以少量真实演示训练出泛化性强的操作策略，大幅降低数据采集成本。",
+      "llm_tldr": "开放世界移动操作需要海量数据，而手动采集成本高昂。WANDA从单个人工演示中重建背景高斯Splat和交互轨迹作为世界基底，然后通过重排接触点生成大量多样化场景。实验表明该方法能以少量真实演示训练出泛化性强的操作策略，大幅降低数据采集成本。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "action-conditioned world models for manipulation and navigation",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.12423v1",
+      "source": "arxiv",
+      "title": "Model-Based Diffusion Optimal Control for Multi-Robot Motion Planning",
+      "abstract": "Multi-Robot Motion Planning in continuous environments, where robots must generate dynamically feasible, collision-free trajectories, is challenging due to the combinatorial growth of the joint trajectory space and the difficulty of enforcing dynamic feasibility and hard safety constraints. Recent approaches recast trajectory planning as probabilistic inference, sampling from a posterior over trajectories using diffusion models whose score functions are learned from demonstration data. While showing promising performance, these approaches are limited: they often rely on sizable demonstration datasets and struggle to rigorously enforce dynamics and hard safety constraints during sampling. To this end, we introduce Model-Based Diffusion Optimal Control (MDOC), a model-based diffusion planner that efficiently produces dynamically feasible trajectories without relying on data. Crucially, we show that MDOC's safety mechanism -- combining known dynamics models with Control Barrier Function-constrained projections -- naturally scales to multi-robot planning settings through Conflict-Based Search. Across simulation experiments, this integrated method consistently outperforms representative baseline planners in sample efficiency, geometric smoothness, and success rate, while reducing computation time and producing collision-free trajectories.",
+      "authors": [
+        "Zhilin He",
+        "Yorai Shaoul",
+        "Jiaoyang Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-14T06:54:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.12423v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "model-based diffusion optimal control for multi-robot motion planning",
+      "llm_evidence_cn": "基于模型的扩散最优控制用于多机器人运动规划",
+      "llm_evidence": "基于模型的扩散最优控制用于多机器人运动规划",
+      "canonical_evidence": "基于模型的扩散最优控制用于多机器人运动规划",
+      "llm_tldr_en": "Model-Based Diffusion Optimal Control combines a learned dynamics model with diffusion-based trajectory sampling to enforce hard constraints for multi-robot planning without large demonstration datasets.",
+      "llm_tldr_cn": "针对多机器人运动规划中动态可行性和安全约束难以强制执行的问题，提出基于模型的扩散最优控制。它利用学到的动力学模型作为先验，在扩散采样过程中施加约束，无需大量演示数据。实验结果表明该方法在多种多机器人场景中生成无碰撞轨迹且满足动态可行性。",
+      "llm_tldr": "针对多机器人运动规划中动态可行性和安全约束难以强制执行的问题，提出基于模型的扩散最优控制。它利用学到的动力学模型作为先验，在扩散采样过程中施加约束，无需大量演示数据。实验结果表明该方法在多种多机器人场景中生成无碰撞轨迹且满足动态可行性。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world models for robot state prediction and model-based control",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.13818v1",
+      "source": "arxiv",
+      "title": "Learning Robust Execution in Robotic Manipulation with Agentic Reinforcement Learning",
+      "abstract": "Robotic manipulation poses fundamental challenges due to uncertainty, long-horizon execution, and compounding errors, which can easily destabilize execution and lead to task failure. Although recent vision-language-action (VLA) models exhibit strong generalization, they typically lack explicit mechanisms to assess execution stability and to recover when execution deviates from its nominal behavior. In this paper, we propose: (1) two complementary metrics to assess execution quality at runtime, and (2) an agentic reinforcement learning framework that learns to restore effective execution through high-level decision-making rather than directly learning low-level actions. In this framework, an agentic policy reasons over recent execution history and selects among a small set of execution modes to regulate the execution process. Under execution degradation, it triggers appropriate recovery mechanisms to restore the robot to previously visited nominal states, enabling the task to continue. We evaluate the proposed method on the LIBERO benchmark, achieving up to a 13.7% improvement in success rate under standard settings and up to a 39.2% improvement under disturbance settings, demonstrating substantially enhanced execution robustness.",
+      "authors": [
+        "Xiaopeng Zhang",
+        "Yueyang Weng",
+        "Qi Liu",
+        "Yongjin Mu",
+        "Yanjie Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-15T13:25:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.13818v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Agentic RL framework for robust VLA execution in manipulation",
+      "llm_evidence_cn": "用于操作中鲁棒VLA执行的智能体RL框架",
+      "llm_evidence": "用于操作中鲁棒VLA执行的智能体RL框架",
+      "canonical_evidence": "用于操作中鲁棒VLA执行的智能体RL框架",
+      "llm_tldr_en": "Proposes metrics and agentic RL to detect and recover from execution deviations in VLA models for robotic manipulation.",
+      "llm_tldr_cn": "VLA模型在长周期操作中因误差累积容易执行失败。本文提出两种运行时执行质量指标，并设计智能体强化学习框架，通过高层决策而非低层动作来恢复有效执行。实验证明该方法能显著提升VLA模型的鲁棒性和完成任务的成功率，尤其是面对干扰时。",
+      "llm_tldr": "VLA模型在长周期操作中因误差累积容易执行失败。本文提出两种运行时执行质量指标，并设计智能体强化学习框架，通过高层决策而非低层动作来恢复有效执行。实验证明该方法能显著提升VLA模型的鲁棒性和完成任务的成功率，尤其是面对干扰时。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.13560v1",
+      "source": "arxiv",
+      "title": "Grounded world models in biological organisms and future embodied AI",
+      "abstract": "Recent advances in generative and embodied AI have been driven by large-scale predictive learning over multimodal data. However, the resulting systems remain largely based on passive training regimes where linguistic regularities create the scaffold onto which information from other modalities is attached. Conversely, neuroscience and cognitive science suggest that biological intelligence is organized in the opposite way, where grounded world models acquired through interaction with the environment provide the semantic scaffold to which language is attached. Here, we illustrate five examples of neural circuits supporting grounded world modelling, which underlie navigation in physical and conceptual spaces, affordance-based perception and interaction with objects, active perception and exploratory learning, allostatic control and emotion, and the distinction between self- and world-generated outcomes. These examples highlight several features largely missing from current embodied AI, including the role of intrinsic dynamics as a foundation for learning, the centrality of action in aligning these dynamics with the external world, the prominence of autonomous experience and open-ended learning over passive assimilation of externally provided data, and the fact that early predictive and control mechanisms scaffold higher cognitive abilities such as reasoning, conceptual navigation, planning, imagination, understanding others' minds, and communication. Finally, we discuss whether and how principles derived from biological systems may inform future embodied AI, including training regimes based on social interaction to construct world models that are not only grounded but also socially shared and aligned with human norms and values.",
+      "authors": [
+        "Giovanni Pezzulo",
+        "Davide Nuzzi",
+        "Marco D'Alessandro",
+        "Riccardo Proietti",
+        "Roberto Bottini",
+        "Paul Cisek"
+      ],
+      "primary_category": "q-bio.NC",
+      "categories": [
+        "q-bio.NC",
+        "cs.AI"
+      ],
+      "published": "2026-07-15T08:02:19+00:00",
+      "link": "https://arxiv.org/pdf/2607.13560v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "discusses grounded world models for embodied AI",
+      "llm_evidence_cn": "讨论具身AI的接地世界模型",
+      "llm_evidence": "讨论具身AI的接地世界模型",
+      "canonical_evidence": "讨论具身AI的接地世界模型",
+      "llm_tldr_en": "Position paper arguing that biological intelligence uses grounded world models as a scaffold for language, contrasting with current passive training regimes.",
+      "llm_tldr_cn": "当前生成式与具身AI依赖于大规模多模态预测学习，但其被动训练模式使语言成为其他模态的支架。本文基于神经科学与认知科学，提出生物智能反向利用与环境交互获得的接地世界模型作为语义支架。文章通过五个神经回路示例展示接地世界模型如何支持物理与概念空间的导航、基于可供性的感知与交互等能力。这为未来具身AI设计提供了重要启示。",
+      "llm_tldr": "当前生成式与具身AI依赖于大规模多模态预测学习，但其被动训练模式使语言成为其他模态的支架。本文基于神经科学与认知科学，提出生物智能反向利用与环境交互获得的接地世界模型作为语义支架。文章通过五个神经回路示例展示接地世界模型如何支持物理与概念空间的导航、基于可供性的感知与交互等能力。这为未来具身AI设计提供了重要启示。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world models for robot state prediction and model-based control",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.14507v1",
+      "source": "arxiv",
+      "title": "DRIFT: Drift and Aggregation for Motion Planning",
+      "abstract": "End-to-end trajectory planners need to represent multiple plausible driving behaviors while producing a single executable trajectory under real-time constraints. Proposal-based approaches address this ambiguity by generating multiple candidates, but converting the proposal set into a final plan remains a key design problem. We present DRIFT, a fixed-depth planner that combines one-step drifting in a compact trajectory latent space with scene-aware proposal aggregation. Conditioned on features from a pretrained visual encoder, the DRIFT Decoder generates 48 proposal features in a single batched pass, with 32 samples at alpha=0.5 and 16 samples at alpha=0.9. A lightweight Aggregation Head integrates these features with scene, navigation, and ego-state information and directly predicts the final trajectory without requiring trajectory-level quality labels for aggregation. Its output is trained with expert-trajectory imitation and a map-derived boundary regularizer that penalizes waypoints outside the drivable polygon and inside waypoints near its boundary. On NAVSIM navtest, DRIFT achieves 89.6 PDMS and 90.4 EPDMS, with strong drivable-area compliance and ego progress among the methods compared. The proposal-generation and aggregation module runs in 10.82 ms on an NVIDIA RTX 4090, while full-model inference including the visual backbone takes 66.43 ms. These results show that one-step latent proposal generation and direct aggregation provide an efficient design for multi-hypothesis motion planning.",
+      "authors": [
+        "Yining Xing",
+        "Zhiyuan Liu",
+        "Zehong Ke",
+        "Wenhao Yu",
+        "Jianqiang Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-16T02:43:13+00:00",
+      "link": "https://arxiv.org/pdf/2607.14507v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "latent space trajectory planning for autonomous driving",
+      "llm_evidence_cn": "用于自动驾驶的潜空间轨迹规划",
+      "llm_evidence": "用于自动驾驶的潜空间轨迹规划",
+      "canonical_evidence": "用于自动驾驶的潜空间轨迹规划",
+      "llm_tldr_en": "Proposes DRIFT, a fixed-depth planner that drifts in a compact trajectory latent space and aggregates proposals for motion planning.",
+      "llm_tldr_cn": "针对自动驾驶中多模态轨迹规划问题，提出DRIFT方法，在紧凑的轨迹潜空间中进行一步漂移并聚合场景感知候选。该方法使用预训练视觉编码器条件，在单次批处理中生成48个候选特征，并通过轻量聚合头融合场景、导航和自车状态信息，实现实时规划。",
+      "llm_tldr": "针对自动驾驶中多模态轨迹规划问题，提出DRIFT方法，在紧凑的轨迹潜空间中进行一步漂移并聚合场景感知候选。该方法使用预训练视觉编码器条件，在单次批处理中生成48个候选特征，并通过轻量聚合头融合场景、导航和自车状态信息，实现实时规划。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "planning and control in latent space for embodied AI agents",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.15275v1",
+      "source": "arxiv",
+      "title": "RoboTTT: Context Scaling for Robot Policies",
+      "abstract": "Recent robot foundation models operate with single-step or short-history visuomotor context. We introduce Test-Time-Training Robot Policies (RoboTTT), a robot model and training recipe that scale visuomotor context to 8K timesteps, three orders of magnitude beyond state-of-the-art policies, without growing inference latency. At this context length, we unlock new robot capabilities: one-shot in-context imitation from human video demonstrations, on-the-fly policy improvement, robustness to perturbations, and stronger performance on multi-stage, long-horizon tasks. We also observe, for the first time, steady gains in closed-loop performance as pretraining context length scales. At its core, RoboTTT integrates Test-Time Training into robot foundation models such as Vision-Language-Action policies, yielding a sequence model whose recurrent state consists of fast weights, parameters updated by gradient descent during both training and inference, compressing histories into weight space and retrieving contextual information for long-context conditioning. To scale training context length, the recipe combines sequence action forcing with truncated backpropagation through time. On challenging real-robot manipulation tasks, RoboTTT improves overall performance by 87% over the single-step context baseline and fully completes a five-minute, ten-stage assembly task, which no baseline ever does. RoboTTT trained with 8K-timestep context outperforms the same model pretrained with 1K timesteps by 62%, suggesting context length as a new scaling axis for robot foundation models. Videos are available at https://research.nvidia.com/labs/gear/robottt/",
+      "authors": [
+        "Yunfan Jiang",
+        "Yevgen Chebotar",
+        "Ruijie Zheng",
+        "Fengyuan Hu",
+        "Yunhao Ge",
+        "Jimmy Wu",
+        "Tianyuan Dai",
+        "Scott Reed",
+        "Li Fei-Fei",
+        "Yuke Zhu",
+        "Linxi \"Jim\" Fan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-16T17:59:06+00:00",
+      "link": "https://arxiv.org/pdf/2607.15275v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "scales visuomotor context for robot VLA models via test-time training",
+      "llm_evidence_cn": "通过测试时训练扩展机器人VLA模型的视觉运动上下文",
+      "llm_evidence": "通过测试时训练扩展机器人VLA模型的视觉运动上下文",
+      "canonical_evidence": "通过测试时训练扩展机器人VLA模型的视觉运动上下文",
+      "llm_tldr_en": "Introduces RoboTTT, scaling visuomotor context to 8K timesteps without latency increase, enabling one-shot imitation and on-the-fly policy improvement.",
+      "llm_tldr_cn": "现有机器人基础模型仅支持单步或短历史视觉运动上下文。本文提出RoboTTT，通过集成测试时训练（TTT）将上下文长度扩展到8000时间步，且推理延迟不变。在长上下文下，机器人首次实现从人类视频演示的一次性上下文模仿、在线策略改进以及对扰动的鲁棒性。实验表明预训练上下文长度与闭环性能呈稳定增长关系。这一方法显著提升了VLA等机器人基础模型的长时程能力。",
+      "llm_tldr": "现有机器人基础模型仅支持单步或短历史视觉运动上下文。本文提出RoboTTT，通过集成测试时训练（TTT）将上下文长度扩展到8000时间步，且推理延迟不变。在长上下文下，机器人首次实现从人类视频演示的一次性上下文模仿、在线策略改进以及对扰动的鲁棒性。实验表明预训练上下文长度与闭环性能呈稳定增长关系。这一方法显著提升了VLA等机器人基础模型的长时程能力。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

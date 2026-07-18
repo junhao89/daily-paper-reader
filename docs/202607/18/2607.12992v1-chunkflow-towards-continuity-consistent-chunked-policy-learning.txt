@@ -1,0 +1,708 @@
+Title: ChunkFlow: Towards Continuity-Consistent Chunked Policy Learning
+
+URL Source: https://arxiv.org/pdf/2607.12992v1
+
+Published Time: Wed, 15 Jul 2026 11:55:41 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# ChunkFlow: Towards Continuity-Consistent Chunked Policy Learning 
+
+Zhao Yang 1,2, Yinan Shi 2, Mingyuan Yao 2, Wenyao Xue 2, Yawei Jueluo 2 and Longjun Liu 1,∗
+
+Abstract — Vision–language action (VLA) models increasingly adopt chunked action heads to satisfy real-time constraints; however, this introduces boundary jitter : overlapping regions between consecutive chunks often yield inconsistent predic-tions, degrading temporal coherence and the task success rate. Existing methods, such as inference-time blending, merely reweight mismatched proposals without correcting underlying errors, leading to residual accumulation under biased or noisy histories. We propose ChunkFlow, a seam-aware training-and-execution framework for chunked policies that aligns chunk structure with boundary execution. It partitions each chunk into frozen, editable, and future zones, applies deterministic overlap blending at execution, and trains raw predictions with seam and first- and second-order continuity losses. History corruption and scheduled sampling improve robustness to executed-history errors, while an AWAC fine-tuning stage adapts the policy without removing these structural regularizers. Under mild smoothness assumptions, pre-blending seam discrepancies prov-ably decay with increasing overlap. Experiments on CALVIN, LIBERO, and real robots show an improved success-stability trade-off with low-latency inference. Project page: https: //cytoderm-ai.github.io/chunkflow .
+
+I. Introduction 
+
+Recent advances in robotic manipulation increasingly leverage vision–language action (VLA) models to translate open-ended instructions into executable behaviors. To en-able real-time control, modern VLA architectures typically employ action-chunking heads, which emit short action se-quences (chunks) per decision step [1], [2], [3], [4], [5]. This design amortizes inference costs and improves deploy-ment efficiency, but it introduces a critical failure mode: 
+
+temporal discontinuities at chunk boundaries . Since each chunk is predicted under slightly shifted observations and histories, overlaps between chunks often yield conflicting actions—causing jitter, degraded coherence, and task failure. This raises a fundamental question: how can we retain task effectiveness while ensuring smooth, consistent transitions across chunked predictions? Most existing mitigations handle boundary artifacts heuris-tically at inference time or overlook execution seman-tics during training. RTC [6] applies online interpola-tion to smooth seams, but such inference-only blending 
+
+reweights misaligned chunk predictions without correcting upstream errors, causing residuals to accumulate under noisy or biased histories. Moreover, the absence of training-time seam supervision yields weak boundary gradients, preventing policies from internalizing blendable structure. 
+
+> 1State Key Laboratory of Human-Machine Hybrid Augmented Intel-ligence, Institute of Artificial Intelligence and Robotics, Xi’an Jiaotong University, China.
+> 2Jiangsu Cytoderm Intelligent Technology Co., Ltd., China.
+> ∗Longjun Liu is the corresponding author.
+
+Fig. 1: Real-world rollout on Strip-cloth grasping . We deploy Chunk-Flow on a manipulation task where the robot extracts a strip from a cloth stack and places it at a target location. Top: keyframes. Bottom: EE roll-angle traces over the first 200 steps, labeled as jitter Δ𝑎 , velocity Δ2 𝑎 ,and acceleration Δ3 𝑎 (finite differences of the EE roll angle). Compared to PI0.5 [13], ChunkFlow reduces boundary-induced spikes and high-frequency artifacts across all three signals (consistent with lower MSD-Δ𝑎 ,MSD-Δ2 𝑎 , and MSD-Δ3 𝑎 ), supporting smoother execution. 
+
+Mainstream VLA pipelines—e.g., OpenVLA [3], GR2 [2], TraceVLA [7]—apply uniform chunk-wise losses and ignore execution-indexed semantics (frozen, editable, future), leav-ing boundary inconsistencies unresolved. Other approaches explore chunked control via flow/diffusion models [8], [9], skill abstraction [10], [11], or behavior priors [12]; while effective offline, these lack executed-history feedback and seam-aware learning, limiting deployment-time alignment. In this work, we present ChunkFlow , a seam-aware training-and-execution framework for chunked policies with three integrated components. ❶ Structure-aligned over-lap blending. Each chunk is divided into frozen , editable ,and future zones, and adjacent chunks are deterministically reconciled without an extra policy forward pass. Unlike inference-only smoothing [6], the overlap structure is ex-posed during training through pre-blending seam supervi-sion. ❷ Continuity-regularized policy optimization. First-and second-order penalties and a raw seam loss encourage temporally consistent predictions, while history corruption and scheduled sampling reduce exposure bias. ❸ Structure-preserving advantage-weighted fine-tuning. AWAC [14] with expectile critics [15] adapts the policy from post-blended histories while retaining seam and continuity reg-ularization. Under mild smoothness assumptions, seam dis-crepancy decreases with overlap. Thus, the contribution lies in seam-aware training and execution for chunked policies, rather than VLA backbone design. We evaluate ChunkFlow on CALVIN [16], LIBERO [17], and two real-robot tasks on a self-developed arm [18]. Across these settings, ChunkFlow improves the success– smoothness trade-off while retaining low-latency execution, reaching an average sequence length of 4.30 on CALVIN, 93.4% success rate on LIBERO, 4.43 ms amortized reasoning arXiv:2607.12992v1 [cs.RO] 14 Jul 2026 latency, and 9/10 successes on the real-robot tasks. 
+
+II. Related Work 
+
+A. Action Chunking and VLA 
+
+Chunked action generation is widely adopted in visuo-motor learning for improving long-horizon consistency [8], [19], [20], often using generative backbones—diffusion and flow models [9], [21], vector quantization [10], [22], or token-based priors [12]—to model long-range dependencies, including extensions via world models and temporal abstrac-tions [23], [24], [25]. Despite success offline, most methods overlook seam inconsistencies in overlapping regions, caus-ing jitter and instability during deployment. Similarly, large-scale VLA models like OpenVLA, GR2, TraceVLA, and Seer [3], [2], [7] scale instruction-conditioned control with vision–language pretraining [26], [27], [5] but lack explicit handling of execution-time continuity. We address these gaps via a seam-aware chunked execution layer beneath the VLA encoder, aligning chunk boundaries through deterministic overlap blending and a boundary consistency loss without modifying the multimodal front-end. 
+
+B. Temporal Alignment and Smoothness for Chunked Policy Execution 
+
+Temporal consistency is critical for stable long-horizon control. Prior work enforces intra-chunk smoothness using total-variation, curvature, or jerk penalties [19], [8], [21], [20], and generative planners [9], [2], [28], [29] implicitly regularize motion through extended temporal context. Other efforts explicitly introduce smooth policy updates or tempo-rally consistent rollouts in RL [30], [31], while hierarchical behavior regularizers [32] further reduce high-frequency artifacts. However, these approaches largely overlook seam mismatches —conflicts in overlapping regions—that disrupt rollout stitching in chunked controllers. Imitation-and-RL pipelines [8], [20], [10] adopt advantage-weighted updates, expectile critics [9], [19], or latent KL constraints [7], [12], [3]; yet they still ignore overlap semantics. In contrast, we embed seam-aware execution as a structural prior, aligning BC and RL updates with deterministic overlap blending and boundary-aware continuity losses to ensure stable long-horizon behavior. 
+
+III. Method 
+
+A. Problem Setup 
+
+We study instruction-conditioned control in continuous action spaces. At each decision index 𝑘 , a chunked policy outputs an 𝐿 -step action sequence: 
+
+𝑎 (𝑘 ) 
+
+> 1: 𝐿
+
+∼ 𝜋 𝜃 
+
+ · 𝑜 𝑠 𝑘 :𝑠 𝑘 +𝐿 −1, ℎ 𝑠 𝑘 , 𝑙  , (1) where 𝑎 (𝑘 ) 
+
+> 𝑡
+
+∈ R𝑑 , ℎ𝑠 𝑘 = (𝑎 (𝑘 )   
+
+> 𝑠 𝑘 −𝑝
+
+, . . . , 𝑎 (𝑘 ) 
+
+> 𝑠 𝑘 −1
+
+) is a 𝑝 -step action history (zero-padded at the start of the episode), and 
+
+𝑠 𝑘 = 1 + ( 𝑘 −1)𝑆 with a stride of 𝑆 = 𝐿 −𝑂 . Overlapping chunk boundaries ( 𝑂> 0) allow for smoother transitions but can also introduce redundant or inconsistent predictions in shared steps. We define the seam discrepancy in the overlapping region as 
+
+𝛿 (𝑘 ) 
+
+> 𝑡
+
+= 𝑎 (𝑘 ) 
+
+> 𝑡
+
+− 𝑎 (𝑘 −1)
+
+> 𝑡 +𝐿 −𝑂
+
+, 𝑡 = 1, . . . , 𝑂. (2) The objective is to learn a chunked policy 𝜋 𝜃 that imitates expert behavior under instruction 𝑙 while minimizing 𝛿 (𝑘 ) 
+
+> 𝑡
+
+,yielding coherent and smooth action streams for long-horizon execution. 
+
+B. Continuity-Consistent Policy Execution via Chunked Ac-tion Sequences 
+
+ChunkFlow is a seam-aware policy framework that gen-erates temporally extended action chunks with enforced continuity across overlapping regions. At each index 𝑘 , the policy 𝜋 𝜃 predicts a chunk of 𝐿 actions 𝑎 (𝑘 ) 
+
+> 1: 𝐿
+
+, conditioned on local observations 𝑜 𝑠 𝑘 :𝑠 𝑘 +𝐿 −1, a short action history ℎ𝑠 𝑘 ,and high-level instruction 𝑙 . Consecutive chunks overlap for 
+
+𝑂 steps, allowing deterministic blending at the seam to align the head of chunk 𝑘 with the tail of chunk 𝑘 −1 (Fig. 2). To promote long-horizon stability, training includes first- and second-order smoothness regularization and history pertur-bation for robustness. The policy is initialized via behavior cloning under these constraints and is further refined with advantage-weighted updates while preserving seam structure. During inference, each chunk commits its first 𝑆 =𝐿 −𝑂 steps, blending the overlap and executing the rest directly, enabling low-latency rollout with smooth transitions and adaptive execution. 
+
+C. Deterministic Overlap Blending for Seamless Chunk Transitions 
+
+Chunked inference improves planning granularity but often introduces discontinuities in overlapping regions between consecutive chunks, resulting in trajectory jitter that un-dermines real-time stability. We propose a parameter-free 
+
+overlap blending mechanism to enforce smooth transitions without introducing latency. Let 𝑎 (𝑘 −1) 
+
+> 𝑡
+
+and 𝑎 (𝑘 ) 
+
+> 𝑡
+
+denote the predicted actions from chunks 𝑘 −1 and 𝑘 in an overlapping region of length 𝑂 . The executed action at time 𝑠 𝑘 +𝑡 −1 is: 
+
+˜𝑎 𝑠 𝑘 +𝑡 −1 = 𝑤 𝑡 𝑎 (𝑘 ) 
+
+> 𝑡
+
++ ( 1 − 𝑤 𝑡 ) 𝑎 (𝑘 −1)
+
+> 𝑡 +𝐿 −𝑂
+
+, 𝑡 = 1, . . . , 𝑂, (3) where the interpolation weight 𝑤 𝑡 ∈ [ 0, 1] is as follows: 
+
+𝑤 𝑡 =
+
+(0, 𝑂 = 1,  
+
+> 𝑡 −1
+> 𝑂 −1
+
+, 𝑂 > 1 (use raw 𝑎 (𝑘 ) 
+
+> 1: 𝐿
+
+when 𝑂 = 0). (4) This linearly shifts control from the prior chunk to the current one, requiring only O( 𝑑 ) flops per overlap step. To enforce consistency during training, we introduce a boundary loss: 
+
+𝐿 bdry = 𝜆 𝐵 𝑂 ∑︁ 
+
+> 𝑡 =1
+
+𝑎 (𝑘 ) 
+
+> 𝑡
+
+− 𝑎 (𝑘 −1) 
+
+> 𝑡 +𝐿 −𝑂
+> 22
+
+, (5) which penalizes seam discrepancies 𝛿 (𝑘 ) 
+
+> 𝑡
+
+= 𝑎 (𝑘 ) 
+
+> 𝑡
+
+− 𝑎 (𝑘 −1)
+
+> 𝑡 +𝐿 −𝑂
+
+(cf. Sec. III-A). This regularization improves pre-blending agreement and enhances rollout continuity. As blending is Fr ozen Editable Futur e      
+
+> Last Chunk
+> k-1 Tail
+> d+1 d+o+1 L
+> Redundant
+> Overlapping
+> Conflicting Actions at Seam
+> Chunk k
+> Action Failed
+> Guidance Weight
+> Failed to Gr asp the
+> Cloth Str ip.
+> Failed to Gr ab the
+> Cube.
+> Grasp the Top Strip of Cloth.
+> Grab Cube and Place in Groove.
+> Grasp, Move and Place.
+> Liber o
+> Calvin
+> Liber o
+> “Grasp the Top
+> Strip of Cloth. ”Noisy
+
+[a kt,a kt+1 ,..,a kt+h ]
+
+> History
+
+ChunkFlow Action      
+
+> Expert
+> ViT ViT ViT ViT ViT ViT
+
+Obs 
+
+[o sk:sk+L-1 ]
+
+L hsk 
+
+Continues Actions 
+
+... 
+
+Obs 
+
+[o sk+1:sk+1+L-1 ]
+
+.... 
+
+L 
+
+> Lcont : Temporal Smoothness
+> ()
+
+qt  
+
+> Reinforcement Fine-Tuning (AWAC) Supervised Pretraining
+> LBC : Imitation Loss
+> Pretrained
+> Policy
+> Critic: TD+Expectile
+> Qβ, V Φ
+> Advantage Weighting
+> LAWAC
+> KL Regularization + Entropy
+> +
+> Lbdr +
+> Lcont
+> Fine-Tuned
+> Lbdry : Seam Consistency
+> 1
+> Lcont : Temporal Smoothness
+> ()
+
+Fig. 2: Overview of ChunkFlow. The policy generates temporally overlapping action chunks, which are deterministically blended at boundaries to ensure seam continuity. Training integrates supervised regularization and reinforcement fine-tuning for stable long-horizon execution. Each predicted chunk is partitioned into three segments: frozen (gray, length 𝑑 ), editable seam (purple-to-pink gradient, length 𝑂 ), and future (yellow, length 𝑠 ), corresponding to index ranges [1: 𝑑 ], [𝑑 +1: 𝑑 +𝑂 ],and [𝑑 +𝑂 +1: 𝐿 ], respectively. deterministic and latency-free, it remains suitable for real-time execution and mitigates residual boundary artifacts at test time. 
+
+Theoretical Justification. Under local Lipschitz continuity of 𝜋 𝜃 and motion-proportional input drift, the expected seam error satisfies: 
+
+E
+
+h
+
+𝛿 (𝑘 )
+
+> 𝑡
+> 22
+
+i
+
+= O(( 𝐿 − 𝑂 )2), (6) i.e., increasing 𝑂 quadratically suppresses boundary mis-match, consistent with empirical results in Table III. 
+
+D. History-Conditioned Policy with Continuity Regulariza-tion 
+
+While overlap blending smooths transitions at chunk boundaries, it does not reduce prediction errors—only in-terpolates conflicting outputs. When the policy depends on recent action history for temporal context, residual errors can accumulate across chunks, especially under noisy or biased inputs. To mitigate this, we adopt a history-conditioned formulation where the policy receives the current observation 
+
+𝑜 𝑡 , an ordered 𝑝 -step history ℎ𝑠 𝑘 = (𝑎 (𝑘 )   
+
+> 𝑠 𝑘 −𝑝
+
+, . . . , 𝑎 (𝑘 ) 
+
+> 𝑠 𝑘 −1
+
+), and a language instruction 𝑙 :
+
+𝑎 (𝑘 ) 
+
+> 𝑡
+
+= 𝜋 𝜃 (𝑜 𝑡 , ℎ 𝑠 𝑘 , 𝑙 ). (7) During execution, the history at the next chunk ˜ℎ𝑠 𝑘 +1 is formed using post-blending actions ˜𝑎 𝑡 (per Eq. (3)), cap-turing realistic feedback from prior executions. To improve robustness and reduce horizon-wise drift, we introduce a temporal continuity prior: 
+
+𝐿 cont = 𝜆 TV 
+
+> 𝑇
+
+∑︁ 
+
+> 𝑡 =2
+
+∥𝑎 (𝑘 ) 
+
+> 𝑡
+
+− 𝑎 (𝑘 )  
+
+> 𝑡 −1
+
+∥1 (8) 
+
++ 𝜆 𝐷 2
+
+> 𝑇
+
+∑︁ 
+
+> 𝑡 =3
+
+∥𝑎 (𝑘 ) 
+
+> 𝑡
+
+− 2𝑎 (𝑘 )  
+
+> 𝑡 −1
+
++ 𝑎 (𝑘 )  
+
+> 𝑡 −2
+
+∥22,
+
+where the first-order term enforces total variation regular-ity, and the second-order term penalizes curvature (jerk). This reduces one-step prediction error and suppresses high-frequency instability across chunks. To simulate imperfect rollout scenarios, we apply stochastic corruption to the history during training: 
+
+𝑎 (𝑘 )  
+
+> 𝑡 −𝑖
+
+←
+
+(
+
+¯𝑎 𝑡 −𝑖 + 𝜖, 𝜖 ∼ N ( 0, 𝜎 2), w.p. 1 − 𝑞, 
+
+0, w.p. 𝑞, 𝑎 (𝑘 )  
+
+> 𝑡 −𝑖
+
+← ( 1−𝛼 ) 𝑎 (𝑘 )  
+
+> 𝑡 −𝑖
+
++ 𝛼 ˆ𝑎 𝑡 −𝑖 , 𝑖 = 1: 𝑝, (9) where 𝑞 is the dropout rate, and 𝛼 ∈ [ 0, 1] is the scheduled sampling ratio. The resulting noisy sequence forms ℎ𝑠 𝑘 
+
+during training, while clean post-blending actions ˜𝑎 𝑡 are used at test time. We define the supervised training objective as: 
+
+𝐿 sup = 𝐿 BC + 𝐿 cont + 𝐿 bdry , (10) where 𝐿 BC aligns actions with demonstrations, 𝐿 cont enforces local smoothness, and 𝐿 bdry (from Sec. III-C) ensures chunk-level consistency. These losses operate on raw predictions 
+
+𝑎 (𝑘 ) , while execution histories are constructed from ˜𝑎 𝑡 .Under mild smoothness assumptions, the long-horizon de-viation can be bounded as follows. If 𝜋 𝜃 is 𝐿 𝜋 -Lipschitz and the history noise is bounded by 𝜖 , with 𝐿 cont inducing a contraction 𝜌 < 1, the cumulative deviation satisfies: 
+
+> 𝑇
+
+∑︁ 
+
+> 𝑡 =1
+
+∥𝑎 (𝑘 ) 
+
+> 𝑡
+
+− 𝑎 (𝑘 )★𝑡 ∥ ≤ 𝐿 𝜋 
+
+1 − 𝜌 𝑇 𝜖, (11) where 𝑎 (𝑘 )★𝑡 denotes the trajectory under clean histories, establishing the link between local regularization and long-horizon stability. 
+
+E. Continuity-Constrained Advantage-Weighted Fine-Tuning 
+
+While continuity-regularized imitation fosters coherent transitions, it remains limited by the coverage and quality of expert demonstrations. To overcome this, we introduce a rein-forcement fine-tuning stage that enables reward-aligned adap-tation while preserving the structural priors learned during pretraining. Trajectories are collected using executed (post-blending) actions ˜𝑎 𝑡 (Eq. (3)), and training-time histories may be perturbed, as in Eq. (9), to improve robustness. The policy continues to operate in chunked form, but advantage estimation and updates are performed step-wise within each chunk. We define the decision state as 𝑠 𝑡 = (𝑜 𝑡 , ˜ℎ𝑠 𝑘 , 𝑙 ), where 
+
+˜ℎ𝑠 𝑘 = ( ˜𝑎 𝑠 𝑘 − 𝑝 , . . . , ˜𝑎 𝑠 𝑘 −1) encodes recently executed actions. We use benchmark-defined sparse success rewards 𝑟 𝑡 (0/1, terminal for long-horizon tasks). A critic pair (𝑄 𝜙 , 𝑉 𝜙 ) is trained via temporal-difference regression and expectile value fitting: 
+
+𝐿 𝑄 (𝜙 ) = E
+
+h 𝑄 𝜙 (𝑠 𝑡 , ˜𝑎 𝑡 ) − ( 𝑟 𝑡 + 𝛾𝑉 𝜙 (𝑠 𝑡 +1)) 2i
+
+,𝐿 𝑉 (𝜙 ) = E𝜌 𝜏 𝑒 
+
+ 𝐴 𝜙 (𝑠 𝑡 , ˜𝑎 𝑡 ) 𝐴 𝜙 (𝑠 𝑡 , ˜𝑎 𝑡 )2 ,𝐴 𝜙 (𝑠 𝑡 , ˜𝑎 𝑡 ) = 𝑄 𝜙 (𝑠 𝑡 , ˜𝑎 𝑡 ) − 𝑉 𝜙 (𝑠 𝑡 ).
+
+(12) where 𝜌 𝜏 𝑒 (𝑢 ) = |𝜏 𝑒 − 1{𝑢 < 0}| defines the asymmetric expectile weight. The resulting advantage informs a clipped exponential update weight: 
+
+𝑤 (𝑠 𝑡 , ˜𝑎 𝑡 ) = clip  exp  max (0, 𝐴 𝜙 (𝑠 𝑡 , ˜𝑎 𝑡 ))/ 𝜏  , 1, 𝑤 max 
+
+ ,
+
+(13) where 𝜏 is the temperature. Positive-advantage actions are amplified, while suboptimal ones are downweighted. The chunked policy is then updated via: 
+
+𝐿 AWAC (𝜃 ) = − E
+
+∑︁ 𝑡 ∈chunk (𝑘 )
+
+𝑤 (𝑠 𝑡 , ˜𝑎 𝑡 ) log 𝜋 𝜃 ( ˜𝑎 𝑡 | 𝑠 𝑡 )
+
+
+
+. (14) To maintain temporal consistency, we retain the same regularization used in imitation. Specifically, we apply total variation and curvature penalties, along with a boundary alignment term: 
+
+𝐿 cont +bdry (𝜃 ) = 𝜆 TV ∑︁   
+
+> 𝑡 ∈chunk (𝑘 )
+
+𝑎 (𝑘 ) 
+
+> 𝑡
+
+− 𝑎 (𝑘 )   
+
+> 𝑡 −11
+
+(15) 
+
++ 𝜆 𝐷 2∑︁   
+
+> 𝑡 ∈chunk (𝑘 )
+
+𝑎 (𝑘 ) 
+
+> 𝑡
+
+− 2𝑎 (𝑘 )  
+
+> 𝑡 −1
+
++ 𝑎 (𝑘 ) 
+
+> 𝑡 −2
+> 22
+
++ 𝛼 
+
+> 𝑂
+
+∑︁ 
+
+> 𝑡 =1
+
+𝑎 (𝑘 ) 
+
+> 𝑡
+
+− sg 
+
+
+
+𝑎 (𝑘 −1)
+
+> 𝑡 +𝐿 −𝑂
+
+ 22 .
+
+where sg denotes stop-gradient to avoid cyclic dependencies across chunks. These losses operate on predicted actions 
+
+𝑎 (𝑘 ) , while the critic and advantage are evaluated on exe-cuted actions ˜𝑎 𝑡 . The final training objective integrates all components: 
+
+𝐿 total (𝜃 ) = 𝐿 AWAC (𝜃 ) + 𝐿 cont +bdry (𝜃 )+ 𝛽 E𝑠 
+
+𝐷 KL 
+
+ 𝜋 𝜃 (·| 𝑠 ) ∥ 𝜋 𝜃 old (·| 𝑠 ) 
+
+− 𝜆 𝐻 E𝑠 [H ( 𝜋 𝜃 (·| 𝑠 ))] , (16) where the KL regularizer and entropy bonus stabilize fine-tuning. This reinforcement stage enables reward-driven im-provements without sacrificing temporal smoothness or struc-tural coherence across chunk boundaries. 
+
+IV. Experiment 
+
+A. Dataset and Evaluation Metric 
+
+Dataset. We evaluate three instruction-conditioned settings: the standard CALVIN benchmark [16], the long-horizon 
+
+LIBERO-Long benchmark [17], and a real-world dataset collected using a 6-DoF collaborative arm [18]. The real-world setting includes two compositional manipulation tasks: (1) Cloth Strip Grasping , which requires sequentially ex-tracting a single strip from a cluttered stack, demanding fine-grained visual discrimination and consistent motion to avoid entanglement; and (2) Block Insertion , which involves picking a block from a randomized location and inserting it into a tight fixture, requiring contact-aware control and smooth alignment. Both tasks are instruction-driven and span nontrivial temporal dependencies. 
+
+Evaluation Metrics. We assess task success and action structure. On CALVIN, we report the average episode length (Avg. Len) for 5-step tasks; on LIBERO-Long, we report the official long-horizon success rate (Long SR). Action smooth-ness is measured by first-, second-, and third-order mean squared differences: MSD-Δ𝑎 = 1
+
+> 𝑇
+
+Í𝑡 ∥𝑎 𝑡 − 𝑎 𝑡 −1 ∥2, MSD-
+
+Δ2𝑎 = 1
+
+> 𝑇
+
+Í𝑡 ∥𝑎 𝑡 −2𝑎 𝑡 −1 +𝑎 𝑡 −2 ∥2, and MSD-Δ3𝑎 = 1
+
+> 𝑇
+
+Í𝑡 ∥𝑎 𝑡 −
+
+3𝑎 𝑡 −1 + 3𝑎 𝑡 −2 − 𝑎 𝑡 −3 ∥2, capturing velocity, acceleration, and jerk. Seam consistency is evaluated via Bjump , the mean discrepancy in the overlap region B, i.e., 1
+
+> | B |
+
+Í𝑏 ∈ B ∥𝑎 (𝑘 ) 
+
+> 𝑏
+
+−
+
+𝑎 (𝑘 −1) 
+
+> 𝑏
+
+∥, and Bratio , its normalization by 1
+
+> 𝑇
+
+Í𝑡 ∥𝑎 𝑡 ∥. Spec-tral artifacts are measured by high-frequency energy ra-tio HF_ratio = Í𝜔 ∈Ωhigh |F ( 𝑎 )( 𝜔 )| 2/Í𝜔 |F ( 𝑎 )( 𝜔 )| 2, with 
+
+F ( 𝑎 ) the Fourier transform. Finally, total variation TV-L1 =
+
+> 1
+> 𝑇
+
+Í𝑡 ∥𝑎 𝑡 − 𝑎 𝑡 −1 ∥1 captures local shifts missed by MSD. 
+
+B. Main Results 
+
+Implementation Details. Training used four NVIDIA A800s per job (over 32 GPUs across all runs); inference used one A800 in FP16. ChunkFlow adds no inference-time network: deterministic blending is parameter-free and requires no extra policy forward pass, while seam/continuity losses and the AWAC critic are used only during training. Thus, deployment remains a single policy despite the added training cost. To compare controllers with different rollout rates and chunk sizes, we report the Average Reasoning Latency (ARL) , the amortized cost per executed action: ARL =  
+
+> Í𝐾 𝑐 =1𝑇 𝑐
+> | A |
+
+, where |A| = Í𝐾 𝑐 =1 |a𝑐 |. For chunked rollout, |a1 | = 𝐿 and |a𝑐 | =
+
+𝐿 − 𝑂 for 𝑐 ≥ 2.
+
+Comparisons. We evaluate ChunkFlow against represen-tative controllers on CALVIN ABC–D, including classic BC/RL, diffusion-based, and autoregressive VLA models. Table I reports task success and smoothness metrics across temporal, spectral, and boundary dimensions. Classic meth-ods (e.g., HULC [33], SPIL [34]) lack structural modeling, resulting in high-frequency jitter (HF_ratio ≥ 1.0), severe boundary artifacts (Bratio > 2.0), and poor success rates (≤1.7). Diffusion models such as FLOWER [35] and 3D Diffuser Actor [36] improve global coherence but exhibit large high-order curvature (e.g., MSD-Δ3𝑎 = 1.191), reflect-ing aliasing and seam inconsistency. VLA baselines (e.g., GR-1 [37], Seer [38]) benefit from stronger temporal memory and yield lower second-order variation (MSD-Δ2𝑎 ≈ 0.16–0.24); yet, they still suffer from unregularized seams, leading to boundary misalignment and unstable long-horizon execution (e.g., Bratio > 2.2). In contrast, ChunkFlow provides a strong smoothness-success trade-off: it achieves competitive task success (4.30), the lowest first-/second-order variation (MSD-Δ𝑎 =0.075, MSD-
+
+Δ2𝑎 =0.154), Bjump (0.209), HF ratio (0.431), and TV-L1 (0.001), while GR-1 and HULC lead on MSD-Δ3𝑎 and Bratio. These gains stem from its chunk-structured pre-diction, overlap-aware blending, and joint regularization of derivatives and seam alignment—enabling smooth, stable, and reward-aligned execution across extended time horizons. 
+
+Cross-Dataset Evaluation on Long-Horizon Tasks. We evaluate generalization on LIBERO [17], which empha-sizes long-horizon task compositionality and layout shifts. As shown in Table II, ChunkFlow achieves 93.4% suc-cess—slightly outperforming PI0.5 [13] (92.6%)—and out-performs OpenVLA (53.7%), VPP (38.9%), and CLIP-RT (83.8%). While PI0.5-RTC [6] applies inference-time chunk blending and reduces boundary artifacts (Bjump: 0.167 →0.115, HF_ratio: 0.494 →0.342), its success drops sharply to 83.7% . This supports our hypothesis: inference-only smoothing cannot resolve misaligned seam predictions, causing bias accumulation and degraded rollout stability. By contrast, ChunkFlow enforces continuity during train-ing and directly optimizes boundary alignment across paired chunks. It achieves the lowest motion deviation (MSD-
+
+Δ𝑎 = 0.042 , Δ2𝑎 = 0.197 , Δ3𝑎 = 0.235 ), minimal dis-continuities (Bjump = 0.082 ), and the cleanest temporal spectrum (HF_ratio = 0.135 , TV-L1 = 0.011 ). Its average action inference latency is also the lowest ( 4.43 ms ) due to amortized inference over fixed-step overlapping chunks (𝑆 = 𝐿 −𝑂 ), which reduces sampling redundancy and stabi-lizes per-action rollout. In contrast, RTC incurs extra plan-ning costs from heuristic smoothing and late-stage proposal reweighting, resulting in a higher ARL (18.47 ms). These results demonstrate that seam-aware training , not inference heuristics, is critical for ensuring temporal smoothness and efficient execution under long-horizon tasks. 0 1 2 3 4 5   
+
+> Frequency (Hz), Nyquist=5.00
+> −7.5
+> −5.0
+> −2.5
+> 0.0
+> 2.5
+> log10 PSD of Δa
+> HF energy spectrum of action derivatives
+> O=0 (no overlap)
+> O=2 (default)
+> O=8
+> L=12, O=0
+> L=10, O=0
+> HF ≥ 2.5 Hz
+> 2–4 Hz band
+> 0.0 0.2 0.4 0.6
+> HF ratio ≥ 2.5 Hz
+> O=0 (no overlap)
+> O=2 (default)
+> O=8
+> L=10, O=0
+> L=12, O=0
+> 0.450
+> 0.350
+> 0.312
+> 0.490
+> 0.466
+
+Fig. 3: High-frequency (HF) energy spectrum under varying overlap and chunk length. We plot the log-scaled power spectral density (PSD) of action derivatives to assess smoothness. The high-frequency band (2.5–5.0 Hz) reflects unstable transitions. The default (𝐿 =10 , 𝑂 =8) maintains low HF energy beyond 3 Hz, while no overlap (𝑂 =0) and long chunks (𝐿 =12 ) induce sharp spikes and spectral bursts. Shaded areas denote standard error across episodes and dimensions. 
+
+C. Ablation Study 
+
+Hyperparameter Sensitivity . We validate our theoretical predictions on continuity-consistent execution by probing architectural and regularization factors. Seam errors grow with stride (𝐿 −𝑂 ), and increasing overlap improves pre-blending agreement and suppresses aliasing: 𝑂 =0 yields high-frequency artifacts (HF_ratio = 0.500; Bjump = 0.230), while moderate 𝑂 =4 minimizes the spectrum (HF_ratio = 0.371), and executable 𝑂 =8 balances spectral stability (MSD-Δ2𝑎 = 0.154) with the best seam coherence (Bjump = 0.209). Chunk horizon also matches expectations: too-short 𝐿 =8 removes temporal context, harming accelera-tion smoothness (MSD-Δ2𝑎 = 0.205), while too-long 𝐿 =12 
+
+amplifies extrapolation error, producing bursts (HF_ratio = 0.812). Fig. 3 confirms that only (𝐿 =10 , 𝑂 =8) sup-presses energy beyond 3 Hz. Regularizers exhibit predictable failure modes: over-strong curvature ( 𝜆 𝐷 2=0.007 ) induces phase lag and seam drift (MSD-Δ𝑎 = 0.121; Bjump =0.214), excessive boundary loss increases curvature (MSD-
+
+Δ2𝑎 = 0.209; Bjump = 0.221), and a large sparsity prior (3×10 −4) harms smoothness without spectral gain. Raising TV ( 𝜆 TV : 0 .005 → 0.015 ) suppresses natural variation, degrading both Δ𝑎 (0.075 →0.091) and Δ2𝑎 (0.154 →0.170). These trends support our core insight: moderate overlap and chunk length reduce stride-induced aliasing, while over-regularization destabilizes dynamics through curvature am-plification and delayed transitions. 
+
+Inference-Time Stability and Smoothness Enforcement. 
+
+To assess deployment robustness, we examine test-time strategies for enforcing temporal consistency in chunked rollouts. We first evaluate naive overlap execution without re-training (Table IV, A1): small overlap ( 𝑂 =2) slightly reduces curvature (MSD-Δ2𝑎 : 0.381 → 0.360), but larger values (𝑂 =4/8) degrade both smoothness and success due to re-dundant predictions and conflicts across chunks, confirming that inference-only overlap suffers from gradient ambiguity under perceptual drift. We next study lightweight smoothing heuristics (A2): blending ( 𝑂 =2), EMA filtering, and warm-started chunk latents. Each improves specific metrics (e.g., TABLE I: Main results on CALVIN ABC-D benchmark. We compare task success, multi-level smoothness (temporal, spectral, boundary), and global variation. Lower is better except Success; bold = column best. 
+
+Method Success (Avg. Len.) ↑ MSD-Δ𝑎 ↓ MSD-Δ2 𝑎 ↓ MSD-Δ3 𝑎 ↓ Bjump ↓ Bratio ↓ HF_ratio ↓ TV-L1 ↓
+
+Classic BC / RL Baselines (Non-VLM) 
+
+HULC [33] 0.67 0.117 0.296 0.956 0.241 1.094 0.575 0.056 SPIL [34] 1.71 0.107 0.228 0.703 0.253 2.231 1.000 0.028 
+
+Generative Diffusion / Flow Policies 
+
+3D Diffuser Actor [36] 3.27 0.259 0.574 1.790 0.212 2.676 0.455 0.013 VPP [39] 4.29 0.096 0.181 0.535 0.237 1.646 1.000 0.035 FLOWER [35] 4.54 0.161 0.382 1.191 0.443 2.367 0.460 0.044 
+
+VLA Policies (Autoregressive / Transformer-based) 
+
+GR-1 [37] 3.06 0.082 0.165 0.496 0.969 2.224 0.999 0.006 Seer [38] 3.50 0.091 0.186 0.556 0.297 1.957 0.442 0.007 UniVLA [22] 3.80 0.118 0.238 0.714 0.251 4.109 0.488 0.009 
+
+ChunkFlow (Ours) 4.30 0.075 0.154 0.512 0.209 1.471 0.431 0.001 
+
+TABLE II: Cross-Dataset Generalization on LIBERO benchmark. We evaluate long-horizon manipulation on LIBERO to assess generalization beyond CALVIN. ChunkFlow achieves strong success while suppressing discontinuities and high-frequency jitter. We also report ARL (ms) , the average action inference latency. Lower is better for all smoothness and latency metrics. 
+
+Method Long SR (%) ↑ MSD-Δ𝑎 ↓ MSD-Δ2 𝑎 ↓ MSD-Δ3 𝑎 ↓ Bjump ↓ Bratio ↓ HF_ratio ↓ TV-L1 ↓ ARL (ms) ↓
+
+OpenVLA [3] 53.7 0.083 0.229 0.743 0.166 1.145 0.862 0.031 219.43 VPP [39] 38.9 0.133 0.255 0.732 0.738 5.702 0.394 0.029 13.91 PI0.5 [13] 92.6 0.095 0.249 0.812 0.167 1.401 0.494 0.023 9.04 PI0.5-RTC [6] 83.7 0.089 0.240 0.729 0.115 0.850 0.342 0.018 18.47 CLIP-RT [40] 83.8 0.135 0.302 0.916 0.179 1.350 0.999 0.026 6.86 Seer [38] 87.7 0.141 0.279 0.639 0.195 1.602 0.337 0.022 14.25 
+
+ChunkFlow (Ours) 93.4 0.042 0.197 0.235 0.082 0.082 0.135 0.011 4.43 
+
+TABLE III: One-Factor Hyperparameter Sensitivity. We vary each factor individually while fixing others to assess robustness. Moderate values yield the best balance between task success, smoothness, and seam consistency. Lower is better except for Success.                                                                                                                                            
+
+> Setting (1-factor) Success ↑MSD-Δ𝑎 ↓MSD-Δ2𝑎 ↓Bjump ↓HF_ratio ↓
+> First-order regularizer 𝜆 TV (fix 𝐿, 𝑂, 𝜆 𝐷 2, 𝜆 𝐵 , 𝜆 prior )
+> 𝜆 TV =0.005 (default) 4.30 0.075 0.154 0.209 0.431
+> 𝜆 TV =0.008 4.29 0.083 0.162 0.214 0.433
+> 𝜆 TV =0.015 4.26 0.091 0.170 0.218 0.437
+> Second-order regularizer 𝜆 𝐷 2(fix 𝐿, 𝑂, 𝜆 𝐵 , 𝜆 prior )
+> 𝜆 𝐷 2=0.003 4.26 0.100 0.170 0.210 0.455
+> 𝜆 𝐷 2=0.005 (default) 4.30 0.075 0.154 0.209 0.431
+> 𝜆 𝐷 2=0.007 4.25 0.121 0.206 0.214 0.472
+> Boundary loss 𝜆 𝐵 (fix 𝐿, 𝑂, 𝜆 𝐷 2, 𝜆 prior )
+> 𝜆 𝐵 =0.02 4.27 0.096 0.165 0.222 0.437
+> 𝜆 𝐵 =0.03 (default) 4.30 0.075 0.154 0.209 0.431
+> 𝜆 𝐵 =0.04 4.23 0.122 0.209 0.221 0.432
+> Sparsity prior 𝜆 prior (fix 𝐿, 𝑂, 𝜆 𝐷 2, 𝜆 𝐵 )
+> 1×10 −44.26 0.097 0.168 0.217 0.437
+> 2×10 −4(default) 4.30 0.075 0.154 0.209 0.431
+> 3×10 −44.24 0.117 0.202 0.213 0.433
+> Overlap ratio 𝑂 /𝐿 (retrain; fix 𝐿, 𝜆 𝐷 2, 𝜆 𝐵 , 𝜆 prior )
+> 𝑂 =04.20 0.118 0.200 0.230 0.500
+> 𝑂 =24.10 0.105 0.175 0.450 0.470
+> 𝑂 =44.20 0.108 0.179 0.388 0.371
+> 𝑂 =8(default) 4.30 0.075 0.154 0.209 0.431
+> Chunk length 𝐿 (retrain; fix 𝑂, 𝜆 𝐷 2, 𝜆 𝐵 , 𝜆 prior )
+> 𝐿 =84.30 0.120 0.205 0.205 0.450
+> 𝐿 =10 (default) 4.30 0.075 0.154 0.209 0.431
+> 𝐿 =12 4.20 0.102 0.192 0.240 0.812
+
+warm-start lowers MSD-Δ2𝑎 to 0.163), but their combina-tion yields the best stability (HF_ratio = 0.431, Bjump = 0.209, Success = 4.30), even when trained with 𝑂 =0. We further simulate latency via ±100 ms control delay (B), ob-serving negligible degradation—indicating strong temporal generalization. Finally, classical filters (Table V) like Sav-itzky–Golay and Butterworth reduce high-order jitter (e.g., TABLE IV: Inference-time stability with overlap smooth-ing and control jitter. We ablate naive overlap blending (A1), smoothing strategies (A2), and control delay robustness (B). Lower is better except Success.                                                                     
+
+> Setting Success ↑MSD-Δ2𝑎 ↓HF_ratio ↓Bjump ↓
+> A1. Naive Chunk Overlap (no retraining)
+> Overlap ( 𝑂 =0)4.29 0.381 1.000 0.437 Overlap ( 𝑂 =2)4.10 0.360 0.950 0.410 Overlap ( 𝑂 =4)3.95 0.390 0.940 0.385 Overlap ( 𝑂 =8)3.60 0.440 0.970 0.420
+> A2. Lightweight Smoothing (no retraining)
+> No smoothing 4.29 0.273 0.445 0.493 + Blend ( 𝑂 =2)4.21 0.317 0.501 0.299 + EMA ( 𝛼 =0.1)4.27 0.273 0.441 0.453 + EMA ( 𝛼 =0.3)4.27 0.283 0.438 0.376 + Warm start 4.31 0.163 0.329 0.428 Blend + EMA ( 𝛼 =0.3) + Warm start 4.30 0.154 0.431 0.209
+> B. Delay Robustness (jitter ±𝑗 ms)
+> ±0 ms 4.31 0.222 0.392 0.202
+> ±10 ms 4.31 0.220 0.392 0.199
+> ±50 ms 4.30 0.222 0.390 0.203
+> ±100 ms 4.30 0.221 0.391 0.203
+
+MSD-Δ3𝑎 = 0.002 ); however, they fail to suppress seam artifacts (Bjump ≥ 0.228) and spectral aliasing (HF_ratio 
+
+≥ 0.69). These results highlight that post-hoc smoothing cannot resolve structural discontinuities. In contrast, Chunk-Flow enforces global coherence via derivative-aligned chunk execution learned through training-time regularization. 
+
+History Length Sensitivity. We evaluate how varying temporal context (𝑝 ) impacts prediction stability. With-out history (𝑝 =0), the policy struggles with accelera-tion smoothness (MSD-Δ2𝑎 =0.223 ), third-order coherence (MSD-Δ3𝑎 =0.582 ), and boundary stability (Bjump = 0.241 ), due to reliance on instantaneous observations. Short his-tories ( 𝑝 =2) yield clear improvements (MSD-Δ2𝑎 =0.207 ,TABLE V: Comparison of post-hoc filters versus training-time smoothness integration. While post-processing (e.g., Savitzky–Golay, Butterworth) improves local smoothness, it fails to suppress high-frequency noise and seam discon-tinuities. ChunkFlow enforces smoothness during training, achieving superior temporal and spectral coherence. Lower is better.                             
+
+> Filter MSD-Δ3𝑎 ↓HF_ratio ↓Bjump ↓Notes Base (raw) 0.839 1.000 0.493 No smoothing Savitzky–Golay 0.045 0.78 0.256 Post-hoc Butterworth (low-pass) 0.002 0.69 0.228 Post-hoc Cubic spline 0.839 0.97 0.493 Offline fitting
+> ChunkFlow (ours) 0.512 0.431 0.209 Integrated during training
+
+TABLE VI: Effect of history length 𝑝 . Increasing temporal context initially improves smoothness and boundary stability, but excessive history introduces error accumulation. Lower is better except Success.                                 
+
+> 𝑝 Success ↑MSD-Δ2𝑎 ↓MSD-Δ3𝑎 ↓HF_ratio ↓Bjump ↓
+> 04.29 0.223 0.582 0.462 0.241 24.27 0.207 0.545 0.431 0.220
+> 44.30 0.154 0.512 0.431 0.209
+> 84.13 0.203 0.538 0.450 0.224
+
+Bjump = 0.220 ), while moderate history (𝑝 =4) achieves optimal results across all axes (e.g., HF_ratio = 0.431 ,success = 4.30 ), enabling consistent chunk transitions. How-ever, longer context ( 𝑝 =8) degrades performance (MSD-
+
+Δ2𝑎 =0.203 , Bjump = 0.224 ) as outdated signals introduce er-ror accumulation. These trends confirm that a limited, recent history improves alignment and smoothness, but excessive memory leads to temporal drift. 
+
+Policy Adaptation with Safety Constraints. To enhance long-horizon performance beyond supervised pretraining, we apply reinforcement fine-tuning using AWAC, with gradient clipping and imitation anchoring. As shown in Table VII, the supervised-only model produces unstable execution with strong high-frequency jitter (HF_ratio = 1.000), sharp cur-vature (MSD-Δ3𝑎 = 0.535), and seam misalignment (Bjump = 0.237). Adding unconstrained RL (AWAC w/o continuity) reduces spectral noise ( ↓28%) but fails to correct boundary inconsistencies. In contrast, our Safe RL-FT achieves coher-ent adaptation: MSD-Δ3𝑎 drops to 0.512, HF_ratio to 0.431, and Bjump to 0.209, recovering full task success (4.30). These results confirm that continuity-aware regularization is critical for reward-driven updates to avoid seam drift and maintain rollout smoothness. 
+
+Long-Horizon Stability. We assess ChunkFlow ’s robust-ness in long-horizon rollouts, where autoregressive policies often accumulate aliasing and drift. Fig. 4 shows the power spectral density (PSD) of action derivatives, highlighting that ChunkFlow significantly suppresses high-frequency components beyond 2.5 Hz—unlike baselines lacking seam-aware blending or curvature regularization, which exhibit spectral spikes due to discontinuities. This confirms that our structural constraints effectively mitigate jitter over extended horizons. To evaluate the trade-off between smoothness and effectiveness, Fig. 5 plots normalized task Success versus Smoothness ( 1−HF _ratio ). ChunkFlow achieves the best TABLE VII: Safe RL fine-tuning. We ablate reinforcement learning strategies under different update constraints. Chunk-Flow benefits from clipped gradients and BC regularization, achieving smoother and more stable rollouts. Lower is better except Success.                           
+
+> Method / Variant Success ↑MSD-Δ3𝑎 ↓HF_ratio ↓Bjump ↓
+> Supervised only (no RL) 4.10 0.535 1.000 0.237 AWAC (w/o continuity) 4.17 0.530 0.720 0.225
+> Safe RL-FT (default) 4.30 0.512 0.431 0.209 012345
+> Frequency (Hz)
+> −15.0
+> −12.5
+> −10.0
+> −7.5
+> −5.0
+> −2.5
+> 0.0
+> 2.5
+> log₁₀ Power Spectral Density
+> Trajectory Smoothness Spectrum in Long-Horizon Tasks
+> ChunkFlow
+> Baseline
+> No Overlap
+> High-freq region
+
+Fig. 4: Trajectory smoothness spectrum. ChunkFlow sup-presses high-frequency spectral energy ( >2.5 Hz), indicating stable action derivatives in long-horizon tasks. Baselines without structural regularization exhibit aliasing and jitter, visible as sharp PSD peaks. balance (0.86, 0.57), outperforming post-hoc filters like BEW (0.82, 0.66) and long-history variants such as Hist-8 (0.83, 0.45). These results show that long-horizon stability cannot be achieved via denoising alone; structural continuity is essential. ChunkFlow ’s overlap blending and trajectory-aware training yield executions that remain stable over time .
+
+V. CONCLUSIONS 
+
+We introduced ChunkFlow, a continuity-consistent frame-work for chunked robotic policy execution. Rather than stacking isolated techniques, ChunkFlow realizes a unified execution model in which overlap-aware blending, seam-regularized learning, and advantage-weighted adaptation are jointly optimized to correct boundary discontinuities in chunked VLA and generative controllers. Experiments on CALVIN, LIBERO, and real-robot benchmarks show im-proved smoothness, temporal stability, and long-horizon suc-cess while preserving the low latency of chunked inference. These results support execution-indexed chunk alignment in simulation and initial hardware tests, while broader real-world robustness remains future work. 
+
+ACKNOWLEDGMENT 
+
+This work was supported by the Natural Science Founda-tion of China under Grant NSFC 62573343 and 62088102, National Basic Strengthen Research Program of ReRAM under Grant2022-00-03, Fundamental Research Funds for the Central Universities xzy012024066,and by the Open-End Fund of Beijing Institute of Control Engineering under GrantOBCandETL-2024-04. NoSm          
+
+> BEW
+> D2-Reg
+> ChunkFlow Hist-0
+> Hist-8
+> 0.6
+> 0.8
+> 1.0
+> Normalized metric
+> 0.87 0.86 0.85 0.86 0.87 0.83
+> 0.54 0.57
+> 0.83 0.85
+> 0.54 0.55
+
+Long-Horizon Stability: Success vs. Smoothness  
+
+> Success ↑ Smoothness score ↑
+
+Fig. 5: Trade-off between trajectory smoothness and task performance. Bars report normalized Success and Smoothness ( 1−HF _ratio ) across key variants: NoSm (no smoothing), BEW (Blend+EMA+Warm), D2-Reg (with D2 loss), ChunkFlow (ours), Hist-0, and Hist-8. ChunkFlow 
+
+lies on the Pareto frontier, balancing high success with smooth execution. 
+
+References 
+
+[1] Binyuan Jiang, Exia Xie, Seungjae Ryan Lee, et al. Vima: Gen-eral robot manipulation with multimodal prompts. arXiv preprint arXiv:2210.03094 , 2023. [2] Samuel Cheang et al. Gr2: A generative video-language-action model for instruction-following robots. arXiv preprint arXiv:2402.09129 ,2024. [3] Moo Jin Kim, Karl Pertsch, Siddharth Karamcheti, Ted Xiao, Ashwin Balakrishna, Suraj Nair, Rafael Rafailov, Ethan Foster, Grace Lam, Pannag Sanketi, et al. Openvla: An open-source vision-language-action model. arXiv:2406.09246 , 2024. [4] Octo Model Team, Dibya Ghosh, Homer Walke, Karl Pertsch, Kevin Black, Oier Mees, Sudeep Dasari, Joey Hejna, et al. Octo: An open-source generalist robot policy. arXiv:2405.12213 , 2024. [5] Zhiyuan Huang, Tianpei Li, Tao Xiao, Jacky Liang, and Jesse Thoma-son. Robotfp: Scaling first-person vision-language-action models for embodied robotics. In Neural Information Processing Systems (NeurIPS) , 2024. [6] Kevin Black, Manuel Y Galliker, and Sergey Levine. Real-time execution of action chunking flow policies. arXiv preprint arXiv:2506.07339 , 2025. [7] Bowen Zheng et al. Tracevla: Training-free compositional instruc-tion execution via vision-language-action tracing. arXiv preprint arXiv:2403.06318 , 2024. [8] Linxi Chi and Hang Wang. Universal diffusion policies for goal-conditioned visuomotor control. arXiv preprint arXiv:2403.00701 ,2024. [9] Jonathan Black et al. Pi-gen: Flow matching for language-conditioned policy generation. arXiv preprint arXiv:2402.11757 , 2024. [10] Youngwoon Lee et al. Behavior2vec: Behavior token pretraining for decision making. In CVPR , 2024. [11] Ozan Mete et al. Quest: Self-supervised skill abstractions for imitation learning. arXiv preprint arXiv:2403.04624 , 2024. [12] Bowen Liu et al. Robotoken: Tokenizing robot trajectories with behavior priors. arXiv preprint arXiv:2403.06055 , 2024. [13] Kevin Black, Noah Brown, James Darpinian, Karan Dhabalia, Danny Driess, Adnan Esmail, Michael Robert Equi, Chelsea Finn, Niccolo Fusai, Manuel Y Galliker, et al. 𝜋 0.5: a vision-language-action model with open-world generalization. In 9th Annual Conference on Robot Learning , 2025. [14] Ashvin Nair, Abhishek Gupta, Murtaza Dalal, and Sergey Levine. AWAC: Accelerating online reinforcement learning with offline datasets. arXiv:2006.09359 , 2020. [15] Ilya Kostrikov, Ashvin Nair, and Sergey Levine. Offline reinforcement learning with implicit q-learning. In ICLR , 2022. [16] Oier Mees, Ludovic Hoyet, Anthony Brohan, and Wolfram Burgard. Calvin: A benchmark for language-conditioned policy learning for long-horizon robot manipulation tasks. In Conference on Robot Learning (CoRL) , 2022. [17] Yuchen Zhu, Fei Xia Li, Abhishek Gupta, and Chelsea Finn. Libero: Benchmarking knowledge transfer in language-conditioned robot ma-nipulation. In Conference on Robot Learning (CoRL) , 2023. [18] Cytoderm AI Lab. Cytoderm robotic platform and dataset. https: //www.cytoderm.ai/ , 2025. [19] Karl Pertsch et al. Fast planning with byte-pair encoded action sequences. In International Conference on Learning Representations (ICLR) , 2025. [20] Wentao Zhao et al. Aloha: Language conditioned imitation with latent actions. In Conference on Robot Learning (CoRL) , 2024. [21] Max Braun et al. Riemannian flow matching for multi-modal skill learning. arXiv preprint arXiv:2402.13978 , 2024. [22] Sudeep Belkhale et al. Minivla: A scalable vision-language-action model for robotic manipulation. In International Conference on Robotics and Automation (ICRA) , 2024. [23] Linxi Shao, Jiajun Wu, and C. Lawrence Zitnick. Genie: Generative interactive environments. arXiv preprint arXiv:2402.15395 , 2024. [24] Kaiwen Zhou, Yuchen Wang, Jiahui Xu, and Shiguang Li. Dreamwalker: World-model predictive control for long-horizon robot navigation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2025. [25] Russell Mendonca, Shubham Gupta, and Chelsea Finn. Adapose: Adaptive policy learning through structured pose abstractions. In 
+
+Proceedings of Robotics: Science and Systems (RSS) , 2024. [26] Alexander Khazatsky et al. Droid: A large-scale in-the-wild robot manipulation dataset. arXiv preprint arXiv:2401.06083 , 2024. [27] Ethan Walke et al. Bridgedata v2: A multi-scene multi-task benchmark for robot learning. arXiv preprint arXiv:2310.11665 , 2023. [28] Jianren Cheng et al. Navila: Pretraining a navigation vision-language-action model via video demonstrations. arXiv preprint arXiv:2402.08698 , 2024. [29] Seung Jang, Yifan Li, and Jian Luo. Tempodp: Temporally consistent diffusion policies for robotic manipulation. In Advances in Neural Information Processing Systems , 2024. [30] Ruohan Wang and Mustafa Mukadam. Smooth policy optimization for continuous control. In International Conference on Learning Representations , 2024. [31] Rishabh Agarwal and Huazhe Xu. Consistent policy learning for long-horizon tasks. In Conference on Robot Learning , 2024. [32] Ye Yuan and Abhinav Gupta. Hierarchical behavior regularization for long-horizon imitation. In Proceedings of the IEEE/CVF International Conference on Computer Vision , 2023. [33] Suraj Nair, Anthony Brohan, Ted Xiao, Tianhe Yu, Jasmine Nguyen, Brian Ichter, Sergey Levine, and Chelsea Finn. What matters in language conditioned robotic imitation learning over unstructured data. In Advances in Neural Information Processing Systems (NeurIPS) ,volume 36, pages 52038–52063, 2023. [34] Hongkuan Zhou, Zhenshan Bing, Xiangtong Yao, Xiaojie Su, Chen-guang Yang, Kai Huang, and Alois Knoll. Language-conditioned imitation learning with base skill priors under unstructured data. IEEE Robotics and Automation Letters , page 1–8, 2024. [35] Anthony Brohan, Noah Brown, Brian Ichter, Yevgen Chebotar, Sergey Levine, Chelsea Finn, et al. Flower: Democratizing generalist robot policies with efficient vision-language-action flow policies. arXiv preprint arXiv:2412.08991 , 2024. [36] Zhizhuo Zhou, Wei-Chiu Ma, Animesh Garg, and Yunzhu Li. 3d diffuser actor: Policy diffusion with 3d scene representations. In Pro-ceedings of the International Conference on Learning Representations (ICLR) , 2024. [37] Hongtao Wu, Ya Jing, Chilam Cheang, Guangzeng Chen, Jiafeng Xu, Xinghang Li, Minghuan Liu, Hang Li, and Tao Kong. Unleashing large-scale video generative pre-training for visual robot manipulation. 
+
+arXiv preprint arXiv:2312.13139 , 2023. [38] Yang Tian, Sizhe Yang, Jia Zeng, Ping Wang, Dahua Lin, Hao Dong, and Jiangmiao Pang. Predictive inverse dynamics models are scalable learners for robotic manipulation. arXiv preprint arXiv:2412.15109 ,2024. [39] Yucheng Hu, Yanjiang Guo, Pengchao Wang, Xiaoyu Chen, Yen-Jen Wang, Jianke Zhang, Koushil Sreenath, Chaochao Lu, and Jianyu Chen. Video prediction policy: A generalist robot policy with predictive visual representations. arXiv:2412.14803 , 2024. ICML 2025 Spotlight. [40] Gi-Cheon Kang, Junghyun Kim, Kyuhwan Shim, Jun Ki Lee, and Byoung-Tak Zhang. Clip-rt: Learning language-conditioned robotic policies from natural language supervision. arXiv preprint arXiv:2411.00508 , 2024.

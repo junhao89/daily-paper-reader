@@ -1,0 +1,297 @@
+Title: DRIFT: Drift and Aggregation for Motion Planning
+
+URL Source: https://arxiv.org/pdf/2607.14507v1
+
+Published Time: Fri, 17 Jul 2026 00:46:29 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# DRIFT: Drift and Aggregation for Motion Planning 
+
+Yining Xing 1, Zhiyuan Liu 1, Zehong Ke 1, Wenhao Yu 2,∗, and Jianqiang Wang 1
+
+Abstract — End-to-end trajectory planners need to represent multiple plausible driving behaviors while producing a single executable trajectory under real-time constraints. Proposal-based approaches address this ambiguity by generating multiple candidates, but converting the proposal set into a final plan remains a key design problem. We present DRIFT, a fixed-depth planner that combines one-step drifting in a compact trajectory latent space with scene-aware proposal aggregation. Conditioned on features from a pretrained visual encoder, the DRIFT Decoder generates 48 proposal features in a single batched pass, with 32 samples at α = 0 .5 and 16 samples at α =0.9. A lightweight Aggregation Head integrates these features with scene, navigation, and ego-state information and directly predicts the final trajectory without requiring trajectory-level quality labels for aggregation. Its output is trained with expert-trajectory imitation and a map-derived boundary regularizer that penalizes waypoints outside the drivable polygon and inside waypoints near its boundary. On NAVSIM navtest, DRIFT achieves 89.6 PDMS and 90.4 EPDMS, with strong drivable-area compliance and ego progress among the methods compared. The proposal-generation and aggregation module runs in 10.82 ms on an NVIDIA RTX 4090, while full-model inference including the visual backbone takes 66.43 ms. These results show that one-step latent proposal generation and direct aggregation provide an efficient design for multi-hypothesis motion planning. 
+
+Index Terms — Motion planning, trajectory generation, end-to-end autonomous driving. 
+
+I. INTRODUCTION End-to-end (E2E) autonomous driving systems [1], [2] learn to predict ego motion directly from sensor observations and navigation context. Compared with traditional modular pipelines [3], [4], this formulation reduces reliance on hand-designed interfaces between perception and planning and allows scene representations to be optimized for the planning objective. Nevertheless, a unified model does not make future driving behavior deterministic. At intersections, during lane changes, or when interacting with other road users, the same observed scene may admit several plausible ego maneuvers. An effective planner should therefore preserve multiple motion hypotheses before committing to a single executable trajectory. Representing multiple hypotheses introduces an additional computational challenge, because candidate generation must 
+
+> 1Yining Xing, Zhiyuan Liu, Zehong Ke, and Jianqiang Wang are with the School of Vehicle and Mobility, Tsinghua University, Beijing, China.
+> 2Wenhao Yu is with the State Key Laboratory of Intelligent Green Vehicle and Mobility, Tsinghua University, Beijing, China (Corresponding author, e-mail: eyre530056@gmail.com). This work was supported by National Key R&D Program of China: 2023YFB2504400, National Natural Science Foundation of China grant 52572477, and Independent Research Project of the State Key Laboratory of Intelligent Green Vehicle and Mobility, Tsinghua University (No. ZZ-PY-20250409).
+
+remain compatible with real-time planning. Anchor-based [5] and DETR-style set prediction methods [6] provide efficient candidate generation, but fixed anchors or set queries can limit flexibility and long-horizon coverage. Generative plan-ners based on diffusion [7], [8] or autoregressive decoding [9] offer flexible candidate generation but commonly rely on iterative inference. MeanFuser [10] recently demonstrated a one-step alternative based on MeanFlow and Gaussian mixture noise. DRIFT likewise avoids iterative inference, but performs generative drift in a compact PCA trajectory latent space rather than generating proposals directly in physical trajectory space. Its decoder produces multiple proposal features in a single batched pass. Generating proposals alone does not determine what the vehicle should execute. A planner still has to combine the proposal set with the current scene, route command, and ego state, then output a single trajectory with stable behavior across frames. Learned trajectory scoring provides one so-lution, either by selecting the highest-scoring candidate or by using scores to guide iterative proposal evolution [11], [12]. Another solution is direct reconstruction, as demon-strated by MeanFuser, which integrates its sampled physical trajectories with an Adaptive Reconstruction Module trained from expert demonstrations [10]. DRIFT follows this direct-reconstruction direction with a different proposal interface. It pools latent proposal features before PCA decoding and uses scene, navigation, and ego-state information to predict the final trajectory. Scorer-based and direct-reconstruction designs also differ in how the proposal-to-plan step is supervised. Learned scorers can be trained with trajectory-level quality targets derived from planning metrics or other evaluation objec-tives [12], [13]. Such targets provide explicit guidance for candidate selection or refinement. DRIFT instead trains the Aggregation Head with expert-trajectory imitation and map-derived boundary regularization. Neither objective requires trajectory-quality labels, and no separate scorer is used at inference time. The final trajectory also needs geometric supervision in physical space. Imitation losses align the prediction with the logged expert, but they do not explicitly encode clearance from drivable-area boundaries [14], [15]. We therefore add a map-derived boundary regularizer. Waypoints outside the drivable polygon receive a fixed penalty, and inside way-points are penalized according to their distance from the nearest boundary. The term is used as a local geometric regularizer, not as a formal safety guarantee. We present DRIFT, an end-to-end planner built on a pretrained visual backbone [16]. On NAVSIM navtest [17], arXiv:2607.14507v1 [cs.RO] 16 Jul 2026 DRIFT achieves 89.6 PDMS and 90.4 EPDMS among the methods compared in this work. Its trajectory generation module keeps a fixed-depth computation profile, generates 48 intermediate proposals, aggregates them into one final trajectory, and runs in 10.82 ms on an RTX 4090. Our contributions are summarized below.  
+
+> •
+
+We adapt one-step drifting to a compact trajectory latent space and generate a fixed-size set of scene-conditioned proposals without iterative denoising.  
+
+> •
+
+We develop a scene-aware Aggregation Head that pools latent proposals across drift intensities before physical decoding and is trained without trajectory-quality labels.  
+
+> •
+
+We combine this design with a map-derived bound-ary regularizer and evaluate the integrated planner on NAVSIM navtest, obtaining 89.6 PDMS and 90.4 EPDMS. II. RELATED WORK 
+
+A. End-to-End Autonomous Driving 
+
+End-to-end autonomous driving encompasses several model organizations rather than a single monolithic design. Imitation-based planners learn driving outputs directly from sensor observations, ego state, and navigation context, with performance depending on the chosen representation, su-pervision, and evaluation protocol [3], [4]. TransFuser uses Transformer-based camera and LiDAR fusion to combine ge-ometric and visual evidence for imitation-based driving [18]. TCP instead predicts both a future trajectory and low-level control, allowing the two output branches to provide comple-mentary planning signals [1]. These approaches illustrate that end-to-end learning can retain different internal structures even when the overall system is optimized for driving. Another line of work expands the scope of joint optimiza-tion. UniAD organizes BEV perception, tracking, motion forecasting, and planning within a planning-oriented query framework [2]. Such unification can facilitate information sharing across tasks, but it also makes the interface be-tween perception and planning an important architectural choice. DriveAdapter explicitly studies this coupling and adapts pretrained perception features for planning [14], while DriveTransformer explores a shared Transformer formulation for scalable end-to-end driving [19]. Together, these systems span different choices in sensor fusion, task sharing, module coupling, and the allocation of trainable capacity. Pretrained visual representations provide a complementary way to allocate model capacity. V-JEPA learns video features by predicting representations in latent space rather than reconstructing pixels [16], and Drive-JEPA applies video-JEPA representations to end-to-end driving with multimodal trajectory distillation [13]. DRIFT adopts a representation-first configuration in which a V-JEPA-pretrained ViT encodes the front-view image history while the trainable planning modules concentrate on trajectory proposal generation and scene-aware aggregation. Its focus is therefore not a new sensor-fusion backbone or a fully unified perception and pre-diction stack, but the planner built on top of pretrained scene features. The following subsection discusses the orthogonal problem of generating or refining multiple trajectory hy-potheses and converting them into one executable plan. 
+
+B. Trajectory Proposal Generation and Refinement 
+
+Trajectory planners often need several candidates because a single regressed trajectory can average over ambiguous decisions [5]. Anchor-based methods [5] are efficient, but static anchors can limit behavior coverage outside the train-ing distribution. DETR-style set prediction [6] removes fixed priors through bipartite matching, yet long-horizon coverage remains difficult. Generative planners, including diffusion-based models [7], [8] and autoregressive decoders [9], provide flexible candidate generation but usually require iterative inference. Closest to DRIFT, MeanFuser [10] uses one-step MeanFlow sampling from Gaussian mixture noise to generate physical trajectory proposals and an attention-based Adaptive Reconstruction Module to produce the final plan from expert supervision. DRIFT shares this one-step proposal-and-integration structure, while applying distribu-tional drifting in a PCA latent space and aggregating proposal features before physical decoding. Iterative refinement is another route to high-quality tra-jectories. Gameformer [20] modeled trajectory prediction as a level-k game in which agents update their plans based on other agents’ anticipated behavior. DiffRefiner [21] used diffusion-based denoising conditioned on scene features. HiPro-AD [22] used sparse Transformers with hybrid atten-tion for proposal refinement. DRIFT avoids iterative refine-ment at inference time. It performs conditional drift in latent feature space, pools the resulting proposals through learned attention, and decodes a single trajectory with scene features. III. METHOD Given historical and current front-view camera frames, high-level navigation commands, and the ego-state vector 
+
+sego = ( vx, v y , a x, a y ), DRIFT predicts the ego vehicle’s executable trajectory over the next 4 seconds. This section describes the architecture and the latent-space drift formula-tion. 
+
+A. Overall Architecture 
+
+Fig. 1 shows the three-stage DRIFT pipeline. A ViT encoder pretrained with V-JEPA extracts scene features from current and past front-view camera frames. The DRIFT Decoder takes Gaussian noise and performs conditional drift in latent feature space by cross-attending to these scene features. It outputs hidden proposal features that represent different driving intents, while a learned MLP maps each feature to PCA coefficients for drift supervision and proposal visualization. The hidden proposal features are pooled by learned attention, concatenated with the navigation command and ego-vehicle state, and refined through cross-attention with the scene features. A final MLP head decodes the result into waypoints ˆTfinal = {(ˆ xt, ˆyt, ˆθt)}Tt=1 , where each waypoint contains position and heading. Fig. 1. Overview of the DRIFT architecture. A V-JEPA pretrained ViT encodes front-view camera frames into shared scene features. The DRIFT Decoder performs conditional drift from isotropic noise to generate multi-hypothesis intent proposals. The Aggregation Head fuses these proposals with navigation and ego-state information through cross-attention and outputs a single executable trajectory. 
+
+B. DRIFT Decoder 
+
+The DRIFT Decoder is a conditional trajectory generator. It starts from a Gaussian noise vector, treated as the trajectory token, and conditions generation on scene features and ego state. The trajectory token is concatenated with a navigation command token and an ego-state token encoding sego to form the decoder token sequence. A cascade of Decoder Blocks processes this sequence. Each Decoder Block has two operations. The trajectory token first cross-attends to the ViT scene features, and the result is added back through a residual connection. The full decoder token sequence then passes through an MLP-Mixer. Token mixing and channel mixing allow the trajectory token to exchange information with the navigation and ego-state tokens. The drift intensity factor α is injected into the Mixer through Adaptive Layer Normalization (adaLN), which is defined as adaLN (x, α ) = γ(α) ⊙ LayerNorm (x) + β(α) (1) where γ(α) and β(α) are affine parameters regressed from an α-embedding. This modulation lets one decoder cover exploratory settings ( α → 0) and imitation-biased settings (α → 1). Directly applying the RBF-based drift to concatenated waypoint coordinates places the affinity computation in a relatively high-dimensional physical space. In our prelimi-nary experiments, the resulting proposal distribution tended to fragment into isolated local clusters. We therefore use separate hidden-feature and PCA-coefficient representations. For the k-th noise sample, the Decoder produces a hidden proposal feature hk, which a learned MLP fψ maps to PCA coefficients xk. The fixed inverse PCA transform then reconstructs the position-only proposal ˆpk according to 
+
+hk = Dϕ(ϵk, c, α ), xk = fψ (hk),
+
+ˆpk = μ + Ux k, (2) where c contains the scene, navigation, and ego-state con-ditions, xk ∈ Rd, ˆpk ∈ R2T contains only (x, y ) waypoint coordinates, and U and μ are the fixed PCA basis and mean. The PCA basis is fitted offline on real driving trajectories. Drift supervision is applied to xk, whereas the Aggregation Head consumes hk directly. 
+
+C. Latent Feature Space Drift 
+
+The decoder is supervised with a drifting mechanism adapted from Drifting Models [23]. Drifting Models describe generation as a distribution-level evolution in which gen-erated samples are attracted toward real data and repelled from one another by a drifting field. At equilibrium, the field vanishes, which enables one-step generation. We adapt this mechanism to trajectory planning by applying the drift in the PCA latent space described above. Using the notation in Eq. 2, xk ∈ Rd is the PCA-space representation of the k-th generated proposal. We compute its affinity to positive samples {y+
+
+> m
+
+} and negative samples 
+
+{y− 
+
+> n
+
+} with an RBF kernel at temperature τ . The negative set consists of the other generated proposals. Sinkhorn sym-metrization gives a doubly normalized affinity matrix A.The drift vector at temperature τ is the displacement from 
+
+xk toward the affinity-weighted positive centroid minus the displacement toward the negative centroid and is written as 
+
+Vτ (xk) = X
+
+> m
+
+A+
+
+> k,m
+
+P 
+
+> m
+
+A+
+
+> k,m
+
+(y+ 
+
+> m
+
+− xk)
+
+− X
+
+> n
+
+A−
+
+> k,n
+
+P 
+
+> n
+
+A−
+
+> k,n
+
+(xn − xk)
+
+(3) We sum this field over multiple temperatures {τs}. Using the expert trajectory as the positive set gives the conditional drift Vcond . Using trajectories from other scenes that satisfy the current road topology gives the unconditional drift Vunc .A drift intensity factor α ∈ [0 , 1] interpolates between them according to 
+
+Vtotal  
+
+> k
+
+= Vunc  
+
+> k
+
++ α · (Vcond  
+
+> k
+
+− Vunc  
+
+> k
+
+) (4) When α → 0, the unconditional prior dominates and en-courages exploration under the current road topology. When 
+
+α → 1, the field is pulled toward the expert demonstra-tion. Following Drifting Models [23], the training objective minimizes ∥xk − sg (xk + Vtotal  
+
+> k
+
+)∥2, where sg denotes stop-gradient. At inference time, different α values and noise samples produce a fixed-size set of exploratory and imitation-biased hypotheses. 
+
+D. Scene-Aware Aggregation 
+
+The Scene-Aware Aggregation module fuses the proposal set from the DRIFT Decoder into a single executable trajec-tory. At inference, the Decoder is queried with a fixed proposal set. We use two drift intensity factors, α = 0 .5 and α = 0 .9.The decoder samples 32 Gaussian noise vectors at α = 0 .5
+
+and 16 at α = 0 .9, producing 48 hidden proposal features 
+
+{hk} in one batched pass. For each α, a learnable query token cross-attends to the hidden features in that group and pools them into one representative token. The pooled tokens from both α values form a compact proposal sequence. The proposal tokens are concatenated with the naviga-tion command token and ego-state token to form a query sequence. A cascade of Aggregation Blocks (AggBlocks) processes this sequence. In each AggBlock, the query tokens attend to the encoded ViT scene features through gated cross-attention. A sigmoid gate on the attention output controls how much scene information enters the query tokens. The tokens then pass through an MLP-Mixer, where token and channel mixing exchange information across proposal, nav-igation, and ego-state tokens. An MLP compresses the final token sequence into a single query vector, with a residual connection from the mean input query. After the final AggBlock, a LayerNorm and MLP head decode the query vector into T future waypoints with posi-tion (x, y ) and heading θ. The heading is predicted as ˆθt =
+
+π · tanh( zt), where zt is the raw network output at timestep 
+
+t. In NAVSIM’s short-horizon ego-centric setting, heading changes are locally continuous in typical maneuvers, so the heading component is supervised together with waypoint positions in the imitation loss. The final plan follows a separate decoding path. Rather than selecting one of the position proposals ˆpk or aggregating their PCA coefficients xk, the Aggregation Head consumes the hidden proposal features hk before the PCA-coefficient MLP fψ and directly regresses (x, y, θ ) with a learned MLP. This direct head predicts heading explicitly and allows the final plan to depart from the fixed PCA subspace, thereby preventing PCA truncation and reconstruction errors from propagating to the executable trajectory. PCA therefore parameterizes the proposal-generation branch without con-straining the final output. The pooling weights and output head are optimized by the trajectory imitation and road-boundary objectives, neither of which requires trajectory-quality labels or evaluator scores. 
+
+E. Physical-Space Safety Losses 
+
+Latent-space drift shapes the proposal distribution. The final aggregated trajectory is supervised in physical coor-dinates to improve execution accuracy and drivable-area compliance. This physical-space supervision has two losses. Following Drive-JEPA [13], we use an arc-length-weighted L1 loss. The loss reweights samples in a batch according to the length of their ground-truth trajectories. For each sample, the per-timestep L1 error is averaged across waypoints. The sample weight is w = 1 /(γ + ℓ), where 
+
+ℓ = P 
+
+> t
+
+∥TGT  
+
+> t+1
+
+− TGT  
+
+> t
+
+∥ is the ground-truth arc length and γ
+
+is a smoothing constant. Short trajectories, such as low-speed or congested driving, receive higher weights. We normalize the weights to have mean one in each batch and define the imitation loss as 
+
+Ltraj = 1
+
+B
+
+> B
+
+X
+
+> b=1
+
+wb · 1
+
+T
+
+> T
+
+X
+
+> t=1
+
+∥ ˆTb,t − TGT  
+
+> b,t
+
+∥1 (5) The L1 imitation loss alone is weakly sensitive to drivable-area boundaries, especially on narrow roads, and we observe occasional waypoints slightly outside the road. We therefore add a road boundary loss as a local correction near the boundary. A point-in-polygon test first determines whether each waypoint lies inside the drivable polygon. Waypoints outside the polygon receive a constant penalty Cout , while the imitation loss supplies the corrective gradient that pulls them toward the expert trajectory. For inside waypoints, we differentiably compute d, the unsigned minimum distance to the nearest road boundary, and apply a piecewise penalty. Both an inverse-distance penalty and a quadratic penalty are active for d < m safe . Only the quadratic penalty is active for 
+
+msafe ≤ d < m soft . The penalty is zero beyond msoft . The road term is a regularizer rather than a projection operator or safety guarantee and is defined as 
+
+r(d) = 1
+
+d + ϵ − 1
+
+msafe + ϵ ,q(d) = 
+
+ msoft − d
+
+∆m
+
+2
+
+,
+
+Lroad =
+
+
+
+Cout , outside polygon ,r(d) + q(d), inside , d < m safe ,q(d), inside , m safe ≤ d < m soft ,
+
+0, inside , d ≥ msoft .
+
+(6) where ∆m = msoft − msafe and Cout is a fixed large penalty for waypoints located outside the drivable polygon. The overall training objective combines the physical-space losses with the latent drift loss from Section III-C and is written as 
+
+Ltotal = λ1Ltraj + λ2Ldrift + λ3Lroad .Fig. 2. Unconditional trajectory samples for two representative scenes. The top row shows a multi-lane straight road where the unconditional set contains lane-keeping and lane-changing maneuvers. The bottom row shows a narrow road where the unconditional trajectories vary in speed while remaining within lane boundaries. In both cases, the sampled trajectories are map-compatible geometric priors. 
+
+IV. EXPERIMENTAL RESULTS 
+
+A. Experimental Setup 
+
+We train and evaluate DRIFT on NAVSIM [17], a data-driven planning benchmark constructed from nuPlan sensor logs and map annotations. NAVSIM evaluates a predicted ego trajectory through non-reactive pseudo-simulation, in which the ego vehicle is propagated with a vehicle model while the recorded traffic participants do not respond to its actions. We train on navtrain and report results on 
+
+navtest under both benchmark protocols. NAVSIM v1 com-bines No at-fault Collision (NC), Drivable Area Compliance (DAC), Time-to-Collision (TTC), Comfort (Comf.), and Ego Progress (EP) into the PDM Score (PDMS). NAVSIM v2 adds Driving Direction Compliance (DDC), Traffic Light Compliance (TLC), Lane Keeping (LK), History Comfort (HC), and Extended Comfort (EC), producing the Extended PDM Score (EPDMS). To construct the unconditional prior for latent-space drift (Section III-C), we extract structured road graph data for each training scene. We then test whether ground-truth trajec-tories from other scenes satisfy the road boundary constraints of the current scene. Trajectories that remain within the drivable area are retained, and 32 diverse trajectories are selected as the unconditional sample set for that scene. This set gives the decoder a map-compatible geometric prior, independent of the specific expert demonstration. Fig. 2 shows two representative scenes and their uncon-ditional trajectory sets. On the multi-lane straight road, the prior includes lane keeping and lane changes. On the narrow road, the selected trajectories mainly vary in speed and stay within the constrained lane boundaries. These examples illus-trate how the unconditional samples encode local drivable-area geometry. 
+
+B. Model Training 
+
+Before training, we fit the PCA basis used in the DRIFT Decoder (Section III-B) on the position components of ground-truth trajectories from navtrain . Each trajectory contains eight two-dimensional waypoints, giving a 16-dimensional input vector, which is projected to an eight-dimensional latent space. The resulting PCA basis, mean, and inverse transform remain fixed throughout both training stages. Training has two stages. In the first stage, the V-JEPA-pretrained ViT encoder is frozen, and only the DRIFT Decoder, including the PCA-coefficient MLP fψ , is trained for 50 epochs with the drift loss (Section III-C). For each scene, we generate 32 proposals from independent Gaussian noise vectors and randomly sampled drift intensities α ∈
+
+[0 , 1] . This stage learns scene-conditioned proposal gener-ation without aggregation objectives. In the second stage, the ViT encoder is unfrozen and all learnable components, including the ViT, Decoder, fψ , and the newly added Ag-gregation Head, are jointly optimized for another 50 epochs. The objective combines the drift loss, the imitation loss Ltraj 
+
+(Eq. 5), and the road boundary loss Lroad (Eq. 6). The drift loss backpropagates through the scene-conditioned Decoder and fψ to the ViT. The imitation and road-boundary losses update the Aggregation Head and propagate through both its scene-attention path and the hidden proposal features to the ViT and Decoder. The same 32-proposal sampling strategy is used during this stage. Both stages use AdamW with a cosine annealing schedule. DRIFT predicts 8 waypoints over a 4 s horizon, with a temporal spacing of 0.5 s. At inference time, we replace random α sampling with two fixed drift intensities, α = 0 .5
+
+and α = 0 .9. The decoder samples 32 Gaussian noise vectors at α = 0 .5 and 16 at α = 0 .9, giving 48 hidden proposal features in one batched generation pass. The Aggregation Head operates directly on the hidden proposal features rather than on their PCA-decoded trajectories. A separate PCA branch maps these features through the PCA-coefficient MLP 
+
+fψ to position trajectories, which are used to interpret and visualize the decoder hypotheses. In the first stage, the drift loss has weight 1. In the second stage, the imitation loss is the main objective with weight 1, the drift loss weight is reduced to 0.1, and the road boundary loss weight is 0.2. Thus, the boundary term acts as an auxiliary geometric regularizer rather than the primary training signal. 
+
+C. Main Results 
+
+Tables I and II compare DRIFT with recent non-scorer-based planners on the 12,146 scenarios of NAVSIM navtest .DRIFT establishes new state-of-the-art results in this setting under both protocols, reaching 89.6 PDMS and 90.4 EPDMS. It exceeds the strongest listed alternatives by 0.6 PDMS under v1 and 0.9 EPDMS under v2. The consistent ranking across both protocols is important because v2 broadens the evaluation from the five original components to additional measures of rule compliance and temporal behavior. The ad-vantage therefore persists under a substantially wider metric suite without using evaluator-derived trajectory-quality labels for proposal aggregation. TABLE I PDMS COMPARISON AMONG NON -SCORER -BASED PLANNERS ON NAVSIM V1 NAVTEST .                                                                                                                                             
+
+> Method NC ↑DAC ↑EP ↑TTC ↑Comf. ↑PDMS ↑
+> DiffusionDrive [7] 98.2 96.2 82.2 94.7 100 88.1 WoTE [24] 98.5 96.8 81.9 94.9 99.9 88.3 World4Drive [25] 97.4 94.3 79.9 92.8 100 85.1 TransFuser [18] 97.7 92.8 79.2 92.8 100 84.0 Epona [26] 97.9 95.1 80.4 93.8 99.9 86.2 MeanFuser [10] 98.6 97.0 82.8 95.0 100 89.0 Drive-JEPA [13] 98.7 96.2 82.9 95.5 100 89.0
+> DRIFT 98.6 97.6 84.0 94.6 100 89.6
+> TABLE II EPDMS COMPARISON AMONG NON -SCORER -BASED PLANNERS ON NAVSIM V2NAVTEST .†DENOTES RESULTS REPRODUCED WITH THE RELEASED
+> DIFFUSION DRIVE CHECKPOINT .
+> Method NC ↑DAC ↑DDC ↑TLC ↑EP ↑TTC ↑LK ↑HC ↑EC ↑EPDMS ↑
+> Ego Status MLP [27] 93.1 77.9 92.7 99.6 86.0 91.5 89.4 98.3 85.4 64.0 TransFuser [18] 96.9 89.9 97.8 99.7 87.1 95.4 92.7 98.3 87.2 76.7 Hydra-MDP++ [28] 97.2 97.5 99.4 99.6 83.1 96.5 94.4 98.2 70.9 81.4 DriveSuprim [29] 97.5 96.5 99.4 99.6 88.4 96.6 95.5 98.3 77.0 83.1 DiffusionDrive †[7] 98.2 96.3 99.4 99.8 87.4 97.4 97.0 98.3 87.7 88.3 MeanFuser [10] 98.3 97.2 99.6 99.8 87.6 97.4 97.3 98.3 88.2 89.5
+> DRIFT 98.7 98.1 99.5 99.9 87.3 98.0 96.8 98.3 88.0 90.4
+
+Under v1, DRIFT leads both DAC and EP while retaining near-best collision avoidance and the saturated top com-fort score. Relative to the two tied runners-up, MeanFuser and Drive-JEPA, the improvement is concentrated in road compliance and progress rather than a uniform increase in every sub-metric. DAC and EP capture complementary failure modes because the former penalizes departures from the drivable region while the latter penalizes insufficient advancement along the route. Leading both suggests that the aggregate gain is not obtained by trading progress for geometric compliance, or vice versa. DRIFT does not lead TTC, so its highest PDMS reflects a favorable overall balance rather than dominance over every safety-related measure. The v2 results reinforce this performance profile under a broader evaluation. DRIFT ranks first not only in EPDMS but also in NC, DAC, TLC, and TTC, while remaining within half a point of the strongest entries in DDC, LK, and EC. HC is nearly saturated across the compared methods and consequently provides little discrimination. The aggregate advantage is therefore supported by several complementary aspects of collision avoidance, road compliance, traffic-rule adherence, and temporal behavior instead of being driven by one favorable component. Although DRIFT does not maximize EP under v2, its competitive progress together with the leading compliance metrics indicates that the planner does not obtain its result simply by producing conservative trajectories. The repeated strength in DAC across both protocols is consistent with the two map-aware elements of DRIFT. The unconditional proposal set supplies hypotheses that respect the local drivable-area geometry, while the boundary loss regularizes the final plan near road edges. At the same time, the leading v1 EP and competitive v2 EP suggest that this geometric bias does not prevent effective route progress. The main comparison alone does not isolate the contribu-tion of either component, which is examined separately in Section IV-F. MeanFuser provides the closest design-level comparison because it also combines one-step proposal generation with direct reconstruction rather than evaluator-supervised tra-jectory scoring. DRIFT improves the aggregate result over MeanFuser under both protocols. This system-level compar-ison supports compact latent-space drift and feature-level aggregation as an effective alternative to generating and reconstructing proposals directly in physical trajectory space. We also profile inference latency on an NVIDIA RTX 4090 GPU. The trajectory generation module, including the DRIFT Decoder, alpha pooling, and Aggregation Head, pro-cesses all 48 proposals in 10.82 ms, whereas the full model takes 66.43 ms. The proposal-to-plan computation therefore accounts for approximately 16% of end-to-end latency and is not the dominant runtime cost in this implementation. Batched fixed-depth generation preserves multi-hypothesis reasoning while most computation remains in the visual backbone and the rest of the end-to-end model. 
+
+D. Qualitative Results 
+
+Fig. 3 visualizes DRIFT on five urban maneuvers that include turning, lane changing, and straight driving under different road widths. Across these cases, the final trajectory follows the demonstrated maneuver while the intermediate proposals retain locally plausible variations for aggregation. In the left-turn and wide-road examples, proposals generated with α = 0.5 spread more than those generated with 
+
+α = 0 .9, which is consistent with the stronger influence Fig. 3. Planning results across five representative driving scenarios. The top row shows the front-view camera image. The bottom row shows the BEV visualization of the planned trajectory (red solid line), GT trajectory (green dashed line), and decoder proposals (orange and blue thin solid lines). From left to right, the scenarios cover a left turn, a lane change toward the left-front, straight driving on a narrow road, driving toward the right-front on a wide road, and a right turn. TABLE III ROBUSTNESS OF DRIFT TO INFERENCE NOISE ACROSS 10 RANDOM SEEDS .        
+
+> Metric Seed Score
+> PDMS 16384 (Best) 89.64 456 (Worst) 89.48 Avg. of 10 seeds 89.56 EPDMS 3333 (Best) 90.38 65535 (Worst) 90.32 Avg. of 10 seeds 90.36
+
+of the unconditional prior at lower drift intensity. In the lane-change and narrow-road examples, both proposal groups occupy a narrower region as the scene geometry restricts the admissible motion. The examples illustrate that proposal spread varies with both α and scene constraints, although they do not by themselves quantify proposal diversity. 
+
+E. Robustness Analysis 
+
+The generative decoder uses Gaussian noise as input. To measure sensitivity to this noise, we evaluate the trained model on NAVSIM navtest with 10 random seeds. Table III reports PDMS and EPDMS across seeds. PDMS ranges from 89.48 to 89.64, and EPDMS ranges from 90.32 to 90.38. The maximum absolute deviations from the corresponding means are 0.08 and 0.04. This experiment evaluates whether the final aggregated trajectory score remains stable under stochastic proposal sampling, ruling out favorable random seeds as the source of the observed gains. 
+
+F. Ablation Study 
+
+We conduct ablations on NAVSIM navtest to evaluate the proposal-to-plan rule and the main model components. For the aggregation baseline, we replace the learned Aggregation Head at inference time with the arithmetic mean of the same 48 PCA-decoded proposals, consisting of 32 proposals at 
+
+α = 0 .5 and 16 proposals at α = 0 .9. The remaining con-figurations remove the DRIFT Decoder, the road boundary loss Lroad , or both components. Table IV reports the results.                                          
+
+> TABLE IV ABLATION OF DRIFT COMPONENTS AND PROPOSAL AGGREGATION ON
+> NAVSIM NAVTEST (12,146 SCENARIOS ).
+> Variant NC ↑DAC ↑EP ↑TTC ↑Comf. ↑PDMS ↑
+> Full DRIFT 98.6 97.6 84.0 94.6 100.0 89.6
+> Mean of 48 proposals 96.6 94.7 81.6 90.8 99.9 85.1 w/o Road 98.6 97.6 83.3 95.0 100.0 89.4 w/o Decoder 98.4 97.6 83.1 94.3 100.0 89.2 w/o Decoder and Road 98.6 97.2 83.8 94.3 100.0 89.1
+
+Replacing learned aggregation with the mean of the same 48 proposals reduces PDMS from 89.6 to 85.1. The decrease appears across NC, DAC, EP, and TTC rather than in only one component, with the largest gaps occurring in TTC and DAC. This result indicates that generating plausible propos-als is not sufficient because an unweighted physical-space mean cannot account for their scene-dependent relevance and may blend distinct motion hypotheses. The Aggregation Head instead conditions proposal features on the scene, navigation command, and ego state before directly decoding the executable trajectory. The component removals produce smaller but consistent changes in aggregate PDMS. Adding the Decoder improves PDMS by 0.4 points when the road term is enabled and by 0.3 points without it. The road term contributes 0.2 and 0.1 points with and without the Decoder, respectively. The metric-level changes are not additive, as the largest EP gain from the Decoder appears with the road term while the DAC gain from the road term is more visible without the Decoder. We therefore treat the two components as interacting parts of the integrated planner rather than as isolated mechanisms for progress and safety. V. CONCLUSION We presented DRIFT, a fixed-depth end-to-end planner that combines one-step latent proposal generation with scene-aware aggregation. The DRIFT Decoder generates 48 inter-mediate proposals in a single batched pass, using 32 samples at α = 0 .5 and 16 samples at α = 0 .9, and the Aggregation Head fuses them into one executable trajectory without evaluator-labeled trajectory-score pairs. The final output is optimized with expert-trajectory imitation and a map-derived boundary regularizer, keeping proposal generation efficient without requiring trajectory-quality supervision. On NAVSIM navtest, DRIFT reaches 89.6 PDMS and 90.4 EPDMS. The trajectory generation module, including proposal generation and aggregation, runs in 10.82 ms on an RTX 4090. These results support evaluator-label-free aggregation as a practical alternative for efficient proposal-based planning. Future work should evaluate the method in pseudo-closed-loop and interactive settings and should measure proposal diversity and aggregation behavior more directly. REFERENCES [1] P. Wu, X. Jia, L. Chen, J. Yan, H. Li, and Y. Qiao, “Trajectory-guided control prediction for end-to-end autonomous driving: A simple yet strong baseline,” Advances in Neural Information Processing Systems ,vol. 35, pp. 6119–6132, 2022. [2] Y. Hu, J. Yang, L. Chen, K. Li, C. Sima, X. Zhu, S. Chai, S. Du, T. Lin, W. Wang et al. , “Planning-oriented autonomous driving,” in 
+
+Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2023, pp. 17 853–17 862. [3] D. Dauner, M. Hallgarten, A. Geiger, and K. Chitta, “Parting with misconceptions about learning-based vehicle motion planning,” in 
+
+Conference on Robot Learning . PMLR, 2023, pp. 1268–1281. [4] L. Chen, P. Wu, K. Chitta, B. Jaeger, A. Geiger, and H. Li, “End-to-end autonomous driving: Challenges and frontiers,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 46, no. 12, pp. 10 164– 10 183, 2024. [5] N. A. Madjid, A. Ahmad, M. Mebrahtu, Y. Babaa, A. Nasser, S. Malik, B. Hassan, N. Werghi, J. Dias, and M. Khonji, “Trajectory prediction for autonomous driving: Progress, limitations, and future directions,” 
+
+Information Fusion , p. 103588, 2025. [6] S. Casas, B. Agro, J. Mao, T. Gilles, A. Cui, T. Li, and R. Urtasun, “Detra: A unified model for object detection and trajectory forecast-ing,” in European Conference on Computer Vision . Springer, 2024, pp. 326–342. [7] B. Liao, S. Chen, H. Yin, B. Jiang, C. Wang, S. Yan, X. Zhang, X. Li, Y. Zhang, Q. Zhang et al. , “Diffusiondrive: Truncated diffusion model for end-to-end autonomous driving,” in Proceedings of the Computer Vision and Pattern Recognition Conference , 2025, pp. 12 037–12 047. [8] Y. Zheng, R. Liang, K. Zheng, J. Zheng, L. Mao, J. Li, W. Gu, R. Ai, S. Li, X. Zhan et al. , “Diffusion-based planning for autonomous driv-ing with flexible guidance,” in International Conference on Learning Representations , vol. 2025, 2025, pp. 37 207–37 227. [9] J. Yang, S. Gao, Y. Qiu, L. Chen, T. Li, B. Dai, K. Chitta, P. Wu, J. Zeng, P. Luo et al. , “Genad: Generalized predictive model for autonomous driving,” arXiv preprint arXiv:2403.09630 , 2024. [10] J. Wang, Y. Zheng, X. Liu, Z. Xing, P. Li, K. Ma, H. Ye, G. Chen, G. Li, L. Chen et al. , “Meanfuser: Fast one-step multi-modal trajectory generation and adaptive reconstruction via meanflow for end-to-end autonomous driving,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2026, pp. 17 884–17 893. [11] Z. Li, W. Yao, Z. Wang, X. Sun, J. Chen, N. Chang, M. Shen, Z. Wu, S. Lan, and J. M. Alvarez, “Generalized trajectory scoring for end-to-end multimodal planning,” arXiv preprint arXiv:2506.06664 , 2025. [12] Z. Ke, Z. Liu, Y. Wang, J. Li, J. Jiang, Y. Jiang, Z. Xu, and J. Wang, “Grade: Guiding realistic autonomous driving with adaptive trajectory evolution,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2026, pp. 1029–1038. [13] L. Wang, Z. Yang, C. Bai, G. Zhang, X. Liu, X. Zheng, X.-X. Long, C.-T. Lu, and C. Lu, “Drive-jepa: Video jepa meets multi-modal trajectory distillation for end-to-end driving,” arXiv preprint arXiv:2601.22032 , 2026. [14] X. Jia, Y. Gao, L. Chen, J. Yan, P. L. Liu, and H. Li, “Driveadapter: Breaking the coupling barrier of perception and planning in end-to-end autonomous driving,” in Proceedings of the IEEE/CVF International Conference on Computer Vision , 2023, pp. 7953–7963. [15] J. Wang, X. Zhang, Z. Xing, S. Gu, X. Guo, Y. Hu, Z. Song, Q. Zhang, X. Long, and W. Yin, “Comdrive: Comfort-oriented end-to-end autonomous driving,” in 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) . IEEE, 2025, pp. 2682– 2689. [16] A. Bardes, Q. Garrido, J. Ponce, X. Chen, M. Rabbat, Y. LeCun, M. Assran, and N. Ballas, “Revisiting feature prediction for learning visual representations from video,” arXiv preprint arXiv:2404.08471 ,2024. [17] D. Dauner, M. Hallgarten, T. Li, X. Weng, Z. Huang, Z. Yang, H. Li, I. Gilitschenski, B. Ivanovic, M. Pavone, A. Geiger, and K. Chitta, “Navsim: Data-driven non-reactive autonomous vehicle simulation and benchmarking,” in Advances in Neural Information Processing Systems (NeurIPS) , 2024. [18] K. Chitta, A. Prakash, B. Jaeger, Z. Yu, K. Renz, and A. Geiger, “Transfuser: Imitation with transformer-based sensor fusion for au-tonomous driving,” IEEE transactions on pattern analysis and machine intelligence , vol. 45, no. 11, pp. 12 878–12 895, 2022. [19] X. Jia, J. You, Z. Zhang, and J. Yan, “Drivetransformer: Unified transformer for scalable end-to-end autonomous driving,” in The Thirteenth International Conference on Learning Representations .[20] Z. Huang, H. Liu, and C. Lv, “Gameformer: Game-theoretic modeling and learning of transformer-based interactive prediction and planning for autonomous driving,” in Proceedings of the IEEE/CVF Interna-tional Conference on Computer Vision , 2023, pp. 3903–3913. [21] L. Yin, R. Ju, G. Guo, and E. Cheng, “Diffrefiner: Coarse to fine trajectory planning via diffusion refinement with semantic interaction for end to end autonomous driving,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 40, no. 14, 2026, pp. 12 009– 12 017. [22] B. Chen, G. Wang, J. Yang, S. Huang, X. Qian, B. Huang, and G. Guo, “Hipro-ad: Sparse trajectory transformer for end-to-end autonomous driving with hybrid spatiotemporal attention,” Sensors (Basel, Switzer-land) , vol. 26, no. 1, p. 185, 2025. [23] M. Deng, H. Li, T. Li, Y. Du, and K. He, “Generative modeling via drifting,” arXiv preprint arXiv:2602.04770 , 2026. [24] Y. Li, Y. Wang, Y. Liu, J. He, L. Fan, and Z. Zhang, “End-to-end driving with online trajectory evaluation via bev world model,” in 
+
+Proceedings of the IEEE/CVF International Conference on Computer Vision , 2025, pp. 27 137–27 146. [25] Y. Zheng, P. Yang, Z. Xing, Q. Zhang, Y. Zheng, Y. Gao, P. Li, T. Zhang, Z. Xia, P. Jia et al. , “World4drive: End-to-end autonomous driving via intention-aware physical latent world model,” in Proceed-ings of the IEEE/CVF International Conference on Computer Vision ,2025, pp. 28 632–28 642. [26] K. Zhang, Z. Tang, X. Hu, X. Pan, X. Guo, Y. Liu, J. Huang, L. Yuan, Q. Zhang, X.-X. Long et al. , “Epona: Autoregressive diffusion world model for autonomous driving,” in Proceedings of the IEEE/CVF International Conference on Computer Vision , 2025, pp. 27 220– 27 230. [27] Z. Li, Z. Yu, S. Lan, J. Li, J. Kautz, T. Lu, and J. M. Alvarez, “Is ego status all you need for open-loop end-to-end autonomous driving?” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 14 864–14 873. [28] K. Li, Z. Li, S. Lan, Y. Xie, Z. Zhang, J. Liu, Z. Wu, Z. Yu, and J. M. Alvarez, “Hydra-mdp++: Advancing end-to-end driving via expert-guided hydra-distillation,” arXiv preprint arXiv:2503.12820 , 2025. [29] W. Yao, Z. Li, S. Lan, Z. Wang, X. Sun, J. M. Alvarez, and Z. Wu, “Drivesuprim: Towards precise trajectory selection for end-to-end planning,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 40, no. 14, 2026, pp. 11 910–11 918.

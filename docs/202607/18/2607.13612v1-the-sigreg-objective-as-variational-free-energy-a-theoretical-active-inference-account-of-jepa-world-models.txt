@@ -1,0 +1,1288 @@
+Title: The SIGReg Objective as Variational Free Energy: A Theoretical Active-Inference Account of JEPA World Models
+
+URL Source: https://arxiv.org/pdf/2607.13612v1
+
+Published Time: Thu, 16 Jul 2026 01:06:46 GMT
+
+Number of Pages: 29
+
+Markdown Content:
+# The SIGReg Objective as Variational Free Energy: A Theoretical Active-Inference Account of JEPA World Models 
+
+Fabio Arnez ∗
+
+Université Paris-Saclay, CEA, List F-91120, Palaiseau, France fabio.arnez@cea.fr 
+
+Alexandra Gomez-Villa 
+
+Computer Vision Center Barcelona, Spain agomezvi@cvc.uab.es 
+
+# Abstract 
+
+Joint-Embedding Predictive Architectures (JEPAs) are the dominant design for latent world models, yet they are usually justified by empirical performance rather than a normative principle. We show that the choice of anti-collapse regulariser determines whether a JEPA’s training objective, a prediction loss plus a weighted embedding regulariser, is a valid Active Inference (AIF) variational free energy. We organise four non-contrastive regularisers (VICReg, LogDet, PairDist, and SIGReg) into an entropy-estimator hierarchy indexed by a prior-miscalibration gap , and show that the gap’s sign , whether the estimator bounds the latent en-tropy from above or below, decides whether the AIF surprise bound survives: VICReg and LogDet are unsafe upper bounds, PairDist a safe lower bound, and SIGReg eliminates the gap. We then prove a correspondence theorem: under the standard constant-noise encoder model and successful SIGReg enforcement (isotropic-Gaussian embeddings), the gap vanishes, the objective becomes an ex-act information bottleneck, the surprise bound is preserved, and the latent goal cost becomes an exact proxy for AIF pragmatic value, whereas VICReg leaves an irreducible second-order anisotropy term. We extend the correspondence to multi-step expected free energy, ensemble epistemic value, and a learned-policy regime, and we identify the one AIF term no current JEPA world model computes: the state-epistemic value , a future-state coverage signal. The predictions differ in 
+
+kind , not degree, and are stated here as theoretical consequences left for empirical test in separate work; full proofs are in Appendix A, and the algebraic core of every result is machine-verified in Lean 4 (Appendix D). 
+
+# 1 Introduction 
+
+Active Inference (AIF) and Joint-Embedding Predictive Architectures (JEPA) are two independently developed accounts of how an agent can learn and act from high-dimensional observations. AIF, rooted in the Free Energy Principle [Friston, 2010], is normative: the agent maintains a generative model and acts to minimise variational free energy, an upper bound on sensory surprise. JEPA, developed within the self-supervised learning (SSL) tradition [LeCun, 2022], is architectural: a deterministic encoder maps observations to latent embeddings and a predictor models the dynamics in that latent space, avoiding pixel-level reconstruction. Despite their separate origins, both frameworks factor the learning objective into the same two competing terms: a complexity term that penalises departures from the dynamics model and an 
+
+> ∗Corresponding author; comments on this manuscript are welcome. This paper establishes a formal correspondence between the SIGReg objective and the Active Inference framework. Empirical validation of its predictions is left to separate work. Preprint. arXiv:2607.13612v1 [cs.LG] 15 Jul 2026
+
+informativeness term that rewards capturing useful structure in observations. The Information Bottleneck (IB) principle [Tishby et al., 2000] formalises this trade-off as a Lagrangian LIB =
+
+D[encoder ∥ prior ] − ˆI(Z; X), where the divergence D and the information estimator ˆI vary across implementations. In AIF the informativeness term is a likelihood or a mutual-information bound [Mazzaglia et al., 2021, 2022]. In JEPA world models it is maintained implicitly by an anti-collapse regulariser such as VICReg [Bardes et al., 2022]. The shared structure invites a precise question: 
+
+how exactly do the terms of a JEPA world model’s training loss correspond to the terms of the AIF variational free energy? 
+
+The problem: non-contrastive informativeness is approximate. The answer hinges on how the informativeness term is maintained. The contrastive route [Mazzaglia et al., 2021] estimates mutual information with an InfoNCE lower bound [van den Oord et al., 2018], so the agent never overstates its own informativeness and the free-energy bound is preserved by construction, at the cost of stochastic encoders and a learned critic. Every deployed JEPA world model [Sobal et al., 2025, Zhou et al., 2025, Assran et al., 2025, Maes et al., 2026] instead uses a deterministic encoder with a non-contrastive regulariser. Under the standard constant-noise model [Kolchinsky et al., 2019], maximising informativeness then reduces to maximising the marginal differential entropy h(Z),which is intractable in high dimension. VICReg approximates it through the first two moments [Shwartz-Ziv et al., 2023], introducing a gap between the true entropy and its proxy. Crucially, this gap is not merely a matter of degree: VICReg’s proxy is an upper bound on the Gaussian reference entropy (via Hadamard’s inequality), which is itself an upper bound on h(Z) (via the maximum-entropy theorem). Maximising an upper bound provides no guarantee that the true entropy increases, since the optimiser can inflate the proxy without increasing h(Z), whereas increasing a 
+
+lower bound is safe. This bound-type asymmetry is the theoretical motivation for seeking tighter estimators. 
+
+Contributions. We make two linked contributions. (1) An entropy-estimator hierarchy (Section 4.1). 
+
+We cast four non-contrastive regularisers (VICReg [Bardes et al., 2022], LogDet [Shwartz-Ziv et al., 2023], PairDist [Kolchinsky and Tracey, 2017], and SIGReg [Balestriero and LeCun, 2025]) as a monotone elimination of prior-miscalibration sources. The organising result is a three-source gap decomposition (Proposition 1): every covariance-based entropy proxy is loose through a non-Gaussianity gap, an off-diagonal-covariance gap, and an estimation error, each with an explicit zero condition and the first two with a definite sign. The hierarchy also separates two axes, bound 
+
+type (upper/unsafe vs. lower/safe) and distributional enforcement , and shows SIGReg is the first estimator that is simultaneously safe and exact. (2) The SIGReg–AIF correspondence (Section 4). 
+
+We prove that replacing VICReg with SIGReg upgrades the AIF correspondence from approximate to exact (Theorem 1): under the constant-noise model and successful SIGReg enforcement, the gap vanishes ( ∆SIG = 0 ), the loss admits an exact IB decomposition, and the AIF bound F ≥ − ln p(x)
+
+is preserved (the first non-contrastive regulariser to achieve this). A dual-tightening corollary (Corollary 1) shows isotropy simultaneously closes the entropy gap and the KL–MSE approximation error, making the latent goal cost an exact AIF pragmatic-value proxy (Proposition 5). We then extend the correspondence from the single-step free energy F to the multi-step expected free energy 
+
+G, to ensemble-based epistemic value, and to a learned-policy regime, and we isolate the one AIF term no current JEPA world model computes: the state-epistemic value , a future-state coverage signal (Proposition 6). Following Klindt et al. [2026], the algebraic core of both contributions is machine-verified in the Lean 4 theorem prover, compiling with zero sorry obligations (Appendix D). 
+
+What the correspondence buys. The equivalence is not a relabelling, because it delivers what the two adjacent results (that JEPAs already learn approximately isotropic-Gaussian embeddings [Balestriero et al., 2025] and that this makes their latents identifiable and plannable [Klindt et al., 2026]) do not. First, it gives a validity criterion for the objective: whether the surprise bound 
+
+F ≥ − ln p(x) survives is a property of the estimator’s bound direction (Proposition 2), separate from how Gaussian or identifiable the embeddings are. Second, it equips JEPA world-model planning with a principled epistemic-value term , the information gain that deployed planners currently approximate only heuristically through ensemble disagreement [Sobal et al., 2025]. Third, it turns the heuristic “add an exploration bonus” into a specific, signed prescription, the state-epistemic coverage term isolated above. Fourth, it unifies the deployed non-contrastive JEPA world-model ecosystem with deep active inference, so each can import the other’s tools. The bare correspondence is the mechanism and these consequences are the contribution. 2The falsifiable hook, and a caveat. The distinction is sharp because it is qualitative: under SIGReg the prior-miscalibration gap is exactly zero and the goal metric is exactly isotropic, while under VICReg both carry an irreducible O(δ2) anisotropy term. This produces predictions that differ by kind, not degree (e.g., the embedding condition number κ ≈ 1 vs. κ ≫ 1). The Gaussianity result noted above, that any successfully trained JEPA already learns approximately Gaussian embeddings [Balestriero et al., 2025], does not blunt this distinction, for three reasons the theory makes precise: “approximately Gaussian” is not sufficient for the AIF bound, which is binary in the estimator’s type 
+
+(Proposition 2), so VICReg may fail to preserve it even when the residual is small; the theory governs the training path , not only the optimum; and the bridge is independently valuable (Section 5 expands all three). A second concurrent result [Klindt et al., 2026] supplies the precondition under which latent distances are physically meaningful (Section 4.6) and triangulates the isotropic-Gaussian target from a third, independent direction. 
+
+Organisation. Section 2 surveys related work; Section 3 fixes notation and three published facts; Section 4 develops the hierarchy, the correspondence theorem, the multi-step/EFE and learned-policy extensions, and the testable predictions the theory entails. Empirical validation of these predictions is left to separate work; the present paper is confined to the theoretical development. Section 5 concludes. 
+
+# 2 Related Work 
+
+JEPAs and latent world models. Joint-embedding prediction has become the dominant SSL design for control-capable world models [LeCun, 2022]. Image and video variants such as I-JEPA and V-JEPA, and the action-conditioned V-JEPA 2 [Assran et al., 2025], learn predictors in a frozen or slowly-updated latent space; DINO-WM [Zhou et al., 2025] plans zero-shot on frozen DINOv2 features; PLDM [Sobal et al., 2025] trains an end-to-end latent dynamics model with a VICReg-style anti-collapse term and an ensemble disagreement cost; and TD-JEPA [Bagatella et al., 2025] extends latent prediction to zero-shot reinforcement learning. Terver et al. [2025] ablate the design space and report that cross-entropy-method planning with an L2 terminal cost is the strongest planner and that a short two-step training rollout is best. Most relevant here, LeWorldModel [Maes et al., 2026] is the first JEPA world model to train stably end-to-end from raw pixels using SIGReg as the sole anti-collapse regulariser, with a two-term objective, no exponential-moving-average teacher, and CEM-based model-predictive control, precisely the system our theory formalises. Complementing these architectures, Klindt et al. [2026] ask when a JEPA trained this way earns the name “world model” at all, and prove that alignment plus Gaussian regularisation recovers the world’s latent degrees of freedom up to a linear map. Their identifiability result is the precondition under which latent distances become physically meaningful, and we return to it in Section 4.6. 
+
+Non-contrastive SSL regularisation. A family of regularisers prevents representational collapse without negative pairs by shaping the embedding covariance: VICReg’s variance/covariance terms [Bardes et al., 2022], Barlow Twins’ redundancy reduction [Zbontar et al., 2021], and Whiten-ing [Ermolov et al., 2021]. Shwartz-Ziv et al. [2023] recast VICReg’s variance/covariance terms as a Gaussian entropy estimator and place it alongside a tighter log-determinant (LogDet) esti-mator. Kolchinsky and Tracey [2017] provide a non-parametric pairwise-distance entropy bound (PairDist). SIGReg [Balestriero and LeCun, 2025] departs from moment matching entirely, enforcing an isotropic-Gaussian distribution by random-projection Gaussianity testing and recovering VICReg as a degenerate moment-matching special case. We unify these under a single axis: the quality of the implicit AIF prior, i.e. the direction and tightness of the entropy bound and hence whether the AIF surprise bound survives, and supply the information-theoretic reason to prefer SIGReg. This bound-safety ordering is distinct from the Gaussianity-strength hierarchy of Klindt et al. [2026], which ranks the same regularisers (implicit, second-moment, full) by how strongly they drive the embeddings toward Gaussian. Instead, ours orders by whether the variational bound is preserved, not by how tight the distributional constraint is. Beyond self-supervised pretraining, the same isotropic-Gaussian regularisation has independently been used to stabilise deep reinforcement learning under non-stationarity, mitigating representation collapse and plasticity loss [Pasand et al., 2026]. This is external evidence, in a control setting, that the isotropic-Gaussian structure our correspondence relies on carries concrete downstream benefits. 3Active inference and deep generative agents. AIF [Friston, 2010, Smith et al., 2022] casts perception and action as free energy minimisation. Deep instantiations scale it with amortised inference and learned dynamics: Monte-Carlo deep active inference [Fountas et al., 2020], the deep-learning treatment of Mazzaglia et al. [2022], and Contrastive Active Inference [Mazzaglia et al., 2021], which replaces the intractable decoder with an InfoNCE critic and is, to our knowledge, the only prior route that achieves an exact AIF correspondence in a latent model. Latent-imagination control such as Dreamer [Hafner et al., 2020] shares the rollout-and-score structure but is not framed as free-energy minimisation. Two concurrent variational JEPAs recover an AIF reading by building probabilistic structure into the architecture: Var-JEPA [Gögl and Yau, 2026] reformulates JEPA as a coupled variational autoencoder and derives an information-bottleneck decomposition by ELBO surgery, while the separately-authored VJEPA of Huang [2026] (distinct from Meta’s V-JEPA) equips the predictor with a learned covariance and a KL-to-prior term and proves an objective-side collapse-avoidance result. Both are, in our terms, the easy case, i.e., they build in the very stochasticity active inference presupposes, and, as Huang [2026] makes explicit, model belief dynamics only, omitting the sensory likelihoods, preferences, and policy evaluation that a full active-inference agent requires. The contribution of this paper is the hard case: the deterministic, non-contrastive architecture that every deployed JEPA actually instantiates, in which the probabilistic structure must be recovered rather than assumed. It further supplies the expected-free-energy layer that these belief-only formulations leave out, namely pragmatic value, epistemic value, and policy-as-inference. Where Mazzaglia et al. [2021] establish one route to exact latent AIF, the contrastive one built around an InfoNCE critic, our result covers the route the deployed JEPA world-model ecosystem already instantiates (V-JEPA 2, DINO-WM, PLDM, LeWorldModel) and states the condition under which that objective is a valid free energy. Two results from model-based control bear on our learned-policy regime (Section 4.5). Georgiev et al. [2024] show that a well-regularised world model induces a smoother 
+
+optimisation landscape than the true dynamics, making first-order policy extraction effective where gradient-free planners (CEM, MPPI) are the default; our correspondence supplies the regulariser-side condition they leave open, since the embedding condition number κ measures that conditioning and only isotropy drives it to one. Wang et al. [2023] show that the optimal goal-reaching cost-to-go is a quasimetric, asymmetric because reachability is irreversible. This does not contradict Proposition 5, since pragmatic value is a log goal prior and preferences over states are symmetric by construction, but it does bound the regime in which the goal cost may be read as a value estimate (Section 5.1). 
+
+Information bottleneck and mutual-information estimation. The IB principle [Tishby et al., 2000] underlies both deep variational IB [Alemi et al., 2017] and multi-view IB [Federici et al., 2020]. Poole et al. [2019] survey variational MI bounds, and Kolchinsky et al. [2019] expose the degeneracy of MI for deterministic encoders, the issue that the constant-noise model resolves and that motivates the entropy-maximisation view we adopt. The same work documents two further IB pathologies: the failure to recover the IB curve under deterministic targets and the degenerate landscape of the IB Lagrangian. Neither bears on the present construction, because our informativeness term is a 
+
+single entropy quantity h(Z) rather than a β-weighted IB trade-off whose curve must be recovered; we maximise one entropy under a distributional constraint, not a two-term information trade-off. Relative to all of the above, our contribution is to make the JEPA/AIF correspondence exact for a non-contrastive, deterministic encoder by controlling the prior-miscalibration gap, and to trace the consequences through multi-step planning. Because the JEPA line of work shares authorship, Appendix C states precisely how this paper differs from each prior result and discusses the relevance of the active-inference perspective it introduces. 
+
+# 3 Background 
+
+Notation. All logarithms are natural. The latent space is Z = Rd and the observation space is X .An encoder fϕ : X → Z maps an observation xt to an embedding zt = fϕ(xt), and a predictor 
+
+Pξ : Z × A → Z produces ˆzt = Pξ (zt−1, a t−1). We write qϕ(st | xt) for the encoder/posterior, 
+
+pξ (st | st−1, a t−1) for the transition prior, h(·) for differential entropy, I(·; ·) for mutual information, and DKL [· ∥ · ] for the Kullback–Leibler divergence. Throughout, O(·) denotes the Landau (big-O)order symbol. 4Fact 1 (AIF free energy). An AIF agent minimises the variational free energy, which decomposes as [Mazzaglia et al., 2022, Smith et al., 2022] 
+
+F = DKL [qϕ(st | xt) ∥ pξ (st | st−1, a t−1)] 
+
+| {z }
+
+> complexity
+
+− Eqϕ [log p(xt | st)] 
+
+| {z }
+
+> accuracy
+
+. (1) Replacing the intractable decoder by a mutual-information term and adding log p(xt) yields the equivalent MI-form F + = DKL [qϕ(st | xt) ∥ p(st)] − I(St; Xt), an instance of the IB Lagrangian [Tishby et al., 2000, Mazzaglia et al., 2021]. The informativeness term I(St; Xt) is generally intractable; how it is estimated determines the agent’s prior calibration. 
+
+Fact 2 (constant-noise encoders). A strictly deterministic encoder gives a degenerate I(Z; X) = +∞. The standard remedy [Kolchinsky et al., 2019] adds fixed, small, isotropic observation noise, 
+
+Z = fϕ(X) + ϵ with ϵ ∼ N  0, σ 2noise Id
+
+, so that the conditional entropy is a constant Cϵ = 
+
+> d
+> 2
+
+ln(2 πe σ 2noise ) independent of ϕ. Then I(Z; X) = h(Z) − Cϵ, and 
+
+arg max  
+
+> ϕ
+
+I(Z; X) = arg max  
+
+> ϕ
+
+h(Z). (2) Maximising AIF informativeness is therefore equivalent to maximising the marginal differential entropy of the embeddings; any regulariser that maintains h(Z) serves as the informativeness proxy. The status of σnoise as an interpretive device rather than a property of deployed JEPAs is discussed in §5.1. 
+
+Fact 3 (VICReg as an upper-bound entropy proxy). Shwartz-Ziv et al. [2023] show that VICReg’s variance/covariance terms constitute the Gaussian entropy estimator ˆHVR (Z) ≈ 12
+
+P 
+
+> k
+
+ln ˆ σ2 
+
+> k
+
+(plus a constant). Combining Hadamard’s inequality [Horn and Johnson, 2012, Thm. 7.8.1] with the maximum-entropy theorem [Cover and Thomas, 2006, Thm. 8.6.5] gives the sandwich 
+
+ˆHPD (Z)
+
+| {z }
+
+> lower bound
+
+≤ h(Z) ≤ 12 ln |Σ| + C
+
+| {z }   
+
+> =hN(Z)(LogDet, tight UB)
+
+≤ 12
+
+P 
+
+> k
+
+ln σ2 
+
+> k
+
++ C
+
+| {z }
+
+> VICReg (loose UB)
+
+, (3) where hN (Z) = 12 ln |2πe Σ| is the Gaussian reference entropy and Σ = Cov( Z). VICReg and LogDet bound h(Z) from above ; PairDist bounds it from below. Maximising an upper bound is unsafe in the sense of Section 1. 
+
+The Gaussian bridge. The complexity term connects to the prediction MSE used in practice through a standard Gaussian identity. For qε = N (μq , εI d) and p = N  μp, σ 2Id
+
+,
+
+DKL [qε ∥ p] = 12σ2 ∥μq − μp∥22 + d
+
+2
+
+ εσ2 − 1 − ln εσ2
+
+
+
+, (4) and since the second term is independent of μp, the optimiser sets coincide: arg min ξ DKL [qε ∥ pξ ] = arg min ξ ∥μq − μpξ ∥22 [Bishop, 2006, §10.1.1]. With μq = zt and μpξ = ˆ zt, the JEPA prediction loss ∥ˆzt − zt∥2 is optimisation-equivalent to the AIF complexity term. When variances depart from isotropy by ratios 1 + δk, the residual is O(δ2); this residual will be eliminated exactly under isotropy (Corollary 1). 
+
+# 4 Method: The SIGReg–AIF Correspondence 
+
+We first define the prior-miscalibration gap and decompose it (§4.1); we then state the single-step correspondence theorem (§4.2), extend it to multi-step planning and the expected free energy (§§4.3– 4.4) and to a learned policy (§4.5), and finally derive the testable predictions (§4.7). The full proof development for the multi-step and expected-free-energy results is given in Appendix A. Table 1 fixes the correspondence at the level of objects: each Active Inference quantity, its JEPA world-model counterpart, and the equation in this paper where the identification is made. The table is the reading key for the rest of the section; the single row with no JEPA counterpart, the state epistemic value, is the paper’s central structural finding (Proposition 6). 5Table 1: The Active Inference ↔ JEPA dictionary. Each row pairs an AIF object with its JEPA world-model counterpart under the constant-noise model and the defining relation in this paper. Informativeness and the state-epistemic value are listed separately: the former is enforced by SIGReg, the latter has no counterpart in any current JEPA world model.                                                                   
+
+> AIF object / role JEPA counterpart Defining relation Hidden state stEmbedding zt=fϕ(xt)encoder; Fact 1 Observation xtInput observation Raw sensory data xt∈ X
+> Action atPredictor action arg. ( Pξ:Z× A → Z)Control command at∈ A
+> Policy πAction sequence / learned policy §4.5 Transition prior p(zτ|zτ−1, a τ−1)Gaussian dynamics about PξEq. (6) Posterior qϕ(zt|xt)Encoder +constant noise Fact 2 Complexity DKL [qϕ∥pξ]Prediction MSE (Gaussian bridge) Eq. (4) Informativeness I(Z;X)SIGReg-enforced I⋆Def. 2, Prop. 3 Pragmatic value Latent goal cost ∥zτ−zg∥2Prop. 5 Param. info gain Ensemble predictive variance §4.4
+> State epistemic value h(Zτ|π)−Cϵabsent in JEPA Prop. 6
+
+4.1 The prior-miscalibration gap and the entropy-estimator hierarchy Definition 1 (Prior-miscalibration gap) . For an entropy proxy ˆH(Z) used in place of h(Z) in the AIF informativeness term, the prior-miscalibration gap is ∆ ˆH (Z) := h(Z) − ˆH(Z). A lower-bound proxy has ∆ ≥ 0 (it underestimates achievable informativeness); an upper-bound proxy has ∆ ≤ 0 (it overpromises, and maximising it need not increase h(Z)). 
+
+Proposition 1 (Three-source gap decomposition) . For any embedding distribution pZ with finite covariance Σ ≻ 0 and Gaussian reference entropy hN (Z) = 12 ln |2πe Σ|,
+
+∆ ˆH (Z) = h(Z) − hN (Z)| {z }  
+
+> (I) non-Gaussianity ≤0
+
++ hN (Z) − ˆH(Z)| {z }
+
+> (II)+(III) estimation
+
+. (5) Gap I is ≤ 0 with equality iff pZ is Gaussian (maximum-entropy theorem, Cover and Thomas, 2006, Thm. 8.6.5). For a variance-based proxy ˆH(Z) = 12
+
+P 
+
+> k
+
+ln σ2 
+
+> k
+
++ d 
+
+> 2
+
+ln 2 πe , the estimation gap contains an off-diagonal term 12 ln |Σ| − 12
+
+P 
+
+> k
+
+ln σ2 
+
+> k
+
+≤ 0 (Gap II), which is 0 iff Σ is diagonal (Hadamard’s inequality, Horn and Johnson, 2012, Thm. 7.8.1); the remaining term (Gap III) is the estimator’s own error and is 0 iff ˆH = hN exactly. 
+
+Scope of the decomposition, and two ways a gap can be absent. The decomposition routes the total gap through the Gaussian reference hN and so characterises Gaussian-reference (covariance-based) proxies, namely VICReg and LogDet. An estimator that invokes no Gaussian reference does not incur Gaps I–II at all: PairDist [Kolchinsky and Tracey, 2017] bounds the mixture entropy directly from pairwise distances between components, without moment-matching pZ to a single Gaussian and without diagonalising Σ, so its entire slack is Gap III. This is distinct from the gap’s zero condition 
+
+holding. Gaps I and II vanish iff pZ is Gaussian and Σ is diagonal respectively, which are properties of the distribution , not of the estimator; no estimator makes them true merely by declining to use them. Only SIGReg drives pZ to satisfy them. Accordingly, Table 2 marks a gap not incurred when the estimator never invokes that source, and enforced when the estimator makes the zero condition hold. The hierarchy is monotone in the first sense (two sources incurred, then one, then none) and SIGReg alone supplies the second. 
+
+Proof sketch. Insert ±hN (Z) for (5) . Gap I follows from the maximum-entropy theorem; among distributions with covariance Σ the Gaussian uniquely maximises differential entropy. Gap II follows from Hadamard’s inequality |Σ| ≤ Q 
+
+> k
+
+σ2 
+
+> k
+
+with equality iff Σ is diagonal. Gap III is the residual by construction. 6Table 2: The entropy-estimator hierarchy as progressive elimination of prior-miscalibration sources. “UB”/“LB” denote upper/lower bounds on the latent entropy. The gap entries distinguish two different ways a gap can be absent, a distinction the estimators do not share. Not incurred : the estimator’s construction never invokes that source, so no looseness arises from it. LogDet computes ln |Σ| and so never makes the diagonal approximation; PairDist bounds the mixture entropy directly from pairwise component distances and so never invokes a Gaussian reference at all. Enforced : the estimator actively drives pZ to satisfy the gap’s zero condition (Gaussianity, diagonality). Only SIGReg does the latter. Being safe is therefore not the same as enforcing : PairDist is safe (lower bound) but does not shape pZ ; SIGReg is both. Figure 4 renders the same distinction as the “Gaussian not assumed / assumed / enforced” axis.                             
+
+> Level Proxy Bound type Gap I Gap II Gap III (non-Gauss.) (off-diag.) (estim.) 0VICReg [Bardes et al., 2022] UB (loose) incurred incurred —1LogDet [Shwartz-Ziv et al., 2023] UB (tight) incurred not incurred small 2PairDist [Kolchinsky and Tracey, 2017] LB not incurred not incurred finite-N
+> 3SIGReg [Balestriero and LeCun, 2025] enforce. enforced enforced enforced
+
+Proposition 2 (Bound type and AIF-bound preservation) . Let ˆF + be the proxy free energy obtained by substituting ˆH(Z) for h(Z). Then ˆF + − F + = ∆ ˆH (Z), so: (i) a lower-bound proxy ( ˆH ≤ h, e.g. PairDist) gives ˆF + ≥ F + ≥ − ln p(x), so the AIF bound is preserved by construction ; (ii) an upper-bound proxy ( ˆH ≥ h, e.g. VICReg or LogDet) gives ˆF + ≤ F +,which no longer certifies ˆF + ≥ − ln p(x): the AIF bound is not guaranteed to be preserved . The inequality may still hold for a particular pZ ; what is lost is the guarantee, and with it the licence to minimise ˆF + as a surrogate for surprise. Maximising an upper bound is therefore unsafe rather than necessarily wrong: the slack ˆH − h ≥ 0 can grow under optimisation (Remark 1). 
+
+Remark 1 (Why an upper bound is unsafe: a worked case) . The failure in Proposition 2(ii) is possible ,not inevitable, and that possibility is precisely what makes an upper bound unsafe to maximise. Because ˆH − h ≥ 0, an optimiser can raise ˆH by inflating the slack instead of the entropy. Let pZ be uniform on an axis-aligned hypercube with per-coordinate variance σ2. Its off-diagonal covariances vanish and its marginal variances are σ2, so the VICReg proxy ˆHVR (Z) = 12
+
+P 
+
+> k
+
+ln σ2 
+
+> k
+
++ C assigns it exactly the value it assigns an isotropic Gaussian of the same variance. The true entropies differ, however: h(Z) = d ln( √12 σ) for the hypercube against hN (Z) = d 
+
+> 2
+
+ln(2 πeσ 2) for the Gaussian, and 2πe > 12 , so the hypercube is strictly sub-maximal by the full non-Gaussianity gap [Balestriero and LeCun, 2025, Thm. 3]. Maximising ˆHVR therefore exerts no pressure toward the entropy maximiser: the proxy can sit at its maximum while h(Z) does not. Nothing here forces 
+
+ˆF + < − ln p(x) for any given input; what is lost is the certificate. A lower bound admits no such manoeuvre, since raising ˆH ≤ h can only raise h.
+
+The hierarchy. Proposition 1 indexes four regularisers by which gap sources they incur , and Proposition 2 adds the orthogonal bound-type axis. Table 2 summarises the resulting hierarchy (Figures 2 and 4 render the bound-type sandwich and the two-dimensional design space). VICReg (diagonal Gaussian proxy) incurs Gaps I and II and is an unsafe upper bound; LogDet (full-covariance proxy) does not incur Gap II, but still incurs Gap I and remains an unsafe upper bound; PairDist (non-parametric) incurs neither, and is a safe lower bound, but it enforces no distributional shape; and SIGReg enforces the isotropic Gaussian directly, making all three zero conditions hold. Safety and enforcement are therefore independent properties, and only SIGReg has both. 
+
+Definition 2 (SIGReg; Balestriero and LeCun, 2025) . Sketched Isotropic Gaussian Regularisa-tion enforces pZ ≈ N (0 , I d) by random-projection Gaussianity testing: for unit directions 
+
+A ⊂ S d−1 and a univariate normality statistic T (the Epps–Pulley test, Epps and Pulley, 1983), SIGReg T (A, {zn}) = 1
+
+> |A|
+
+P 
+
+> a∈A
+
+T ({a⊤zn}). The hyperspherical Cramér–Wold the-orem [Cramér and Wold, 1936] guarantees that matching all one-dimensional projections to a Gaussian is sufficient for a full distributional match. 7Proposition 3 (SIGReg eliminates the gap) . Under Fact 2, if SIGReg enforces pZ = N  0, cd Id
+
+,where c := tr(Σ Z ) is the target total variance, so the per-coordinate variance is c/d , then 
+
+h(Z) = h⋆(c, d ) := d 
+
+> 2
+
+ln(2 πe c/d ), the gap is exactly zero ( ∆ = 0 with Gaps I, II, III all zero), and the informativeness term attains its constrained maximum I(Z; X) = h⋆(c, d ) − Cϵ =: I⋆.Gaussianity alone closes the gap ( ∆ = 0 ); isotropy additionally maximises the value of the closed bound. 
+
+4.2 The single-step correspondence theorem Definition 3 (SIGReg-modular free energy) . Under the constant-noise model with deterministic 
+
+zt, ˆzt, the SIGReg-modular free energy is FSIG -mod = 12σ2 ∥ˆzt − zt∥22 + CKL − λ I ⋆ [1 −
+
+SIGReg T (A, {zn})] , where CKL is the μp-independent second term of the Gaussian bridge (4) and I⋆ = h⋆(c, d )−Cϵ (Proposition 3); both are constants in (ϕ, ξ ). This is the AIF reading of the LeJEPA objective LLeJEPA = ∥ˆzt − zt∥2 + λSIG SIGReg T (A, {zn}) [Balestriero and LeCun, 2025], up to (ϕ, ξ )-independent additive constants and the rescaling λSIG = 2 σ2λ I ⋆ (with 
+
+I⋆ > 0, i.e. c/d > σ 2noise , which holds for the small fixed noise of Fact 2): once enforcement succeeds, the informativeness is not estimated but guaranteed to equal the constant I⋆ (Figure 1 renders this reading of the objective). 
+
+Theorem 1 (SIGReg–AIF correspondence) . Under the constant-noise model (Fact 2), the Gaus-sian encoder family, and successful SIGReg enforcement ( pZ = N  0, cd Id
+
+ in the population limit M, N → ∞ ), taking λ = 1 in Definition 3: (i) Zero gap. ∆SIG := h(Z) − h⋆(c, d ) = 0 ; Gaps I, II, III all vanish. (ii) Exact IB form (within the constant-noise model). FSIG -mod SIGReg=0 = 12σ2 ∥ˆzt −zt∥2 +
+
+CKL − I⋆ = F +, where the complexity term 12σ2 ∥ˆzt − zt∥2 + CKL equals DKL [qϕ ∥ pξ ]
+
+exactly (not merely in gradient) because the Gaussian bridge (4) has zero anisotropy error under isotropy (Corollary 1), and the informativeness term equals I(Z; X) = I⋆ exactly because SIGReg enforces the maximum-entropy distribution. (iii) AIF bound preserved. FSIG -mod = F + ≥ − ln p(x). By contrast FVR -mod ≤ F +
+
+(Proposition 2(ii)), so under VICReg the bound is no longer guaranteed. (iv) Contrastive equivalence. FSIG -mod attains the same guarantees as the contrastive free energy FNCE [Mazzaglia et al., 2021] through the non-contrastive pathway. 
+
+Proof sketch. From the MI-form F + = DKL [qϕ ∥ pξ ] − h(Z) + Cϵ, enforcement gives h(Z) = 
+
+h⋆(c, d ) (Proposition 3), hence (i); isotropy makes the Gaussian-bridge (4) exact, and substituting it together with I(Z; X) = I⋆ into the MI-form gives (ii) with all additive constants carried explicitly; (iii) follows from Proposition 2 at ∆ = 0 ; (iv) by comparison with the InfoNCE optimum. The multi-step extension and full derivations are in Appendix A; Table 4 (§5.1) records which parts of this and the other main results are exact under the main-text assumptions and which are bounded or deferred. 
+
+Remark 2 (Which assumptions do the work) . Theorem 1 is exact within its hypotheses, and it is worth naming what each one does. The constant-noise model (Fact 2) is what makes I(Z; X) well defined at all for a deterministic encoder, so it is presupposed by every information-theoretic statement here; it is assumed identically for VICReg and for SIGReg, and therefore does no work in the comparison between them. Successful SIGReg enforcement does the real work: it supplies pZ = N  0, cd Id
+
+
+
+and with it, simultaneously, the zero entropy gap (i), the exactness of the Gaussian bridge (ii) via Corollary 1, and the bound preservation (iii). The population limit M, N → ∞ is what makes enforcement exact rather than approximate; at finite (M, N ) the guarantee degrades gracefully and linearly in the enforcement residual (Corollary 2), at the rate of Proposition 4, rather than failing discontinuously. Away from these conditions the correspondence is approximate, not void: Table 4 records the status result by result. 8Corollary 1 (Dual tightening) . Isotropy ( Σ = cd Id) closes the entropy gap (Gap II) and the Gaussian-bridge approximation error simultaneously , because both are governed by the same anisotropy quantity: the off-diagonal/eigenvalue spread of Σ. Hence SIGReg tightens the informativeness and complexity terms of the free energy with a single distributional constraint; under VICReg both carry an O(δ2) residual. 
+
+Corollary 2 (Graceful degradation under approximate enforcement) . Suppose SIGReg enforce-ment is only approximate, leaving a residual gap ∆SIG = ϵ ≥ 0 and embedding covariance Σ with anisotropy ∥Σ − cd Id∥. Then (i) by Proposition 2 the AIF-bound slack is exactly | ˆF + − F +| = ϵ,linear in the residual rather than catastrophic; and (ii) the pragmatic-value distortion is first order in the anisotropy ∥Σ − cd Id∥, the same quantity that governs both gaps by Corollary 1, recovering the VICReg O(δ2) expression as the special case in which the eigenvalue spread equals δ. The qualitative distinction is the load-bearing point: under SIGReg ϵ is penalised directly by the objective and driven toward zero along the optimisation path (self-correcting), whereas under VICReg the anisotropy δ is structural and irreducible , a fixed floor present even at the optimum. 
+
+Proof sketch. Part (i) is immediate from Proposition 2: the proxy free energy differs from F + by exactly the substituted gap, here ϵ. For (ii), expand the Gaussian-bridge and informativeness terms about the isotropic point; Corollary 1 identifies their common first-order coefficient as the anisotropy 
+
+∥Σ − cd Id∥, and the VICReg case is the diagonal-but-unequal-variance specialisation with spread δ.The self-correction claim is that SIGReg’s objective contains SIGReg T , which penalises ϵ directly, whereas VICReg’s variance-covariance penalty admits an anisotropic optimum. The constant in (ii) inherits the finite-d caveat of Remark 3. 
+
+Proposition 4 (Finite-sample rate) . With M projections, batch size N , and projected-density Sobolev regularity α on Sd−1, |h(Z) − h⋆(c, d )| = O M −2α/ (d−1)  + O N −1/2, combining the directional discrepancy rate of Balestriero and LeCun [2025, Thm. 5], a Cramér–Wold conversion [Cramér and Wold, 1936], an entropy–total-variation continuity bound [Bobkov and Madiman, 2011], and the √N U-statistic rate [Hoeffding, 1948, Serfling, 1980]. Because the isotropic-Gaussian target is C∞, α grows during training and the M -dependent term accelerates. 
+
+Remark 3 (Honest status of the rate) . Three links in Proposition 4 invoke published results directly and are rigorous; the quantitative Cramér–Wold step, converting uniform directional convergence to a multivariate total-variation bound for the non-independent random directions SIGReg uses, is classical only in its qualitative form. A fully explicit finite-d constant requires a quantitative multivariate Berry–Esseen / Stein argument [Bonis, 2020, Vershynin, 2018] and may be looser than the displayed rate suggests. This does not affect the qualitative conclusion that the gap vanishes as 
+
+M, N → ∞ ; we flag it as a point for a camera-ready strengthening. 
+
+4.3 From F to G: multi-step planning and the expected free energy 
+
+JEPA world models exist to plan: at deployment the predictor is unrolled H steps and scored against a goal, which in AIF corresponds to minimising the expected free energy (EFE) Gπ over policies. 
+
+Gπ adds two elements absent from the single-step F : a multi-step temporal structure in which errors compound, and an epistemic-value term that drives exploration. Two questions follow: does the per-step KL–MSE exactness compose across the horizon, and does each EFE term map to a JEPA planning-cost component? 
+
+Multi-step complexity. Three deployment regimes bound how the per-step exactness composes. Under teacher-forcing , where each prediction is grounded in the true encoded observation, the per-step Gaussian-bridge exactness composes exactly. Under free autoregressive rollout , where the predictor is unrolled on its own output, two errors enter: a small-noise Jacobian term scaling with the predictor sensitivity, and a compounding term governed by the predictor’s Lipschitz constant LP
+
+(the factor by which a latent perturbation grows per predicted step). Under model-predictive control 
+
+with replanning interval m, the rollout only scores candidate actions and the agent re-encodes a true 9observation every m steps, so the effective autoregressive horizon is m, not the full planning horizon 
+
+H. The following theorem collects the three regimes. 
+
+Theorem 2 (SIGReg–AIF multi-step correspondence) . Let the encoder and predictor satisfy the constant-noise model and successful SIGReg enforcement (the hypotheses of Theorem 1), and let the predictor be LP -Lipschitz in its latent argument. Under model-predictive control with planning horizon H and replanning interval m:(i) Teacher-forced exactness. The teacher-forced multi-step prediction cost is an exact proxy for the joint trajectory complexity DKL [q ∥ p], and the AIF bound is preserved at the trajectory level. (ii) Autoregressive control. The autoregressive planning cost approximates the trajectory com-plexity with total error bounded by a Jacobian term of order Hε 2/σ 2 plus a compounding term of order L2HP ¯ϵ2/σ 2, where ¯ϵ is the mean per-step prediction error. (iii) Executed-trajectory exactness under deployment. The same bound holds with m in place of H; in particular at m = 1 (the PLDM/LeWorldModel default) both error terms vanish and the executed trajectory satisfies the exact per-step correspondence of Theorem 1. (iv) Ranking fidelity. The planning cost orders candidate action sequences faithfully, with zero per-step ranking distortion. Replacing SIGReg with VICReg adds an O(Hδ 2) anisotropy term to every bound, including a nonzero per-step ranking distortion. The full development is given in Appendix A (Theorem A.6). The practical reading of part (iii) is the one that matters for deployed systems. The compounding term 
+
+L2HP in part (ii) is vacuous only for an expansive predictor over a long free horizon; two standard facts remove that worry. First, under one-step-replanning MPC the effective horizon is m = 1 , so by part (iii) both error terms vanish on the executed trajectory regardless of LP . Second, spectral normalisation of the predictor bounds LP ≤ 1 directly, making the compounding term non-expansive even under free rollout. Thus, under standard deployment, the regulariser choice factors out of the horizon-dependent error budget: SIGReg yields an exact multi-step correspondence with zero compounding error, while VICReg’s anisotropy distortion persists at every step. 
+
+4.4 The expected free energy of a JEPA world model 
+
+The multi-step result above concerns the complexity term across a horizon. Planning, however, scores trajectories against a goal, which in AIF is the expected free energy (EFE) Gπ . We now instantiate the EFE under the JEPA generative model and read off its terms, which is where the correspondence becomes most legible. A JEPA world model with encoder fϕ, predictor (ensemble) Pξ , and dynamics noise σ2 is an AIF generative model 
+
+p(x1: H , z 1: H | z0, π, ξ ) = Q 
+
+> τ
+
+p(xτ | zτ ) p(zτ | zτ −1, a τ −1, ξ ), (6) with Gaussian dynamics p(zτ | zτ −1, a τ −1) = N  Pξ (zτ −1, a τ −1), σ 2Id
+
+, the constant-noise obser-vation model of Fact 2, and Gaussian goal preferences p(x | C) ∝ exp( − 12σ2
+
+> g
+
+∥fϕ(x) − zg ∥2). Under the mean-field posterior q(z1: H ) = Q 
+
+> τ
+
+N  fϕ(xτ ), ε 2Id
+
+ the per-step EFE decomposes equivalently as epistemic-plus-pragmatic value or as ambiguity-plus-risk [Smith et al., 2022, Mazzaglia et al., 2022]. We take each term in turn; the expectation calculations are routine and are deferred to Appendix A.5, with the term-by-term map summarised in Figure 3. 
+
+Pragmatic value. The headline term is the goal cost. 10 Proposition 5 (Pragmatic value under SIGReg) . With Gaussian goal preferences p(x | C) ∝
+
+exp( − 12σ2
+
+> g
+
+∥fϕ(x) − zg ∥2), the pragmatic value at step τ is −Eq(xτ |π)[ln p(xτ | C)] = 12σ2
+
+> g
+
+∥zτ −
+
+zg ∥2 + const . Under SIGReg the Euclidean goal cost is an exact KL proxy, 
+
+DKL 
+
+N  zτ , ε 2Id
+
+ N  zg , ε 2Id
+
+ = 12ε2 ∥zτ − zg ∥2 (zero anisotropy error ), (7) whereas under VICReg it carries an O(δ2) distortion from dimension-dependent precision weighting. PLDM’s goal cost and DINO-WM’s terminal cost are instances of this term. This reading presumes the latent goal distance faithfully tracks the world’s goal distance; Section 4.6 states the identifiability precondition under which that holds. 
+
+The remaining terms. The ambiguity is the constant Cϵ, independent of policy and regulariser. The risk reduces to the same MSE-based functional as the pragmatic value, exact under SIGReg and anisotropic under VICReg. The parameter information gain maps to ensemble predictive variance, 
+
+I(ξ; Zτ | zτ −1, a τ −1) ≈ 12σ2
+
+P 
+
+> j
+
+Var k[P kξ (·)j ], which is exactly PLDM’s uncertainty cost. The one term with no JEPA counterpart is the state epistemic value. 
+
+Proposition 6 (The state-epistemic gap) . Under the constant-noise model the state-epistemic value is Iq (Zτ ; Xτ | π) = h(Zτ | π) − Cϵ, a coverage signal driving the agent toward policies that maximise future-state entropy. Under SIGReg the marginal satisfies h(Zτ ) = h⋆(c, d ), so I⋆
+
+is a principled upper bound; for a specific policy h(Zτ | π) ≤ h⋆(c, d ). No current JEPA world model computes this quantity ; it is the primary structural gap between AIF and JEPA planning. These two informativeness-related quantities must not be conflated. The single-step informativeness 
+
+I(Z; X) = I⋆ is what SIGReg enforces (Proposition 3): it pins the marginal entropy of the embed-dings to its maximum and is fully accounted for in the correspondence. The multi-step state-epistemic value h(Zτ | π) − Cϵ (Proposition 6) is a different object, a policy-conditioned coverage signal over future states, and it is precisely the term that no JEPA world model computes. SIGReg guaranteeing the former says nothing about a JEPA agent possessing the latter. 
+
+The consolidated objective. Substituting the four terms into the per-step EFE collects the entire JEPA planning cost into a single expression, 
+
+Gfull  
+
+> π
+
+= 12σ2
+
+> g
+
+X
+
+> τ
+
+∥zτ − zg ∥2
+
+| {z }  
+
+> ∝Cgoal (goal cost)
+
+− X
+
+> τ
+
+ h(Zτ | π) − Cϵ
+
+| {z }
+
+> state epistemic (absent in JEPA)
+
+− 12σ2
+
+X
+
+> τ
+
+X
+
+> j
+
+Var k[P kj ]
+
+| {z }  
+
+> ∝Cunc (ensemble var.)
+
++ const . (8) Equation (8) is the paper’s central reading of JEPA planning: the deployed planning cost 
+
+Cgoal + β C unc is exactly the expected free energy Gfull  
+
+> π
+
+minus the one term no JEPA world model computes: the state-epistemic coverage signal. Under SIGReg each retained term is exact (The-orem 1, Proposition 5); under VICReg the pragmatic, risk, and ensemble terms each carry the 
+
+O(δ2) anisotropy distortion. The absent term is not a defect of the correspondence but its sharpest empirical prediction: it names precisely what a JEPA agent would have to add to become a complete active-inference agent (Proposition 6). 
+
+4.5 The learned-policy regime 
+
+Sections 4.3 and 4.4 address what the agent evaluates ; AIF also specifies how it acts : action selection is inference, with a posterior q(π) ∝ exp( −ζG π ) [Smith et al., 2022], which CEM/MPPI only approximate. A learned goal-conditioned policy makes this exact. 11 Proposition 7 (Amortised EFE policy) . Let πϕ(at | zt, z g ) minimise Lπ =
+
+Ea∼πϕ [P 
+
+> τ
+
+γτ GSIG ,(τ ) 
+
+> π
+
+] − 1 
+
+> ζ
+
+H[πϕ]. Then Lπ = 1 
+
+> ζ
+
+DKL [πϕ ∥ π∗] − 1 
+
+> ζ
+
+ln ZH with Boltzmann optimum π∗ ∝ exp( −ζG SIG ); the policy trains against the exact EFE under SIGReg (Theorem 1, Proposition 5) and against an O(δ2)-distorted EFE under VICReg. The precision ζ controls action entropy and maps to the AIF policy precision; CEM is the ζ → ∞ limit and MPPI with temperature λ is ζ = 1 /λ , so the learned policy generalises both. 
+
+The policy network supplies an explicit AIF habit prior and computable action entropy that MPC lacks, and acts in a single forward pass rather than thousands of model evaluations per step. A policy 
+
+ensemble partially proxies the state-epistemic value of Proposition 6. MPC and the learned policy are complementary cases of the same correspondence: MPC optimises the planning cost and so realises the AIF policy posterior of Proposition 7 at the zero-temperature limit ζ → ∞ , giving pointwise 
+
+exactness along the single executed trajectory (Appendix A, Corollary A.5), whereas a learned stochastic policy realises the finite-temperature posterior itself, giving distributional coverage over behaviours. Under SIGReg both are exact, the per-step proxy under MPC and the training objective under the learned policy, while VICReg distorts each by O(δ2). The learned-policy direction carries implementation-timeline risk, not architectural risk: the correspondence is exact at the optimum, and the open question is amortisation capacity and latency, not whether the objective is correct. Evidence from model-based control bounds that risk: Georgiev et al. [2024] extract policies from pre-trained world models by first-order gradients in minutes per task, outperforming planners with ground-truth dynamics, because a well-regularised model induces a smoother optimisation landscape than the true dynamics. Our correspondence names the regulariser-side condition for that smoothness: gradients of 
+
+Lπ propagate through the latent geometry, whose conditioning is measured by κ, so isotropy leaves the amortised objective well-conditioned while VICReg’s anisotropy stretches it along the dominant covariance directions. This is structural rather than a theorem of the present paper, and it sharpens TP1: first-order amortisation should be better conditioned under SIGReg than under VICReg. 
+
+4.6 The precondition: linear identifiability of the latent 
+
+The pragmatic-value reading (Proposition 5) and the planning correspondence presume that Euclidean distance in the embedding is a faithful surrogate for distance in the world’s latent state, so far grounded only on the constant-noise model and SIGReg isotropy. A recent identifiability result supplies the missing recovery guarantee. Klindt et al. [2026] consider a Gaussian world (independent latents observed through an unknown nonlinear mixing, positive pairs from an Ornstein–Uhlenbeck transition) and prove that any encoder satisfying the two LeJEPA objectives is linearly identifiable ,
+
+h(z) = Qz for orthogonal Q, recovering the latent up to a rotation; their planning theorem shows that under h(z) = Qz any finite-horizon problem with O(n)-invariant costs has identical value and optimal plan in the learned and true latent. Squared Euclidean goal distance is exactly such a cost, so the latent goal distance is a monotone image of the true-state goal distance by construction: the pragmatic-value proxy acquires an external, formally verified precondition the present theory previously assumed. Two qualifications sharpen the position. First, identifiability is regulariser-agnostic at the optimum: SIGReg, VICReg, and InfoNCE all attain near-perfect linear recovery on Gaussian-latent data [Klindt et al., 2026], so it is not the axis on which to prefer SIGReg; the discriminating axis remains the estimator’s bound type (Proposition 2). The methods separate off the ideal along exactly the gap structure of Section 4.1, independent corroboration of the hierarchy rather than competition with it. Second, the guarantee is proven for matched dimension, whereas the theory’s anchor, LeWorldModel (d = 192 ), is strongly over-complete ( d ≫ n). In that regime the embedding has far more dimensions than the world has latent degrees of freedom, so driving the embedding to an isotropic Gaussian does not by itself fix which subspace carries the recovered latent. Whether isotropy nonetheless yields usable approximate identifiability there is open (Section 5). The practical consequence is a data-regime condition: latent distances are physically meaningful only under sufficiently broad state coverage. 12 Table 3: Testable predictions. Each ties a qualitative SIGReg-vs-VICReg contrast to a single measurement and a source result. κ is the embedding covariance condition number; ρS a Spearman rank correlation. The Tier column uses the three-way vocabulary of Table 4. Exact : the prediction reads directly off an exact-in-scope result. Asymptotic : it follows from the O(δ2) scaling of the anisotropy term. Structural : it is a behavioural consequence of the correspondence rather than a deductive corollary, and is correspondingly the most in need of empirical test. TP5 additionally inherits the identifiability precondition of §4.6, which is proven only for matched dimension.                                 
+
+> ID Prediction (SIGReg vs. VICReg) Measurable Tier Source TP1 κSIG ≈1≪κVR (embedding isotropy) condition num-ber
+> exact Thm. 1(i), Prop. 3 TP2 higher ρSbetween planning cost and success Spearman ρSstructural Thm. 2 TP3 κcorrelates with degradation under VI-CReg; flat under SIGReg
+> κvs. success asymptotic Cor. 1 TP4 better discrimination of nearby goals goal-pair suc-cess structural Prop. 5 TP5 latent goal distance tracks physical dis-tance more tightly
+> ρS(dlat , d phys )structural Prop. 5 +§4.6
+
+4.7 Testable predictions 
+
+The correspondence makes predictions that differ by kind between SIGReg and VICReg. Table 3 collects the five most directly measurable ones, each tied to the result that entails it. These are stated here as theoretical consequences of the correspondence; their empirical evaluation is left to separate work. 
+
+# 5 Conclusion and Future Work 
+
+We have argued that the anti-collapse regulariser is not an implementation detail but the component that determines whether a JEPA world model’s objective is a valid Active Inference free energy. Organising VICReg, LogDet, PairDist, and SIGReg by a three-source prior-miscalibration gap shows that bound type governs whether the AIF surprise bound survives, and that SIGReg is the first non-contrastive regulariser that is simultaneously safe and gap-free. The correspondence theorem makes this precise: under the constant-noise model and successful SIGReg enforcement, the gap is exactly zero, the objective is an exact information bottleneck, the bound is preserved, and the latent goal cost is an exact isotropic proxy for the pragmatic value, while VICReg leaves an irreducible 
+
+O(δ2) gap. The result extends to multi-step planning, ensemble epistemic value, and a learned-policy regime that makes action selection an exact amortised inference. 
+
+5.1 Limitations and scoped open problems Status of the main results. The correspondence results hold exactly only within their stated idealising assumptions: the constant-noise encoder model (Fact 2) and population-limit SIGReg enforcement ( pZ = N  0, cd Id
+
+ with M, N → ∞ ). Table 4 records, for each main result, what is exact under those assumptions, what degrades at finite sample, and what is structural (motivated but approximate). It is the single reference for the exact / asymptotic / structural distinction used throughout; statements elsewhere inherit these labels, with the finite-sample chain (Proposition 4) and the autoregressive/MPC bounds (Theorem 2) deferred to Appendix A. The correspondence rests on idealised assumptions, which we gather here as deliberately scoped open problems rather than as concessions. For each we note whether it bounds the qualitative result (the direction of the AIF bound and the existence of the correspondence) or only the quantitative 
+
+constants. In every case below it is the latter. 
+
+The constant-noise model is an interpretive device, not a claim about deployed systems. De-ployed JEPAs inject no observation noise; a strictly deterministic encoder makes I(Z; X) degenerate. The constant additive noise of Fact 2 is the standard remedy [Kolchinsky et al., 2019] that makes 13 Table 4: Status of the main results. The exact-in-scope results (Theorem 1, Corollary 1, Propositions 3 and 5) are not claimed to hold unconditionally: they are exact given Fact 2 and successful enforcement, and degrade gracefully at finite (M, N ) at the rate of Proposition 4 (Corollary 2). The structural results are labelled as such at each occurrence and are not exact identities.                                                                      
+
+> Result Establishes Status under the stated assumptions Prop. 1 (three-source gap) algebraic gap identity Exact (algebraic; no further assump-tions) Prop. 3 (SIGReg eliminates gap) ∆ = 0 ,h(Z) = h⋆(c, d )Exact , conditional on successful en-forcement pZ=N 0,cdId
+> 
+> Thm. 1 (single-step) exact IB/AIF decomposition;
+> F≥ − ln p(x)
+> Exact within the constant-noise model and population limit; finite-sample degradation bounded by Prop. 4 Cor. 1 (dual tightening) zero O(δ2)Gaussian-bridge error Exact under isotropy (same assump-tions as Thm. 1) Prop. 4 (finite-sample rate) O(M−2α/ (d−1) +N−1/2)Asymptotic / order-of-magnitude ;the quantitative Cramér–Wold step rests on a multivariate Berry–Esseen argument with implicit d-dependent constants – the one link not yet self-contained (Remark 3) Prop. 5 (pragmatic value) latent goal cost as pragmatic-value proxy
+> Exact under SIGReg (Thm. 1 assump-tions); O(δ2)-distorted under VICReg Thm. 2 (multi-step / MPC) (i) teacher-forced exact; (ii)– (iii) autoregressive/MPC bounded (i) Exact ; (ii)–(iii) bounded , com-pounding controlled by the predictor Lipschitz constant and replanning in-terval m(exact per-step at m= 1 )Prop. 6 (state-epistemic value) coverage term absent in JEPA planners
+> Structural :the one EFE term no current JEPA world model computes, only partially proxied by a policy en-semble Learned-policy regime (§4.5) MPC maps 3/4 EFE terms; learned-policy 4/4, the state-epistemic term only partially
+> Structural correspondence; point-wise (MPC) vs. distributional (learned-policy) guarantees
+
+the mutual information well-defined, with the deterministic encoder recovered as the σnoise → 0
+
+reading. The construction can equally be framed not as an a priori assumption but as an asymptotic consequence of the data distribution together with SIGReg convergence: once the embeddings are driven to the isotropic Gaussian, the conditional entropy is constant by construction. Crucially, the whole device is consistent with the non-generative stance [LeCun, 2022]: SIGReg isotropy supplies the implicit Gibbs prior, the density a trained JEPA learns “secretly” [Balestriero et al., 2025], without a log Z term in the objective. This bounds none of the qualitative results; it is the lens through which the information-theoretic quantities are defined. 
+
+The finite-sample rate has a qualitative-only step. The convergence rate of Proposition 4 chains four results, one of which, the quantitative Cramér–Wold conversion for the non-independent di-rections SIGReg uses, is classical only in its qualitative form (Remark 3). A fully explicit finite-d
+
+constant requires a multivariate Berry–Esseen / Stein argument [Bonis, 2020, Vershynin, 2018] and is deferred to future work. This bounds only the constant in the rate, not the fact that the gap vanishes in the population limit; under approximate enforcement the slack degrades gracefully and linearly (Corollary 2). 
+
+Compounding error is controlled by deployment, not by the regulariser. The autoregressive bound of Theorem 2(ii) carries a term O(L2HP ) in the predictor Lipschitz constant, which is vacuous for an expansive predictor over a long horizon. This is resolved in practice by the deployment regime rather than the theory: under one-step-replanning MPC (Theorem 2(iii), the PLDM/LeWorldModel default) the effective horizon is one and both error terms vanish, and spectral normalisation of the 14 predictor bounds LP directly. The qualitative executed-trajectory correspondence is therefore exact under standard deployment. 
+
+The state-epistemic gap is a structural finding, not a defect. The coverage term h(Zτ | π) − Cϵ
+
+(Proposition 6) is computed by no current JEPA world model and is only partially proxied by the policy ensemble; separating behavioural multi-modality from reducible uncertainty is open. This does not bound the correspondence; it is its sharpest prediction, naming exactly what a JEPA agent must add to become a complete active-inference agent. 
+
+The over-complete identifiability regime is unproven. The linear-identifiability guarantee un-derwriting the latent-distance reading (Section 4.6) is proven only for matched dimension, whereas the theory’s anchor operates with d ≫ n [Klindt et al., 2026]. Whether SIGReg isotropy still yields usable approximate identifiability in that over-complete regime is open. Settling it would require two things the present paper does not supply: a broad-coverage data regime, since latent distances are physically meaningful only when the data actually explore the state space, and a dedicated identifiability diagnostic. Beyond this, scaling to large video-encoder dimensions ( d ≥ 1024 ) and the calibration quality of small ( K = 4 –8) ensembles are open empirical questions. 
+
+Pragmatic value is a preference, not a cost-to-go. Proposition 5 identifies the latent goal cost with AIF pragmatic value , a log goal prior over states. Wang et al. [2023] show that the optimal goal-reaching cost-to-go is instead a quasimetric, asymmetric because reachability is irreversible, so no symmetric Euclidean distance represents it in general. The two objects are distinct and the correspondence is unaffected: preferences over states are symmetric by construction, and the asymmetry of reachability is carried by the transition kernel inside the expected free energy, not by the terminal cost. The residue is a deployment caveat. Short-horizon MPC uses the terminal cost as an implicit surrogate for the cost-to-go beyond its horizon, and there a symmetric latent distance is a good proxy only when the dynamics are approximately reversible. Terver et al. [2025] find an L2
+
+terminal cost strongest empirically, but in navigation and manipulation benchmarks whose dynamics are largely reversible. Whether an asymmetric goal term is required under irreversible dynamics is open. 
+
+Approximate Gaussianity does not blunt the distinction. Balestriero et al. [2025] prove that any successfully trained JEPA already learns approximately Gaussian embeddings. The distinction nonetheless matters, for three reasons the theory makes precise. First , “approximately Gaussian” is not “exactly Gaussian,” and the residual is exactly what ∆ measures; because the AIF bound is binary in the estimator’s type (Proposition 2), VICReg is not guaranteed to preserve it even when the residual is small, while SIGReg penalises that residual directly (Corollary 2). Second , their result characterises the optimum, whereas the hierarchy and Proposition 4 govern the path to it. Suggestive here is LeWorldModel’s smooth two-term training against PLDM’s noisier multi-term dynamics [Maes et al., 2026], though because the two systems differ in architecture and in the number of loss terms, not in the regulariser alone, this is corroborating rather than confirmatory; isolating the regulariser’s contribution requires a controlled SIGReg-vs-VICReg ablation under a fixed architecture. Third , the bridge is valuable independently of the comparison: even were the two regularisers empirically indistinguishable, the correspondence would still supply the validity criterion, the principled epistemic-value term, and the transfer of tools between active inference and the JEPA world-model literature (Appendix C). 
+
+Outlook. The contribution of this paper is theoretical and, within the stated scope, complete: it establishes that the anti-collapse regulariser determines whether a JEPA world model’s objective is a valid active-inference free energy, makes that correspondence exact under SIGReg, traces it through multi-step planning and a learned-policy regime, and isolates the single expected-free-energy term, the state-epistemic value, that no current JEPA world model computes. The predictions of Section 4.7 differ by kind between SIGReg and VICReg and are therefore refutable; their empirical evaluation is left to separate work. Establishing the theory and stating its falsifiable consequences is the purpose served here. The experimental validation, and any consequent revision of the limitations above, will follow separately. 15 References 
+
+Alexander A. Alemi, Ian Fischer, Joshua V. Dillon, and Kevin Murphy. Deep variational information bottleneck. In International Conference on Learning Representations (ICLR) , 2017. Mahmoud Assran, Adrien Bardes, David Fan, Quentin Garrido, Russell Howes, Mojtaba Komeili, Matthew Muckley, Ammar Rizvi, Claire Roberts, Koustuv Sinha, Artem Zholus, Sergio Arnaud, Abha Gejji, Ada Martin, Francois Robert Hogan, Daniel Dugas, Piotr Bojanowski, Vasil Khalidov, Patrick Labatut, Francisco Massa, Marc Szafraniec, Kapil Krishnakumar, Yong Li, Xiaodong Ma, Sarath Chandar, Franziska Meier, Yann LeCun, Michael Rabbat, and Nicolas Ballas. V-JEPA 2: Self-supervised video models enable understanding, prediction, and planning. arXiv preprint arXiv:2506.09985 , 2025. Marco Bagatella, Matteo Pirotta, Ahmed Touati, Alessandro Lazaric, and Andrea Tirinzoni. TD-JEPA: Latent-predictive representations for zero-shot reinforcement learning. arXiv preprint arXiv:2510.00739 , 2025. Randall Balestriero and Yann LeCun. LeJEPA: Provable and scalable self-supervised learning without the heuristics. arXiv preprint arXiv:2511.08544 , 2025. Randall Balestriero, Nicolas Ballas, Michael Rabbat, and Yann LeCun. Gaussian embeddings: How JEPAs secretly learn your data density. arXiv preprint arXiv:2510.05949 , 2025. Adrien Bardes, Jean Ponce, and Yann LeCun. VICReg: Variance-invariance-covariance regularization for self-supervised learning. In International Conference on Learning Representations (ICLR) ,2022. Christopher M. Bishop. Pattern Recognition and Machine Learning . Springer, 2006. Sergey G. Bobkov and Mokshay Madiman. Concentration of the information in data with log-concave distributions. The Annals of Probability , 39(4):1528–1543, 2011. Thomas Bonis. Stein’s method for normal approximation in Wasserstein distances with application to the multivariate central limit theorem. Probability Theory and Related Fields , 178(3):827–860, 2020. Thomas M. Cover and Joy A. Thomas. Elements of Information Theory . John Wiley & Sons, 2nd edition, 2006. Harald Cramér and Herman Wold. Some theorems on distribution functions. Journal of the London Mathematical Society , s1-11(4):290–294, 1936. Leonardo de Moura and Sebastian Ullrich. The lean 4 theorem prover and programming language. In Automated Deduction – CADE 28 , volume 12699 of Lecture Notes in Computer Science , pages 625–635. Springer, 2021. T. W. Epps and L. B. Pulley. A test for normality based on the empirical characteristic function. 
+
+Biometrika , 70(3):723–726, 1983. Aleksandr Ermolov, Aliaksandr Siarohin, Enver Sangineto, and Nicu Sebe. Whitening for self-supervised representation learning. In International Conference on Machine Learning (ICML) ,pages 3015–3024, 2021. Marco Federici, Anjan Dutta, Patrick Forré, Nate Kushman, and Zeynep Akata. Learning robust representations via multi-view information bottleneck. In International Conference on Learning Representations (ICLR) , 2020. Zafeirios Fountas, Noor Sajid, Pedro A. M. Mediano, and Karl Friston. Deep active inference agents using Monte-Carlo methods. In Advances in Neural Information Processing Systems (NeurIPS) ,2020. Karl Friston. The free-energy principle: A unified brain theory? Nature Reviews Neuroscience , 11 (2):127–138, 2010. 16 Ignat Georgiev, Varun Giridhar, Nicklas Hansen, and Animesh Garg. PWM: Policy learning with multi-task world models. arXiv preprint arXiv:2407.02466 , 2024. ICLR 2025. Moritz Gögl and Christopher Yau. Var-JEPA: A variational formulation of the joint-embedding predictive architecture – bridging predictive and generative self-supervised learning. arXiv preprint arXiv:2603.20111 , 2026. Danijar Hafner, Timothy Lillicrap, Jimmy Ba, and Mohammad Norouzi. Dream to control: Learning behaviors by latent imagination. In International Conference on Learning Representations (ICLR) ,2020. Wassily Hoeffding. A class of statistics with asymptotically normal distribution. Annals of Mathe-matical Statistics , 19(3):293–325, 1948. Roger A. Horn and Charles R. Johnson. Matrix Analysis . Cambridge University Press, 2nd edition, 2012. Yongchao Huang. VJEPA: Variational joint embedding predictive architectures as probabilistic world models. arXiv preprint arXiv:2601.14354 , 2026. David A. Klindt, Yann LeCun, and Randall Balestriero. When does LeJEPA learn a world model? 
+
+arXiv preprint arXiv:2605.26379 , 2026. Artemy Kolchinsky and Brendan D. Tracey. Estimating mixture entropy with pairwise distances. 
+
+Entropy , 19(7):361, 2017. Artemy Kolchinsky, Brendan D. Tracey, and Steven Van Kuyk. Caveats for information bottleneck in deterministic scenarios. In International Conference on Learning Representations (ICLR) , 2019. Yann LeCun. A path towards autonomous machine intelligence (version 0.9.2). OpenReview preprint ,2022. Lucas Maes, Quentin Le Lidec, Damien Scieur, Yann LeCun, and Randall Balestriero. LeWorld-Model: Stable end-to-end joint-embedding predictive architecture from pixels. arXiv preprint arXiv:2603.19312 , 2026. Pietro Mazzaglia, Tim Verbelen, and Bart Dhoedt. Contrastive active inference. In Advances in Neural Information Processing Systems (NeurIPS) , 2021. Pietro Mazzaglia, Tim Verbelen, Ozan Çatal, and Bart Dhoedt. The free energy principle for perception and action: A deep learning perspective. arXiv preprint arXiv:2207.06415 , 2022. Ali Saheb Pasand, Johan Obando-Ceron, Aaron Courville, Pouya Bashivan, and Pablo Samuel Castro. Stable deep reinforcement learning via isotropic Gaussian representations. arXiv preprint arXiv:2602.19373 , 2026. Ben Poole, Sherjil Ozair, Aäron van den Oord, Alexander A. Alemi, and George Tucker. On variational bounds of mutual information. In International Conference on Machine Learning (ICML) , 2019. Robert J. Serfling. Approximation Theorems of Mathematical Statistics . John Wiley & Sons, 1980. Ravid Shwartz-Ziv, Randall Balestriero, Kenji Kawaguchi, Tim G. J. Rudner, and Yann LeCun. An information-theoretic perspective on variance-invariance-covariance regularization. In Advances in Neural Information Processing Systems (NeurIPS) , volume 36, pages 33965–33998, 2023. Ryan Smith, Karl J. Friston, and Christopher J. Whyte. A step-by-step tutorial on active inference and its application to empirical data. Journal of Mathematical Psychology , 107:102632, 2022. Vlad Sobal, Wancong Zhang, Kyunghyun Cho, Randall Balestriero, Tim G. J. Rudner, and Yann LeCun. Learning from reward-free offline data: A case for planning with latent dynamics models. 
+
+arXiv preprint arXiv:2502.14819 , 2025. 17 Basile Terver, Tsung-Yen Yang, Jean Ponce, Adrien Bardes, and Yann LeCun. What drives success in physical planning with joint-embedding predictive world models? arXiv preprint arXiv:2512.24497 , 2025. The mathlib Community. The lean mathematical library. In Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs (CPP 2020) , pages 367–381. ACM, 2020. Naftali Tishby, Fernando C. Pereira, and William Bialek. The information bottleneck method. In 
+
+Proceedings of the 37th Annual Allerton Conference on Communication, Control, and Computing ,pages 368–377, 2000. Aäron van den Oord, Yazhe Li, and Oriol Vinyals. Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748 , 2018. Roman Vershynin. High-Dimensional Probability: An Introduction with Applications in Data Science .Cambridge University Press, 2018. Tongzhou Wang, Antonio Torralba, Phillip Isola, and Amy Zhang. Optimal goal-reaching reinforce-ment learning via quasimetric learning. In International Conference on Machine Learning (ICML) ,2023. Jure Zbontar, Li Jing, Ishan Misra, Yann LeCun, and Stéphane Deny. Barlow twins: Self-supervised learning via redundancy reduction. In International Conference on Machine Learning (ICML) ,pages 12310–12320, 2021. Gaoyue Zhou, Hengkai Pan, Yann LeCun, and Lerrel Pinto. DINO-WM: World models on pretrained visual features enable zero-shot planning. In International Conference on Machine Learning (ICML) , 2025. 18 Appendix 
+
+The appendices are supplementary. Appendix A gives the full proof development for the multi-step and expected-free-energy results summarised in Sections 4.3 and 4.4; environment numbering here is internal to the appendix (e.g. Proposition A.2) and is cross-referenced from the main text where relevant. Appendix B collects the schematic figures, Appendix C expands the positioning discussion, and Appendix D reports the formal verification of the paper’s algebraic core in the Lean 4 theorem prover. 
+
+# A Full Proof Development: Multi-Step Correspondence and EFE Decomposition 
+
+This appendix expands the multi-step results that Section 4.3 states in compressed form. Throughout, 
+
+fϕ is a deterministic encoder and Pξ a deterministic predictor under the constant-noise model (Background, Fact 2): zt+τ = fϕ(xt+τ ) + ϵt+τ with ϵt+τ
+
+> i.i.d.
+
+∼ N  0, ε 2Id
+
+ independent across steps and of ϕ. We write σ2 for the dynamics noise variance, Cϵ = d 
+
+> 2
+
+ln(2 πe ε 2) for the conditional entropy, and CKL = d 
+
+> 2
+
+(ε2/σ 2 − 1 − ln( ε2/σ 2)) ≥ 0 for the per-step Gaussian-bridge constant (the 
+
+ε2 here is the noise variance , written ε in (4) and σ2noise in Fact 2). The single-step correspondence (main-text Theorem 1) and the dual-tightening corollary (Corollary 1) are taken as given; under SIGReg enforcement the per-step KL–MSE bridge (4) is exact (zero anisotropy error). The development proceeds through three operational regimes: teacher-forcing (§A.1), autoregressive rollout (§A.2), and model-predictive control (§A.3), consolidated in Theorem A.6, and then through the term-by-term EFE decomposition (§A.5). Together these results establish the multi-step claims summarised in Section 4.3 of the main text; the supporting lemmas below (factorisation, Jacobian correction, compounding error) are the intermediate steps that the main text omits. 
+
+A.1 Stage 1: Teacher-forced multi-step exactness 
+
+Under teacher-forcing, the predictor at each step receives the true encoded observation, ˆzTF  
+
+> t+τ
+
+:= 
+
+Pξ (zt+τ −1, a t+τ −1), so each step is independently grounded in data. Define the per-step posterior 
+
+q(τ ) 
+
+> ϕ
+
+= N  fϕ(xt+τ ), ε 2Id
+
+ and prior p(τ ) 
+
+> ξ
+
+= N  ˆzTF  
+
+> t+τ
+
+, σ 2Id
+
+, and write L(H)MSE := PHτ =1 ∥ˆzTF  
+
+> t+τ
+
+−
+
+zt+τ ∥2 for the teacher-forced multi-step MSE. 
+
+Lemma A.1 (Teacher-forced factorisation) . For any fixed trajectory (o, a), the teacher-forced joint distributions factorise: qTF (zt+1: t+H ) = QHτ =1 q(τ ) 
+
+> ϕ
+
+and pTF (zt+1: t+H ) = QHτ =1 p(τ ) 
+
+> ξ
+
+.
+
+Proof. Under the constant-noise model the only randomness in zt+τ is the independent noise ϵt+τ ;conditioning on o fixes the means, so zt+1 , . . . , z t+H are conditionally independent and the joint density is the product of marginals. For the prior, teacher-forcing conditions p(τ ) 
+
+> ξ
+
+on the realised 
+
+zt+τ −1, making each a fixed Gaussian with intrinsic noise σ2 independent across steps; the joint therefore factorises. (The unconditional joint would not factorise, since it chains the dynamics, but the operationally relevant conditioning is on the realised encoder outputs, since the loss is computed after encoding all observations.) 
+
+Proposition A.2 (Teacher-forced multi-step KL–MSE equivalence) . Under SIGReg enforcement (Σ = cd Id), the joint trajectory KL equals the scaled teacher-forced MSE plus a constant, exactly: 
+
+DKL 
+
+qTF pTF  =
+
+> H
+
+X 
+
+> τ=1
+
+DKL 
+
+h
+
+q(τ ) 
+
+> ϕ
+
+p(τ )
+
+> ξ
+
+i
+
+= 12σ2 L(H)MSE + H C KL . (9) Consequently arg min ξ DKL 
+
+qTF pTF  = arg min ξ L(H)MSE and the gradients coincide up to the factor 1/2σ2, for every ε > 0.19 Proof. By Lemma A.1 the two joints are products, and the KL between product measures is additive: expanding ln   Q  
+
+> τ
+
+q(τ )/ Q 
+
+> τ
+
+p(τ ) = P  
+
+> τ′
+
+ln( q(τ ′)/p (τ ′)) and integrating, each summand depends only on its own coordinate, so integrating out the others gives unity and leaves P 
+
+> τ
+
+DKL 
+
+h
+
+q(τ ) 
+
+> ϕ
+
+p(τ )
+
+> ξ
+
+i
+
+[Cover and Thomas, 2006, Thm. 2.5.3]. Each per-step term is a KL between isotropic Gaussians; under SIGReg the variance ratios are equal across dimensions, so Corollary 1 makes (4) exact: 
+
+DKL 
+
+h
+
+q(τ ) 
+
+> ϕ
+
+p(τ )
+
+> ξ
+
+i
+
+= 12σ2 ∥ˆzTF  
+
+> t+τ
+
+− zt+τ ∥2 + CKL . Summing over τ gives (9) ; the constant H C KL is independent of ξ, so the minimisers and gradients follow. Summing the per-step free energy F (τ )SIG = 12σ2 ∥ˆzTF  
+
+> t+τ
+
+− zt+τ ∥2 + CKL − I⋆ over the horizon gives the teacher-forced multi-step free energy F (H)TF = 12σ2 L(H)MSE − HI ⋆ + H C KL , which is optimisation-equivalent to L(H)MSE and preserves the bound at the trajectory level: F (H)TF ≥ − P 
+
+> τ
+
+ln p(xt+τ ).Under VICReg, the per-step bridge carries an O(δ2) error and the cumulative gap grows linearly, 
+
+|DKL 
+
+qTF pTF  − 12¯ σ2 L(H)MSE | ≤ H · E(VR) – a “horizon tax” that vanishes identically under SIGReg. 
+
+A.2 Stage 2: Autoregressive rollout 
+
+At planning time the predictor is unrolled on its own output, ˆzAR  
+
+> t+τ
+
+= Pξ (ˆ zAR  
+
+> t+τ−1
+
+, a t+τ −1) with 
+
+ˆzAR  
+
+> t
+
+= zt. Two effects break Stage-1 exactness: the AIF generative model becomes a Markov chain (not a product), and the planning MSE evaluates predictions under the rollout distribution. Let 
+
+eτ := zt+τ − ˆzTF  
+
+> t+τ
+
+, δτ := ˆ zAR  
+
+> t+τ
+
+− ˆzTF  
+
+> t+τ
+
+(with δ1 = 0 ), and Jτ := ∇z Pξ (z, a τ ) z=zt+τ
+
+the predictor Jacobian. 
+
+Proposition A.3 (Markov-chain trajectory KL and the Jacobian correction) . With product pos-terior q and Markov-chain prior pMC (z1: H ) = Q 
+
+> τ
+
+N  Pξ (zτ −1, a τ −1), σ 2Id
+
+, under SIGReg enforcement, 
+
+DKL 
+
+q pMC  = 12σ2 L(H)MSE + H C KL 
+
+| {z }   
+
+> =DKL [qTF ∥pTF ]
+
++ 12σ2
+
+> H
+
+X 
+
+> τ=2
+
+Φτ , Φτ = ε2∥Jτ −1∥2 
+
+> F
+
++ O(ε3), (10) where Φτ ≥ 0 in the small-noise regime. Hence DKL 
+
+q pMC  ≥ DKL 
+
+qTF pTF .
+
+Proof. Expanding the KL with the product q against the chained pMC , each summand depends only on (zτ −1, z τ ); integrating out the rest gives P 
+
+> τ
+
+Ezτ −1∼q(τ −1) 
+
+DKL 
+
+q(τ ) p(· | zτ −1)  . Under SI-GReg both arguments are isotropic Gaussians, so the inner KL equals 12σ2 ∥zt+τ −Pξ (zτ −1, a τ −1)∥2 +
+
+CKL . Separating the τ = 1 term (where z0 = zt is fixed) and adding/subtracting the teacher-forced MSE yields the decomposition with Φτ = Ezτ −1 ∥zt+τ − Pξ (zτ −1)∥2 − ∥ zt+τ − Pξ (zt+τ −1)∥2.Taylor-expanding Pξ about zt+τ −1 with zτ −1 = zt+τ −1 + εη , η ∼ N (0 , I d), the linear term vanishes in expectation and E∥Jτ −1η∥2 = tr( J⊤ 
+
+> τ−1
+
+Jτ −1) = ∥Jτ −1∥2 
+
+> F
+
+, giving Φτ = ε2∥Jτ −1∥2 
+
+> F
+
++ O(ε3).The correction is O(ε2/σ 2) – negligible in the deterministic-encoder limit – and under SIGReg’s isotropic noise it is the unweighted Frobenius norm (under VICReg it would be the anisotropy-weighted tr( J⊤ΣεJ)). 
+
+Proposition A.4 (Compounding error) . If Pξ (·, a ) is LP -Lipschitz in its first argument, the autoregressive error ϵAR  
+
+> τ
+
+:= ∥ˆzAR  
+
+> t+τ
+
+− zt+τ ∥ obeys ϵAR  
+
+> τ
+
+≤ LP ϵAR   
+
+> τ−1
+
++ ϵTF  
+
+> τ
+
+, hence ϵAR  
+
+> τ
+
+≤
+
+Pτs=1 Lτ −sP ϵTF  
+
+> s
+
+, and the planning MSE satisfies L(H)plan = L(H)MSE + ∆ (H)comp with ∆(H)comp =
+
+−2 P 
+
+> τ
+
+⟨eτ , δ τ ⟩ + P 
+
+> τ
+
+∥δτ ∥2. The error saturates ( LP < 1), grows linearly ( LP = 1 ), or grows exponentially ( LP > 1) with the horizon. 
+
+Proof. The recurrence is the triangle inequality applied to ˆzAR  
+
+> t+τ
+
+= Pξ (ˆ zAR  
+
+> t+τ−1
+
+, a τ −1) together with 
+
+LP -Lipschitzness; unrolling it gives the geometric bound. Writing ˆzAR  
+
+> t+τ
+
+− zt+τ = δτ − eτ and 20 squaring yields the decomposition of L(H)plan , with ∥δτ ∥ ≤ LP ϵAR  
+
+> τ−1
+
+. The three regimes follow from the geometric series. SIGReg does not control LP ; it is set by the predictor and its regularisation. Chaining Propositions A.3–A.4 relates the AIF trajectory complexity to the planning MSE, 
+
+DKL 
+
+q pMC  = 12σ2 L(H)plan + H C KL + 12σ2 (Φ (H) − ∆(H)comp ), so the absolute gap is bounded by the Jacobian term plus the compounding term. 
+
+A.3 Stage 3: Model-predictive control and the executed trajectory 
+
+Under MPC with replanning interval m, the H-step rollout is only a scoring function; the agent executes m actions, then re-encodes a true observation. The executed trajectory is thus grounded every m steps, and the effective autoregressive horizon within each epoch is m, not H.
+
+Corollary A.5 (Exact executed-trajectory correspondence at m = 1 ). Under SIGReg enforce-ment and MPC with m = 1 (the PLDM/LeWorldModel default), each executed step resets at a true embedding, so δ1 = 0 and the Jacobian sum is empty: ∆(1) comp = 0 and Φ(1) = 0 . Each executed step satisfies the exact single-step bridge, 
+
+DKL 
+
+h
+
+q(n) pMC ,(n)i
+
+= 12σ2 ztn+1 − ˆztn+1  
+
+> 2
+
++ CKL , (11) and over N epochs the executed-trajectory complexity is the scaled sum of per-step MSEs plus N C KL and an environment-determined inter-epoch term Γinter that is independent of the regulariser. 
+
+Proof. With m = 1 each epoch is a single prediction grounded in ztn , so the autoregressive and teacher-forced predictions coincide and both Stage-2 corrections vanish; (11) is Proposition A.2 at 
+
+H = 1 (equivalently Corollary 1). Summing over epochs and adding the inter-epoch term gives the trajectory statement. Γinter reflects how much the true latent state at one epoch predicts the next; it is a property of the data, present regardless of regulariser or planner. For action selection what matters is ranking fidelity, not the absolute gap. Two action sequences are correctly ordered whenever their planning-cost difference exceeds their differential correction; under SIGReg each per-step contribution is an exact KL proxy, so there is zero per-step ranking distortion, whereas under VICReg an additional action-dependent O(Hδ 2) distortion is present. 
+
+A.4 Why the state-epistemic term has no JEPA counterpart 
+
+Proposition 6 states that the state-epistemic value is the one expected-free-energy term that no current JEPA world model computes. Because this is the paper’s central structural claim, and because it is easy to mistake SIGReg’s entropy guarantee for a resolution of it, we develop the point in full here. The argument has four steps: the EFE contains two distinct epistemic drives; only one has a JEPA counterpart; SIGReg’s marginal-entropy guarantee does not supply the other; and a learned policy closes the gap only partially. 
+
+Step 1: the EFE contains two distinct epistemic drives. Written in full, the expected free energy of a policy contains two information-gain terms that are routinely conflated because both are called “epistemic.” The first is the parameter information gain Iq (ξ; Zτ | Zτ −1, a τ −1): how much executing the policy is expected to reduce uncertainty about the model parameters ξ. This is the drive to act where the model is unsure of its own dynamics. The second is the state epistemic value 
+
+Iq (Zτ ; Xτ | π): under the constant-noise model (Proposition 6) it equals h(Zτ | π) − Cϵ, the entropy of the distribution of embeddings the policy would visit , minus the constant observation-noise entropy. These measure different things. The parameter term is about epistemic uncertainty over ξ; the state term is about the coverage or diversity of the visited-state distribution. A policy that confines the agent to a small region of embedding space has low h(Zτ | π) and hence low state-epistemic value; a policy that fans the agent out across the space has high h(Zτ | π) and high state-epistemic value. The latter is precisely the intrinsic drive to explore that distinguishes an active-inference agent from a pure goal-reacher, independent of any goal. 21 Step 2: only the parameter drive has a JEPA counterpart. The parameter information gain 
+
+does have a computable JEPA proxy. With an ensemble of K predictors {P kξ }, a second-order ex-pansion gives Iq (ξ; Zτ | Zτ −1, a τ −1) ≈ 12σ2
+
+P 
+
+> j
+
+Var k[P kξ (zτ −1, a τ −1)j ], which is exactly PLDM’s ensemble-disagreement (uncertainty) cost. So this epistemic term is present, at least approximately, in JEPA planners that carry an ensemble penalty. The state epistemic value is different: it is a property of the visited-state distribution , not of predictor disagreement. A JEPA planner scores a candidate trajectory by its goal cost plus, optionally, an ensemble term. The goal cost ∥zτ − zg ∥2 is minimised by reaching zg and is indifferent to how much of the space the trajectory explores on the way; the ensemble term measures parameter uncertainty, not state diversity. No quantity in the objective increases when h(Zτ | π) increases, so there is nothing whose minimisation rewards coverage. The term is simply absent. 
+
+Step 3: SIGReg’s marginal entropy does not supply the conditional entropy. This is the step most likely to mislead. SIGReg does maximise an entropy: it drives the marginal embedding entropy to its ceiling, h(Z) = h⋆(c, d ) (Proposition 3). It is therefore tempting to conclude that SIGReg has already supplied the coverage term. It has not, because the two entropies are different objects: • h(Z) is the entropy of embeddings averaged over the full data distribution , evaluated at training time ; it is a property of the encoder . SIGReg maximises it by construction. • h(Zτ | π) is the entropy of the embeddings induced by one policy’s trajectory , evaluated at 
+
+planning time ; it is a property of the policy’s behaviour . SIGReg never sees it. SIGReg makes the overall space maximally informative, but it says nothing about whether a particular policy chooses to explore that space or to huddle in one corner of it. The only link is an inequality: for any policy, h(Zτ | π) ≤ h(Z) = h⋆(c, d ), since conditioning cannot increase entropy. Thus SIGReg establishes the ceiling on state-epistemic value, since no policy’s coverage can exceed I⋆,but it neither computes h(Zτ | π) nor inserts it into any planner’s objective. As the theory puts it, SIGReg has already “spent” the full entropy budget on the marginal; the question the state-epistemic term asks, namely whether this policy concentrates the trajectory into a subspace, is left entirely open. This is the same marginal-versus-conditional distinction flagged in Section 4.4: enforced single-step informativeness I(Z; X) = I⋆ is a guarantee about the encoder; the multi-step state-epistemic coverage term is a property of the policy, and the former does not imply the latter. 
+
+Step 4: a learned policy closes the gap only partially. Replacing MPC with a learned goal-conditioned policy, and training an ensemble of such policies, yields a signal that is correlated with the state-epistemic value: the disagreement among the policy heads about which action to take captures uncertainty about the optimal action, which the dynamics ensemble alone cannot. This is why the learned-policy regime improves the term-by-term accounting, from three of the four EFE terms mapped under MPC to all four accounted for, with the state-epistemic term mapped only partially. The closure is partial, not complete, for a precise reason: the policy-ensemble disagreement tr( V πτ ) conflates several sources of variance (genuine multi-modality of good actions, value uncertainty, and state-coverage uncertainty), and isolating the component that actually tracks 
+
+h(Zτ | π) from the rest is itself unresolved. The residual is the open quantity ∆epistemic : the learned policy supplies a proxy correlated with the coverage term, not the term itself. The gap narrows; it does not close. SIGReg sharpens this further by making the conditioning space isotropic, so that the policy ensemble’s sensitivity to the latent state is direction-independent rather than dominated by high-variance dimensions, but this calibrates the proxy without making it exact. The state-epistemic value therefore remains the primary structural gap between AIF and JEPA planning, and, as Section 4.4 stresses, this is a positive finding: it names exactly the quantity a JEPA agent would have to add to its planning objective to become a complete active-inference agent. 22 Theorem A.6 (SIGReg–AIF multi-step correspondence; formal restatement of Theorem 2) .
+
+(Formal statement and proof of Theorem 2, Section 4.3.) 
+
+Under the hypotheses of Theorem 1 with an LP -Lipschitz predictor and MPC (H, m ): (i) the teacher-forced multi-step MSE is an exact proxy for the joint trajectory KL (Proposition A.2) and the bound is preserved; (ii) the autoregressive planning MSE approximates the AIF trajectory complexity with error bounded by the Jacobian term O(Hε 2/σ 2) plus the compounding term 
+
+O(L2HP ¯ϵ2/σ 2) (Propositions A.3–A.4); (iii) under MPC the same bound holds with m in place of H, and at m = 1 the executed trajectory is exact (Corollary A.5); (iv) the planning cost is ranking-faithful, with zero per-step distortion under SIGReg. Replacing SIGReg with VICReg adds an O(Hδ 2) term to every bound. 
+
+Proof. We prove the four parts in turn, then the VICReg comparison. 
+
+(i) Teacher-forced exactness. Under teacher-forcing the joint posterior and prior factorise over steps (Lemma A.1), so the trajectory KL is the sum of per-step KLs. By Proposition A.2, SIGReg isotropy makes each per-step Gaussian bridge (4) exact, giving DKL 
+
+qTF pTF  = 12σ2 L(H)MSE + H C KL 
+
+with no residual. The trajectory free energy F (H)TF = 12σ2 L(H)MSE − HI ⋆ + H C KL then satisfies 
+
+F (H)TF ≥ − P 
+
+> τ
+
+ln p(xt+τ ), since each per-step bound is preserved (Proposition 2 at ∆ = 0 ) and the bound is additive over the horizon. 
+
+(ii) Autoregressive control. Under free rollout the prior becomes a Markov chain rather than a product. Proposition A.3 gives the exact decomposition DKL 
+
+q pMC  = DKL 
+
+qTF pTF  + 12σ2
+
+P  
+
+> τ≥2
+
+Φτ
+
+with Φτ = ε2∥Jτ −1∥2 
+
+> F
+
++ O(ε3), so the Jacobian contribution is O(Hε 2/σ 2). Separately, the rollout MSE differs from the teacher-forced MSE by the compounding term ∆(H)comp of Proposi-tion A.4; unrolling the Lipschitz recurrence ϵAR  
+
+> τ
+
+≤ LP ϵAR   
+
+> τ−1
+
++ ϵTF  
+
+> τ
+
+bounds the accumulated error by 
+
+P 
+
+> s≤τ
+
+Lτ −sP ϵTF  
+
+> s
+
+, whose square is O(L2HP ¯ϵ2). Combining the two contributions and dividing by the 
+
+2σ2 scaling gives the stated bound; the AIF complexity equals the planning MSE up to these two terms plus the constant H C KL .
+
+(iii) Executed-trajectory exactness under deployment. MPC executes m actions per epoch and re-encodes a true observation, so the autoregressive analysis of part (ii) applies within each epoch with horizon m rather than H; substituting m for H in the part (ii) bound gives the first claim. At 
+
+m = 1 each epoch is a single prediction grounded in a true embedding, so δ1 = 0 and the Jacobian sum is empty: by Corollary A.5 both ∆(1) comp and Φ(1) vanish, and each executed step satisfies the exact single-step bridge (11) . Summing over the N executed epochs gives an executed-trajectory complexity equal to the scaled sum of per-step MSEs plus N C KL and a regulariser-independent inter-epoch term Γinter .
+
+(iv) Ranking fidelity. Action selection depends only on the ordering of planning costs across candidate sequences, not on their absolute value. Two sequences π, π ′ are correctly ordered whenever their planning-cost difference exceeds the difference of their correction terms. Under SIGReg each per-step contribution is an exact KL proxy (parts (i),(iii)), so the per-step correction is identically zero and the ordering of planning costs coincides with the ordering of trajectory free energies exactly; there is no per-step ranking distortion. 
+
+VICReg comparison. Replacing SIGReg with VICReg reopens the per-step Gaussian-bridge error of Stage 1, which is O(δ2) in the anisotropy δ (the eigenvalue spread of the embedding covariance; Stage 1 and Corollary 1). Substituting this nonzero per-step error into the additive trajectory KL of part (i) yields a cumulative O(Hδ 2) term; the same substitution enters the part (ii)/(iii) bounds and, because the per-step correction is now action-dependent and nonzero, the part (iv) ranking argument acquires an O(Hδ 2) distortion. Hence every bound carries an additional O(Hδ 2) term under VICReg, vanishing identically under SIGReg. 
+
+A.5 The expected-free-energy decomposition 
+
+This section supplies the term-by-term expectation calculations behind the expected-free-energy reading of Section 4.4; the generative model (6) and the consolidated objective (8) are stated there. Throughout, the mean-field posterior is q(z1: H ) = Q 
+
+> τ
+
+N  fϕ(xτ ), ε 2Id
+
+ and the per-step EFE is 23 G(τ ) 
+
+> π
+
+= −Iq (Zτ ; Xτ | π) − Eq(xτ |π)[ln p(xτ | C)] (epistemic + pragmatic), equivalently ambiguity 
+
++ risk [Smith et al., 2022, Mazzaglia et al., 2022]. 
+
+Proposition A.7 (Pragmatic value) . (Full statement and proof of Proposition 5, Section 4.4.) 
+
+The pragmatic value at step τ is −Eq(xτ |π)[ln p(xτ | C)] = 12σ2
+
+> g
+
+(∥fϕ(xτ ) − zg ∥2 + dε 2) +  
+
+> d
+> 2
+
+ln(2 πσ 2 
+
+> g
+
+), whose policy-dependent part is the JEPA goal cost 12σ2
+
+> g
+
+∥zτ − zg ∥2. Under SIGReg the Euclidean cost is an exact KL proxy, DKL 
+
+N  zτ , ε 2Id
+
+ N  zg , ε 2Id
+
+ = 12ε2 ∥zτ − zg ∥2;under VICReg it carries an O(δ2) anisotropy discrepancy. 
+
+Proof. Expand ln p(xτ | C) and take the expectation under q, using zτ = fϕ(xτ ) + ϵτ , E[ϵτ ] = 0 ,
+
+E∥ϵτ ∥2 = dε 2; the noise term is policy-independent and enters the constant. The exact KL identity is the isotropic-Gaussian formula, which under SIGReg has equal variances and hence no anisotropy correction. 
+
+Proposition A.8 (Ambiguity, risk, and the state-epistemic gap) . (Expands the remaining EFE terms of Section 4.4; the state-epistemic part is Proposition 6.) 
+
+Under the constant-noise model: (ambiguity) Eq(zτ |π)H[p(xτ | zτ )] = Cϵ, constant in π and regulariser-independent; (risk) DKL [q(xτ | π) ∥ p(xτ | C)] = 12σ2
+
+> g
+
+∥zτ − zg ∥2 + d 
+
+> 2
+
+(ε2/σ 2 
+
+> g
+
+− 1 −
+
+ln( ε2/σ 2 
+
+> g
+
+)) , exact under SIGReg and the same MSE functional as the pragmatic value up to a policy-independent constant; (state-epistemic value) Iq (Zτ ; Xτ | π) = h(Zτ | π) − Cϵ, a coverage signal upper-bounded by I⋆ under SIGReg and computed by no current JEPA world model. 
+
+Proof. For ambiguity, H[p(xτ | zτ )] = H[ϵτ ] = Cϵ is independent of zτ , so the expectation is Cϵ.For risk, the observation distributions are in bijection with isotropic-Gaussian latent distributions, and the KL is the standard isotropic-Gaussian formula [Bishop, 2006, §10.1.1]. For the state-epistemic value, I(Zτ ; Xτ ) = h(Zτ ) − h(Zτ | Xτ ) and, since Zτ = fϕ(Xτ ) + ϵτ with ϵτ ⊥ Xτ ,
+
+h(Zτ | Xτ ) = Cϵ; under SIGReg the marginal entropy equals h⋆(c, d ) (main-text Proposition 3), giving the bound. The parameter information gain maps to ensemble predictive variance: for Gaussian dynamics the Fisher information about the predictor mean is σ−2Id, and a second-order expansion of 12 ln det( Id +
+
+σ−2 Cov ξ [μξ ]) gives Iq (ξ; Zτ | Zτ −1, a τ −1) ≈ 12σ2
+
+P 
+
+> j
+
+Var k[P kξ (zτ −1, a τ −1)j ] + O(σ−4), the per-step PLDM uncertainty cost. Substituting Propositions A.7–A.8 together with this term into the per-step EFE yields the consolidated objective (8) of Section 4.4: the JEPA planning cost Cgoal + β C unc 
+
+equals Gfull  
+
+> π
+
+minus the absent state-epistemic term, with each retained term exact under SIGReg and 
+
+O(δ2)-distorted under VICReg. The learned-policy identity that closes Section 4.5, that minimising 
+
+Eπϕ [P 
+
+> τ
+
+γτ GSIG ,(τ ) 
+
+> π
+
+] − 1 
+
+> ζ
+
+H[πϕ] equals 1 
+
+> ζ
+
+DKL [πϕ ∥ π∗] up to a constant, with Boltzmann optimum 
+
+π∗ ∝ exp( −ζG SIG ), follows by the standard free-energy-to-KL completion, so CEM ( ζ → ∞ ) and MPPI ( ζ = 1 /λ ) are its limiting cases and, under SIGReg, the policy trains against the exact EFE. 24 B Schematic Figures                   
+
+> xt
+> xt+1
+> fϕ
+> fϕ
+> zt
+> zt+1
+> Pξˆzt+1
+> at
+> Lpred =∥ˆzt+1 −zt+1 ∥2
+> λSIG ·SIGReg T(Z)
+> F=complexity −informativeness
+> AIF complexity: DKL
+> qϕpξ
+> 
+> AIF informativeness: enforces
+> h(Z) = h⋆, so I(Z;X) = I⋆
+
+Figure 1: The JEPA world-model loss read as an AIF variational free energy (main-text Theorem 1). The next-embedding prediction loss Lpred is, up to the 1/(2 σ2) scale and the additive constant CKL 
+
+of (4) , the AIF complexity term (a KL divergence under the Gaussian bridge); the regulariser is the AIF informativeness term. Under SIGReg the informativeness is enforced rather than estimated, so both terms are exact and the total is a valid free energy. Swapping SIGReg for VICReg changes only the regulariser box, but reopens the prior-miscalibration gap. The “exact free energy” reading holds only under the constant-noise encoder model (Fact 2) and successful SIGReg enforcement (pZ = N  0, cd Id
+
+ in the population limit); away from these conditions it degrades gracefully (Corollary 2). 
+
+entropy 
+
+ˆHPD (Z)
+
+> PairDist (lower bound, safe)
+
+h(Z)
+
+> true entropy
+
+hN (Z)
+
+> LogDet (tight upper bound)
+
+ˆHVR (Z) 
+
+> VICReg (loose upper bound)
+> Gap I (non-Gaussianity)
+> Gap II (off-diagonal)
+> SIGReg: distributional enforcement collapses all gaps ( ∆ = 0 )
+> h(Z) = h⋆(c, d )
+
+Figure 2: The entropy-estimator hierarchy and the bound-type “sandwich” (reproduced and extended from the first iteration). PairDist lower-bounds the true entropy h(Z) (safe to maximise); LogDet and VICReg are upper bounds (unsafe), separated from h(Z) by the non-Gaussianity gap (Gap I) and from each other by the off-diagonal-covariance gap (Gap II). SIGReg enforces the isotropic Gaussian directly, driving h(Z) → h⋆(c, d ) and collapsing all gaps ( ∆ = 0 ; main-text Proposition 3). 25 Pragmatic value    
+
+> −E[ln p(x|C)]
+
+State epistemic     
+
+> h(Zτ|π)−Cϵ
+
+Param. info gain   
+
+> I(ξ;Zτ| · )
+
+Ambiguity 
+
+> Cϵ
+
+Goal cost    
+
+> ∥zτ−zg∥2
+
+absent 
+
+> (no JEPA term)
+
+Ensemble var.     
+
+> P
+> jVar k[Pkj]
+
+constant 
+
+> exact (SIGReg)
+> gap
+> 1st-order (approx.)
+> Cϵ
+
+Figure 3: Term-by-term correspondence between the AIF expected free energy (left) and the JEPA world-model planning cost (right), as established in §A.5. Under SIGReg the pragmatic value maps exactly to the latent goal cost (Proposition A.7); the parameter information gain maps to ensemble variance at first order; ambiguity is a constant; and the state epistemic value (coverage) has no counterpart in any current JEPA world model: the primary structural gap (Proposition 6). The arrow style encodes the nature of each correspondence: solid black for exact mappings (under SIGReg), amber dash-dot for the first-order approximate mapping, and dashed red into the shaded box for the 
+
+absent term.   
+
+> Gaussian
+> not assumed
+> Gaussian
+> assumed
+> Gaussian
+> enforced
+> diagonal Σ
+> full / isotropic Σ
+
+— VICReg  
+
+> (Level 0, UB)
+
+—
+
+PairDist 
+
+> (Level 2, LB)
+
+LogDet 
+
+> (Level 1, UB)
+
+SIGReg 
+
+> (Level 3, exact)
+> covariance structure
+> shape enforcement
+
+Figure 4: The two-dimensional design space of non-contrastive entropy regularisers: covariance structure (diagonal → full/isotropic) versus distributional-shape enforcement (assumed → enforced). VICReg, LogDet, and PairDist each occupy one cell; SIGReg is the unique estimator that both enforces the isotropic covariance and tests the full distributional shape, closing all three gap sources of Proposition 1. “UB”/“LB” denote upper/lower entropy bounds. 
+
+# C Positioning and Relevance 
+
+This appendix expands two points that the main text states only briefly: how the contribution differs from the closely related JEPA literature (§C.1), and why the active-inference perspective it introduces is worth having (§C.2). 
+
+C.1 Differentiation from the JEPA programme 
+
+Because the JEPA line of work is closely related and shares authorship, it is worth stating precisely how this paper differs from each prior result. The contribution is orthogonal to each, a different kind 
+
+of statement about the same systems, rather than an increment on any of them. 
+
+The architecture and design programme. The Joint-Embedding Predictive Architecture and the path-to-autonomy programme [LeCun, 2022] are an engineering proposal: they specify how to build a latent world model that learns from observation and plans without pixel-level reconstruction, and they justify the design by what it enables. This paper supplies the normative account those designs lacked. It identifies the principle, minimisation of an Active Inference variational free energy, that a SIGReg-regularised JEPA implicitly optimises, and thereby explains why the architecture has the form it does rather than only that it works. The two are complementary: the programme provides the object, and the present theory provides its interpretation. 26 The regularisers. VICReg [Bardes et al., 2022] and LeJEPA/SIGReg [Balestriero and LeCun, 2025] propose anti-collapse regularisers and justify them on self-supervised grounds, avoidance of representational collapse and downstream task performance. This paper evaluates the same regularisers against an external criterion: whether the implied entropy estimator preserves the Active Inference free-energy bound. That criterion, the bound type of the estimator (Proposition 2), is invisible from within the SSL framing, and it is what distinguishes SIGReg from VICReg in kind rather than degree. The hierarchy of Section 4.1 is, in effect, a reading of the regulariser landscape through a lens the original proposals did not use. 
+
+The optimum-characterising results. The Gaussian-Embeddings result [Balestriero et al., 2025] shows that a successfully trained JEPA is approximately Gaussian, a property of the optimum. The linear-identifiability result [Klindt et al., 2026] establishes when the trained encoder recovers the world’s latent up to a linear transform, the state-representation precondition of Section 4.6. This paper uses both differently. It uses the signed gap from exact Gaussianity (not the fact of approximate Gaussianity) to make a claim about the AIF bound and about the training path , not only the optimum; and it consumes the identifiability guarantee as an upstream precondition for a 
+
+planning and control correspondence that the identifiability authors explicitly leave open. The three results triangulate the same isotropic-Gaussian target from maximum-entropy, density-estimation, and spectral-identifiability directions respectively, which is a positioning strength rather than a redundancy. 
+
+The world models and planners. LeWorldModel [Maes et al., 2026], DINO-WM [Zhou et al., 2025], PLDM [Sobal et al., 2025], V-JEPA 2 [Assran et al., 2025], and the planning ablations of Terver et al. [2025] build and benchmark JEPA world models and their planners. This paper shows that the components those systems already use (the latent goal cost, the ensemble-disagreement penalty, the model-predictive planner) are specific Active Inference quantities (Propositions 5–6): the goal cost is the pragmatic value, the ensemble disagreement is the parameter information gain, and MPC with one-step replanning realises the exact executed-trajectory correspondence. It further identifies the one AIF term none of these systems computes, the state-epistemic value, and converts the whole mapping into falsifiable predictions. In one line: the JEPA programme asks how to build 
+
+world models that work; this paper asks why a particular regulariser makes them Active Inference agents, and what that implies for what they should compute. 
+
+C.2 Relevance and potential impact of the active-inference perspective 
+
+A correspondence theorem invites a fair question: granting that the mathematics holds, what does the active-inference reading actually buy? We give four answers, ordered from the most concrete to the most speculative, and flag the last two as conjectural. 
+
+A normative selection criterion for regularisers. The most immediate consequence is practical. Absent a normative principle, the choice among anti-collapse regularisers is made on empirical grounds that do not transfer across settings. The AIF reading supplies a criterion that does transfer: a regulariser should preserve the free-energy bound, which requires a lower-bound (or exact) entropy estimator rather than an upper-bound one (Proposition 2). This both explains an existing empirical preference for SIGReg and predicts the behaviour of regularisers not yet proposed, by locating them on the two-dimensional design space of Figure 4. The criterion is useful independently of whether one accepts the full AIF framing, because it is ultimately a statement about information-theoretic safety. 
+
+A concrete, missing architectural component. The decomposition identifies a specific term, the state-epistemic value, the entropy of the predicted future-state distribution under a policy (Proposi-tion 6), that no current JEPA world model computes. This is not a philosophical observation but an engineering target: it names a coverage signal that, if added to the planning objective, would give a JEPA agent a principled drive to explore, of exactly the kind that distinguishes active-inference agents from purely goal-reaching controllers. The perspective thus does more than re-describe existing systems; it points at a buildable addition and predicts its effect. 
+
+A bridge that lets two literatures share results. Establishing that JEPA world models and AIF agents optimise the same functional means that results proven in one framework become available 27 to the other. The neuroscience and theoretical-AIF literature has developed an extensive account of exploration, precision-weighting, hierarchical generative models, and the role of the habit prior; the SSL and world-model literature has developed scalable encoders, stable training, and efficient planners. A formal correspondence is the precondition for transfer in both directions, for importing AIF’s exploration machinery into scalable world models, and for giving AIF’s normative claims a concrete, large-scale computational instantiation. The learned-policy regime (Proposition 7), which casts action selection as amortised inference, is one such transfer already visible within the paper. 
+
+A conjectural broader significance. More speculatively, and we mark this clearly as conjecture rather than established consequence, the correspondence bears on a longstanding question about whether the Free Energy Principle, often criticised as unfalsifiable in its most general form, can be given empirical teeth in artificial systems. By tying a specific FEP-derived quantity (the surprise bound) to a measurable property of a specific class of trainable models (the embedding condition number, the latent-to-physical calibration), the present work turns a portion of the principle into something a particular experiment can confirm or refute. Whether this generalises beyond the constant-noise, isotropic-Gaussian regime studied here is open, and we do not claim that a successful test of these predictions would vindicate the Free Energy Principle as a whole. The narrower claim is that the AIF perspective, applied to JEPA world models, is productive in the scientifically meaningful sense: it generates predictions that could be wrong. 
+
+# D Lean Verification 
+
+Following the precedent of Klindt et al. [2026], we formally verify the algebraic core of this paper’s results, namely the Gaussian bridge (4) with its optimiser-set equivalence, the three-source gap decomposition and the bound-type dichotomy (Propositions 1 and 2, Corollary 2(i)), the single-step correspondence (Proposition 3, Theorem 1(i)–(iii)), the exact expected-free-energy term identities (Propositions 5 and 6; Proposition A.8), the amortised-policy result (Proposition 7), and the exact parts of the multi-step correspondence (Propositions A.2 and A.4, Corollary A.5, Theorem 2(i),(iii),(iv)), in the Lean 4 theorem prover [de Moura and Ullrich, 2021] using the Mathlib mathematical library [The mathlib Community, 2020]. The development compiles with zero sorry obligations: every logical step from the stated premises to the stated conclusions is machine-checked. 
+
+Scope and methodology. Lean verification requires every inference step to be justified by a previously established lemma, hypothesis, or axiom. When a standard result exists in Mathlib (e.g. Real.log_le_sub_one_of_pos for ln x ≤ x − 1, ConcaveOn.le_map_sum for Jensen’s inequality), we invoke it directly. Analytic facts that Mathlib cannot yet express at our encoding, because they concern differential entropies of distributions that the scalar development treats as opaque real parameters, enter as named hypotheses in the theorem statements rather than as global axioms: the maximum-entropy theorem behind Gap I [Cover and Thomas, 2006, Thm. 8.6.5], the isotropic-Gaussian entropy value behind enforcement [Cover and Thomas, 2006, Thm. 8.4.1], conditioning-reduces-entropy behind Proposition 6, and the Fact-1 surprise bound. This is a deliberate refinement of the axiom-based convention of Klindt et al. [2026]: over opaque real-valued parameters a global axiom would be unsound, and the hypothesis form makes each result’s analytic dependencies auditable in its own signature. Exactly one classical result is introduced as a Lean axiom , because it is stateable about concrete Mathlib objects and is absent from Mathlib: Hadamard’s determinant inequality for positive-semidefinite real matrices [Horn and Johnson, 2012, Thm. 7.8.1], consumed only by the matrix form of Gap II in Proposition 1. The complete reasoning chains between these inputs are fully verified; Table 5 gives the inventory. One scoping rule is worth stating: the finite-sample rate (Proposition 4) is excluded entirely, because its quantitative Cramér–Wold step is classical only in qualitative form (Remark 3), and axiomatising unsettled mathematics would counterfeit the standard under which axioms stand for settled results; the Taylor-remainder analyses (Proposition A.3, Theorem 2(ii)) are likewise deferred rather than axiomatised. 
+
+What is verified. All reasoning between the stated inputs is machine-checked: the bridge identity, the nonnegativity of its constant CKL , and the optimiser-set equivalence between KL and squared error; the three-source decomposition and, from the Hadamard axiom, the sign of Gap II; the bound-type dichotomy of Proposition 2 and the exact linear slack of Corollary 2(i); Gibbs’ inequality, the KL-completion identity, and the Boltzmann-optimality of Proposition 7 in full; the teacher-28 forced summation of Proposition A.2; the unrolled Lipschitz recurrence and the planning-MSE decomposition of Proposition A.4; the executed-trajectory specialisation of Corollary A.5; the ranking-fidelity equivalence of Theorem 2(iv); and the Jensen argument that isotropy maximises the Gaussian log-volume at fixed total variance (Proposition 3). The correspondence statements themselves (Proposition 3, Theorem 1(i)–(iii), Proposition 6, Theorem 2(i),(iii)) are verified as 
+
+assemblies : their algebra is machine-checked, with successful SIGReg enforcement entering as an explicit hypothesis, matching the scoping of Remark 2. The formalisation also surfaced an additive-constant bookkeeping discrepancy between an earlier draft of Definition 3 and the per-step free energy of Appendix A; Definition 3 as stated incorporates the correction, and the offset identity is itself a machine-checked lemma ( mainText_constant_offset ). Table 5: Lean verification inventory. VERIFIED : machine-checked from Mathlib primitives with no analytic hypotheses. ASSEMBLY : algebraic derivation machine-checked, analytic inputs (e.g. SIGReg enforcement, the Fact-1 bound) as named hypotheses. The Hadamard axiom is the only Lean axiom 
+
+in the development.                                            
+
+> Result Lean declaration Status Gaussian bridge (4); CKL ≥0; argmin equiv. gaussKL_eq ,gaussKL_le_iff VERIFIED
+> Prop. 1 decomposition; Gap II ≤0gap_decomposition ,gapII_nonpos VERIFIED †
+> Prop. 2 (bound type) boundtype_* VERIFIED
+> Cor. 2(i) (linear slack) graceful_degradation_abs VERIFIED
+> Prop. 3; isotropy maximises sigreg_zero_gap ;isotropy_maximises ASSEMBLY ;VERIFIED
+> Thm. 1(i)–(iii) correspondence_single_step ASSEMBLY
+> Prop. 5/A.7 (exact KL proxy) pragmatic_exact VERIFIED
+> Prop. 6 (state-epistemic ceiling) state_epistemic_bound ASSEMBLY
+> Prop. 7 (KL completion; argmin) policy_kl_completion ,policy_argmin VERIFIED
+> Prop. A.2 (teacher-forced KL–MSE) teacherForced_kl_mse VERIFIED
+> Prop. A.4 (compounding; plan-MSE decomp.) compounding_error_bound VERIFIED
+> Cor. A.5 ( m=1 exactness) executed_trajectory_exact VERIFIED
+> Thm. 2(i),(iii); (iv) ranking multistep_correspondence ;ranking_fidelity ASSEMBLY ;VERIFIED
+> Prop. A.8 risk identity risk_identity VERIFIED
+> †The matrix form of Gap II consumes the declared Hadamard axiom; all log algebra is machine-checked.
+
+Build information. The project comprises 37 Lean theorem/lemma declarations, 12 definitions, and 1 axiom across six modules (746 lines of Lean). These are Lean declarations, which do not map one-to-one onto the paper’s numbered results: Lean does not distinguish proposition or corollary from theorem, and a single result typically expands into several declarations (one per clause), together with supporting lemmas that the prose folds away (e.g. Gibbs’ inequality behind Proposition 7, or the Boltzmann normalisation facts behind its argmin corollary). The development compiles against Lean 4 v4.32.0 with Mathlib v4.32.0 (8,662 build targets, zero errors, zero sorry obligations). A per-theorem #print axioms audit confirms that every declaration depends only on Mathlib’s three standard axioms ( propext , Classical.choice , Quot.sound ), except the matrix form of Gap II, which additionally depends on the declared Hadamard axiom. The development is publicly available at https://github.com/FabioArnez/sigreg-vfe-correspondence-lean .29
