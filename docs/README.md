@@ -6,49 +6,41 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-18
-- 运行时间：2026-07-18 21:35:46 UTC
+- 最新运行日期：2026-07-19
+- 运行时间：2026-07-19 21:22:36 UTC
 - 运行状态：成功
-- 本次总论文数：9
-- 精读区：1
-- 速读区：8
+- 本次总论文数：7
+- 精读区：2
+- 速读区：5
 
 ### 今日简报（AI）
-今日精选9篇论文，精读一篇关于JEPA世界模型的理论解读，速读三篇聚焦机器人连续分块策略与开放世界操作学习。  
-最值得关注的方向：JEPA世界模型与变分自由能的统一框架；机器人分块策略与操作鲁棒性的结合。  
-建议侧重阅读精读论文的数学推导，速读论文可快速浏览实验部分以获取操作设计思路。
-- 详情：[/202607/18/README](/202607/18/README)
+今日日报精读2篇，聚焦世界模型与偏好学习；速读5篇覆盖视觉接口、语义导航与多视角驾驶世界模型。最值得关注的是《Xiaomi-Robotics-U0》的世界基础模型与《RENEW》的偏好学习修复方法。建议优先精读这两篇8分论文，再浏览速读中的视觉接口与驾驶世界模型相关研究。
+- 详情：[/202607/19/README](/202607/19/README)
 
 ### 精读区论文标签
-1. [The SIGReg Objective as Variational Free Energy: A Theoretical Active-Inference Account of JEPA World Models](/202607/18/2607.13612v1-the-sigreg-objective-as-variational-free-energy-a-theoretical-active-inference-account-of-jepa-world-models)  
-   标签：评分：8.0/10、query:latent-vla
-   evidence：对联合嵌入预测架构（JEPA）用于潜在世界模型的理论分析
+1. [Xiaomi-Robotics-U0: Unified Embodied Synthesis with World Foundation Model](/202607/19/2607.11643v1-xiaomi-robotics-u0-unified-embodied-synthesis-with-world-foundation-model)  
+   标签：评分：8.0/10、query:wam-vla
+   evidence：用于统一具身合成的世界基础模型，包含视频生成
+2. [RENEW: Towards Learning World Models and Repairing Model Exploitation from Preferences](/202607/19/2607.14180v1-renew-towards-learning-world-models-and-repairing-model-exploitation-from-preferences)  
+   标签：评分：8.0/10、query:wam-vla
+   evidence：通过偏好学习世界模型并使用想象滚动修复模型利用
 
 ### 速读区论文标签
-1. [ChunkFlow: Towards Continuity-Consistent Chunked Policy Learning](/202607/18/2607.12992v1-chunkflow-towards-continuity-consistent-chunked-policy-learning)  
+1. [VIA: Visual Interface Agent for Robot Control](/202607/19/2607.11119v1-via-visual-interface-agent-for-robot-control)  
    标签：评分：7.0/10、query:latent-vla
-   evidence：改进VLA分块策略的连续性用于机器人操作
-2. [Worlds in One Demo: A Synthetic Data Engine for Learning Open-World Mobile Manipulation](/202607/18/2607.13154v1-worlds-in-one-demo-a-synthetic-data-engine-for-learning-open-world-mobile-manipulation)  
+   evidence：提出通过视觉接口利用基础模型控制机器人，是一种替代性VLA方法
+2. [From Language to Navigation Goals: A Vision-Language Approach for Semantic Navigation of Mobile Robots Using RGB-D Perception](/202607/19/2607.13624v1-from-language-to-navigation-goals-a-vision-language-approach-for-semantic-navigation-of-mobile-robots-using-rgb-d-perception)  
+   标签：评分：7.0/10、query:latent-vla
+   evidence：移动机器人语义导航的VLA方法
+3. [M$^\text{4}$World: A Multi-view Multimodal Driving World Model for Interactive Object Manipulation and Minute-long Streaming](/202607/19/2607.14005v1-mtext4world-a-multi-view-multimodal-driving-world-model-for-interactive-object-manipulation-and-minute-long-streaming)  
    标签：评分：7.0/10、query:wam-vla
-   evidence：具有世界基底的合成数据引擎用于移动操作
-3. [Learning Robust Execution in Robotic Manipulation with Agentic Reinforcement Learning](/202607/18/2607.13818v1-learning-robust-execution-in-robotic-manipulation-with-agentic-reinforcement-learning)  
-   标签：评分：7.0/10、query:latent-vla
-   evidence：用于操作中鲁棒VLA执行的智能体RL框架
-4. [DRIFT: Drift and Aggregation for Motion Planning](/202607/18/2607.14507v1-drift-drift-and-aggregation-for-motion-planning)  
-   标签：评分：7.0/10、query:latent-vla
-   evidence：用于自动驾驶的潜空间轨迹规划
-5. [RoboTTT: Context Scaling for Robot Policies](/202607/18/2607.15275v1-robottt-context-scaling-for-robot-policies)  
-   标签：评分：7.0/10、query:latent-vla
-   evidence：通过测试时训练扩展机器人VLA模型的视觉运动上下文
-6. [Pix2Act: Image-Space Manipulation Policies with Equivariant Augmentation](/202607/18/2607.11167v1-pix2act-image-space-manipulation-policies-with-equivariant-augmentation)  
+   evidence：生成式驾驶世界模型，支持多视角视频和LiDAR，交互物体操控和长时稳定
+4. [RxBrain: Embodied Cognition Foundation Model with Joint Language-Visual Reasoning and Imagination](/202607/19/2607.14187v1-rxbrain-embodied-cognition-foundation-model-with-joint-language-visual-reasoning-and-imagination)  
+   标签：评分：7.0/10、query:wam-vla
+   evidence：联合语言-视觉推理与想象的具身认知模型用于规划
+5. [Exploratory, Communicative, and Deployable: Vision-Driven Embodied Agents for Open-World Mobile Manipulation](/202607/19/2607.13653v1-exploratory-communicative-and-deployable-vision-driven-embodied-agents-for-open-world-mobile-manipulation)  
    标签：评分：6.0/10、query:latent-vla
-   evidence：联合观测-动作空间表示用于操作
-7. [Model-Based Diffusion Optimal Control for Multi-Robot Motion Planning](/202607/18/2607.12423v1-model-based-diffusion-optimal-control-for-multi-robot-motion-planning)  
-   标签：评分：6.0/10、query:wam-vla
-   evidence：基于模型的扩散最优控制用于多机器人运动规划
-8. [Grounded world models in biological organisms and future embodied AI](/202607/18/2607.13560v1-grounded-world-models-in-biological-organisms-and-future-embodied-ai)  
-   标签：评分：6.0/10、query:wam-vla
-   evidence：讨论具身AI的接地世界模型
+   evidence：视觉驱动的开放世界移动操作智能体框架
 
 
 <div class="dpr-home-promo-card">
