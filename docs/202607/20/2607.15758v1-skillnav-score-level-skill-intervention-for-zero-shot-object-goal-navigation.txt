@@ -1,0 +1,319 @@
+Title: SkillNav: Score-Level Skill Intervention for Zero-Shot Object Goal Navigation
+
+URL Source: https://arxiv.org/pdf/2607.15758v1
+
+Published Time: Mon, 20 Jul 2026 00:53:54 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# SkillNav: Score-Level Skill Intervention for Zero-Shot Object Goal Navigation 
+
+Ruijie Sang 1, ∗
+
+Yiqun Duan 2, ∗
+
+Pinhan Fu 3, ∗
+
+Ruilin Wang 1 Wei Sui 1, †
+
+Xianda Guo 3, ‡ 
+
+> 1
+
+D-Robotics 2 HAI Center, University of Technology Sydney  
+
+> 3
+
+School of Computer Science, Wuhan University sangruijie2001@163.com, duanyiquncc@gmail.com, fupinhan168@163.com ruilinking@gmail.com , wei.sui@d-robotics.cc, xianda_guo@163.com  
+
+> ∗
+
+Equal Contributions † Project Leader ‡ Corresponding Author 
+
+## Abstract 
+
+Vision-Language Model (VLM) agents have advanced zero-shot object-goal navi-gation, yet single-frame reasoning leaves them without the cross-step behavioral awareness an embodied navigator requires, producing recurring failures such as dead-end stalls, in-room loops, and circuitous approaches to detected targets. Prompt-based remedies inflate token budgets across multi-submodule episodes and still struggle to encode inherently spatial signals such as angles, map cells, and viewpoint coordinates. In this paper, we propose SkillNav, an extensible be-havioral skill framework for VLM-based navigation that treats the curiosity value map already maintained by modern VLM navigators as a writable substrate on which composable skills inscribe behavioral memory at zero token cost. Skills are stratified into three tiers by their level of behavioral authority, namely soft scaling for proportional reweighting, lower-bound boost for region-level guarantees, and hard override for threshold-triggered forced actions, and cooperate across tiers under a fixed composition order that establishes a predictable, declared priority among skills. This design turns capability improvement into skill registration: new behaviors plug in without retraining the VLM or disturbing existing skills, opening a path for continual refinement. A minimal prompt channel complements the score-level skills with category-level semantic hints, yielding a dual-representation design in which spatial memory lives on the map and semantic memory in short prompts. Training-free, SkillNav establishes new state-of-the-art SPL across MP3D (25.5), HM3D v0.1 (39.3), and HM3D v0.2 (43.2), improving SPL by up to 6.0 absolute over the strongest prior method, and achieves the highest Success Rate on HM3D v0.1 (69.7) and v0.2 (75.9). Code will be released upon acceptance at 
+
+https://github.com/XiandaGuo/SkillNav .
+
+## 1 Introduction 
+
+Object-Goal Navigation (ObjectNav) requires an embodied agent to locate an instance of a queried category in a previously unseen environment, using only egocentric observations as input [Anderson et al., 2018, Batra et al., 2020]. By coupling perception, semantic reasoning, and long-horizon decision making, ObjectNav serves as a canonical testbed for generalist embodied behavior and underpins downstream applications such as household service robots, search-and-rescue platforms, and assistive agents in unstructured environments [Chaplot et al., 2020, Ramrakhya et al., 2022]. Recent progress on this task has been driven by the repurposing of large VLMs as zero-shot, training-free reasoners for navigation [Zhou et al., 2023, Gadre et al., 2023, Kuang et al., 2024, Liu et al., 2025]. Methods such as VLFM [Yokoyama et al., 2024], SG-Nav [Yin et al., 2024], UniGoal [Yin et al., 2025], and WMNav [Nie et al., 2025] cast frontier scoring, sub-goal proposal, and stop decision 
+
+> Preprint. arXiv:2607.15758v1 [cs.RO] 17 Jul 2026
+
+as VLM queries grounded in single-frame observations, while MerNav [Qi et al., 2026] further introduces hierarchical memory to enrich cross-step context, collectively narrowing the gap with supervised counterparts on HM3D [Ramakrishnan et al., 2021] and MP3D [Chang et al., 2017]. Goal ：F ind the toilet ！
+
+> position
+> 1
+
+stuck ！  
+
+> position
+> 3
+> Invalid search ！
+> position
+> 8
+> Miss the target
+> object ！
+> 2The position of the agent in step 2 Target object
+> 3
+> 46
+> 5
+> 7
+> 2
+> 8
+
+Figure 1: Three recurring failures caused by the ab-sence of cross-step memory: getting stuck against an obstacle ( position 1 ), conducting invalid in-room search instead of exiting through the door (position 3 ), and losing the target after it leaves the field of view ( position 8 ). Despite these advances, current VLM-based agents tend to fail in a recurring and stereo-typed manner. As illustrated in Figure 1, a robot tasked with finding a toilet may become wedged against the corner of a bed and repeatedly at-tempt the same failed escape directions ( posi-tion 1 ); it may continue to spend exploration steps deep inside a room whose appearance al-ready rules out the target, taking a long detour rather than the short path that exits through the door ( position 3 ); or it may briefly catch the target in view and lose track of it after a sin-gle oversized step ( position 8 ). These failures share a common structural cause: the decisions are produced by a VLM that, at every step, sees only the current observation and lacks cross-step behavioral awareness of which directions have failed, which regions are barren, and where the target was last seen. A natural remedy, inspired by LLM agent paradigms such as ReAct [Yao et al., 2023] and Reflexion [Shinn et al., 2023], is to accumulate past observations and decisions into the textual prompt of every VLM call, so that each query reasons over the full trajectory rather than over the current frame alone [Qi et al., 2026, Long et al., 2025, Liu et al., 2025]. However, this strategy carries a non-trivial cost: behavioral memory is by nature cumulative , the prompt grows with every step, and the per-call token budget rapidly inflates across multiple reasoning sub-modules. More fundamentally, the information that one most wants to remember is intrinsically spatial, namely angles, map cells, and viewpoint coordinates rather than sentences, and a few sentences cannot faithfully encode such signals in the way that a single 2D map cell can. We observe that modern VLM navigators already maintain a spatial representation, namely a curiosity value map whose cells or angular bins store scores ranking candidate motion directions [Yokoyama et al., 2024, Nie et al., 2025, Yu et al., 2023]. This surface offers a natural medium for behavioral memory: any spatial signal written onto it biases the next action immediately, persists across steps without re-narration, and incurs zero additional token cost. We instantiate this idea as SkillNav , a training-free framework inserting a Refinement Layer between VLM-based score evaluation and action execution, monitoring the agent’s cross-step behavioral state and applying structured corrections to raw direction scores. To make multiple corrections compose predictably, every intervention is abstracted into one of three modification protocols , namely soft scaling , lower-bound boost , and hard override , applied in a fixed order that makes conflicting-skill resolution explicit and predictable. The contributions of this work are summarized as follows. • Problem Identification. We identify a structural blind spot of current VLM-based ObjectNav agents, namely the underuse of spatial information for cross-step behavioral awareness, and trace the recurrent failures of getting stuck, looping, and circuitous approach to this absence. • Skill Framework. We propose SkillNav , a training-free behavioral skill framework that inscribes cross-step memory on the curiosity value map at zero token cost. Skills are stratified into three tiers by authority, namely soft scaling , lower-bound boost , and hard override .• Composable Extensibility. The three tiers cooperate under a fixed order under which conflicts between skills are resolved by declared authority rather than by registration accident, turning capability improvement into skill registration: new behaviors plug in by declaring their tier, opening a path for continual refinement. 2• Results. SkillNav consistently improves Success Rate and SPL over strong VLM-based baselines on HM3D and MP3D, establishing new SPL state of the art on MP3D (25.5), HM3D v0.1 (39.3), and HM3D v0.2 (43.2), with a 6.0-point absolute SPL improvement over the strongest prior method. The remainder of this paper is as follows. Section 2 reviews related work. Section 3 presents the proposed method. Section 4 reports experimental results and ablations. Section 5 concludes. 
+
+## 2 Related Work 
+
+2.1 Training-Free Object-Goal Navigation 
+
+Existing ObjectNav methods fall into two paradigms. Supervised approaches train visual encoders coupled with RL or imitation policies [Wijmans et al., 2020, Ramrakhya et al., 2022, Maksymets et al., 2021, Ramrakhya et al., 2023], or learn potential functions over semantic maps to guide exploration [Chaplot et al., 2020, Ramakrishnan et al., 2022], but they degrade on unseen object categories or room layouts. Zero-shot approaches remove this dependency through open-vocabulary scene understanding: image-based methods match the target against egocentric observations in a multimodal feature space [Majumdar et al., 2022, Gadre et al., 2023, Khandelwal et al., 2022], while map-based methods rank frontier candidates with LLM or VLM commonsense [Yu et al., 2023, Zhou et al., 2023, Yokoyama et al., 2024, Kuang et al., 2024, Yin et al., 2024, Nie et al., 2025] or operate over waypoint and topological abstractions [Wu et al., 2024, Zhong et al., 2024]. Within the map-based zero-shot family, recent VLM-centric pipelines score frontiers [Yokoyama et al., 2024, Nie et al., 2025], propose sub-goals [Qi et al., 2026, Zhong et al., 2024], and select actions end-to-end [Goetting et al., 2025] directly from egocentric images, avoiding the grounding gap incurred by language-mediated scene descriptions. Our framework follows this VLM-centric line but differs in what is stored on the map: rather than treating the map as a stateless scoring surface refreshed at each step, we treat it as a writable substrate that carries cross-step behavioral memory. 
+
+2.2 Memory and State Tracking in LLM/VLM Agents 
+
+The dominant approach to equipping LLM/VLM agents with memory is prompt-based : past obser-vations, actions, or sub-goals are serialized into the textual context of every model call [Yao et al., 2023, Shinn et al., 2023, Wang et al., 2023]. Variants of this idea have been adopted in navigation for maintaining episode-level context such as exploration history and completed sub-goals [Qi et al., 2026, Long et al., 2025, Liu et al., 2025], but the prompt grows monotonically with episode length, inflating per-call token budgets and diluting attention on the current observation. An alternative line of work externalizes memory into structured representations such as scene graphs [Yin et al., 2024] or topological abstractions [Wu et al., 2024, Zhong et al., 2024], which the VLM then queries through prompts; however, these representations are still consumed via re-narration into language at every decision step. Our design departs from both lines: we record cross-step behavioral state directly on the curiosity value map that already drives action selection, so the memory acts on the behavior of the agent without ever being re-encoded as text. 
+
+## 3 Method 
+
+This section presents SkillNav. Section 3.1 formalizes the Object-Goal Navigation task and describes the underlying VLM pipeline. Section 3.2 introduces the Refinement Layer and the three score-level operators it composes. Section 3.3 establishes the fixed composition order and its stability properties. Section 3.4 describes the bounded prompt channel used for non-spatial signals. 
+
+3.1 Problem Setup and Pipeline Overview 
+
+We consider Object-Goal Navigation (ObjectNav) in unseen indoor environments. At each timestep t,the agent receives an egocentric RGB-D observation ot = ( It, D t), where It ∈ RHI ×WI ×3 denotes the RGB image and Dt ∈ RHI ×WI denotes the aligned depth map, together with its current pose. The agent then selects a discrete navigation action at ∈ A . A target object category g is specified at the start of each episode, and the episode succeeds if the agent emits a STOP action within a fixed 3Pr edict VLM ： Plan VLM ： Goal VLM ： Action VLM ：
+
+> Selects the next
+> movement action.
+> Skills
+> Aided
+> navigation
+> Skills
+> expandable
+
+Invalid search ！      
+
+> After entering via the blue line , no objects are
+> visible. The agent should exit via the yellow
+> line rather than detouring along the red line .
+> When the voxel map indicates full exploration,
+> passages leading outward are scored high on
+> the value map to guide the agent out.
+
+Add skills 
+
+Miss the target object ！ 
+
+> Agent passes the
+> target ( red circle )
+> from large steps.
+> modify
+> score
+> ！
+> After two
+> sightings, a high
+> score marks the
+> target for return .
+
+Add skills  
+
+> Incorporation of prior knowledge Incorporation of prior knowledge
+
+stuck ！   
+
+> Obstacle-blocked;
+> cannot advance. Stage t+1
+> Stuck, no
+> movement
+> forward.
+> Stage t
+> Obstacles
+> at current
+> location.
+> When the agent gets stuck, failed
+> directions are overridden to zero and the
+> most open unvisited heading is forced.
+
+Add skills 
+
+> Confirms and localizes
+> the target object.
+> Proposes sub-goals and
+> flags target sightings.
+> Scores each direction
+> toward the target.
+
+Figure 2: Overview of the SkillNav pipeline. The Predict VLM scores each heading direction, and the corrected heading is processed by the Plan, Goal, and Action VLMs. Without behavioral memory, the agent recurrently gets stuck (“stuck!”), searches an exhausted room (“Invalid search!”), or overshoots a detected target (“Miss the target object!”). The Refinement Layer resolves each by registering a skill (“Add skills”) that writes a correction onto the value map. Prior knowledge enters the Predict and Plan VLMs as bounded experience prompts. distance threshold dsucc of any instance of g. We adopt Success Rate (SR) and Success weighted by Path Length (SPL) [Anderson et al., 2018] as evaluation metrics. As illustrated in Figure 2, SkillNav augments a multi-module VLM pipeline. At the start of step t,the agent rotates in place to capture a panoramic split: K egocentric RGB views v(k)
+
+t , each aligned with one of the K discrete heading directions Θ = θ1, . . . , θ K (we use K = 6 ): 
+
+Vt = {v(1) 
+
+t , . . . , v (K)
+
+t }, v(k)
+
+t aligned with θk. (1) 
+
+Predict VLM. Given the panoramic views Vt, the Predict VLM assigns a curiosity score α to each heading direction θk, estimating how likely that direction is to lead toward an instance of g:
+
+α(θk) = fpred (v(k)
+
+t , g ), α (θk) ∈ [0 , α max ]. (2) These per-direction scores are ray-cast into voxel cells and accumulated into a curiosity value map 
+
+Mt ∈ RH×W . Before the next heading is selected, the proposed Refinement Layer (detailed in Section 3.2) applies the structured corrections of Figure 2 that encode behavioral memory. The corrected map yields the next heading as ˆθ = arg max k ˜α(θk), where ˜α denotes the refined scores. 
+
+Plan VLM. Given the chosen heading view ˆθ , the Plan VLM produces a textual sub-goal σt that describes an intermediate navigation intention, together with a binary detection flag zplan 
+
+t ∈ { 0, 1}
+
+indicating whether g is visible in ˆθ. The sub-goal σt is forwarded to the Action VLM to condition the subsequent motion selection. If zplan 
+
+t = 1 , the Goal VLM is activated for further verification; otherwise, the pipeline proceeds directly to action selection. 
+
+Goal VLM. The Goal VLM is invoked only when zplan 
+
+t = 1 , serving as a precise verifier that either confirms the presence of g and returns its pixel coordinate or rejects the sighting: Goal VLM (ˆθ, g ) = 
+
+(u, v ) ∈ Z2 if g confirmed, 
+
+∅ otherwise. (3) A confirmed pixel (u, v ) is back-projected via Dt[u, v ] to a global 3D coordinate p⋆t ∈ R3 that anchors the location of the target for subsequent steps. If the Goal VLM rejects the sighting, no anchor is produced and the pipeline falls back to the Action VLM for continued exploration. 4Action VLM. Conditioned on the sub-goal σt produced by the Plan VLM and the projected forward direction, the Action VLM selects one local motion primitive at ∈ A to execute. 
+
+3.2 Score-Level Skill Intervention via the Refinement Layer Goal ：Find the toilet ！
+
+> Goal ：Find the toilet ！
+> History ：step 1 ......;
+> step 2 ......;
+> ... ...
+> step n ...... ;
+> Token Cost ：
+> increase rapidly
+> Goal ：Find the toilet ！
+> Goal ：Find the toilet ！
+> After n steps ... ...
+
+(b) 
+
+> Zero extra token cost
+> Direct spatial intervention
+
+(a) Prompt-based 
+
+> memory
+> Score-map-
+> based memory
+> Goal ：Find the toilet ！
+> History ：step 1 ......;
+> Nudge
+
+Figure 3: Two memory paradigms for VLM-based ObjectNav. (a) Prompt-based memory appends the action history to every VLM call, inflating the token cost as the episode grows. (b) SkillNav writes behavioral memory directly onto the curios-ity value map and refines it through score-level skill operators, achieving direct spatial interven-tion at zero extra token cost. As discussed in Section 1, serializing the his-tory of the agent into the textual prompt of every VLM call is a natural but costly approach to cross-step memory. As illustrated in Figure 3(a), the token cost grows monotonically with episode length, inflating the per-call budget and dilut-ing attention on the current observation. The Refinement Layer of SkillNav instead writes behavioral memory directly onto the curiosity value map, achieving direct spatial intervention at zero extra token cost (Figure 3(b)). We for-malize this layer as the ordered composition of three primitive operators on RK .The three operator types reflect the distinct gran-ularities at which behavioral memory needs to intervene. Some corrections are best expressed as proportional adjustments to individual direc-tion scores, gently reweighting the existing rank-ing without overwriting it; this is the regime of 
+
+Soft Scaling . Others require elevating an en-tire spatial region on the value map to a guaran-teed minimum, regardless of what per-direction scores currently say; this is the regime of Lower-Bound Boost . Finally, certain failure states de-mand immediate, unconditional action that bypasses the scoring mechanism altogether, triggered only when monitored indicators cross predefined thresholds; this is the regime of Hard Override . Orga-nizing interventions along this spectrum, from score-proportional adjustments through region-level guarantees to threshold-triggered forced actions, ensures that each behavioral correction operates at its natural level of authority and that when two corrections target the same direction, the outcome is determined by their declared tiers rather than by the order in which they happen to be registered. 
+
+Soft scaling. Given a per-direction multiplier γ = ( γ1, γ 2, . . . , γ K ) with each γk ∈ (0 , +∞), the soft scaling operator adjusts the score of each heading direction by: 
+
+S(αk) = min  γk αk, α sof t 
+
+. (4) Each score αk is multiplied by γk and clamped at a soft ceiling αsoft = 7 .0, deliberately kept below the global maximum αmax = 10 so that the top of the score range is reserved for the higher tiers, namely the region-level guarantees of Lower-Bound Boost and the forced actions of Hard Override: 
+
+γk > 1 amplifies the score, while γk < 1 suppresses it without reducing it to zero. Our canonical instantiation is room exhaustion . When the mean curiosity over visible directions falls below τexh 
+
+and the voxel coverage exceeds τcov , we set γk < 1 for already-explored directions and γk > 1 for directions toward unexplored frontiers or room exits, the “Invalid search!” remedy in Figure 2. 
+
+Lower-bound boost. This operator ensures that a confirmed target location is never forgotten due to transient score fluctuations. Whenever the Goal VLM confirms g at two nearby pixels on two consecutive steps, we take (u, v ) to be the mean of the two confirmed pixel coordinates, back-project it via the depth value Dt[u, v ] to a global 3D anchor point p⋆t , and store it in the history buffer ht. At every subsequent step, a circular region B(p⋆t , r ) of radius r centered at p⋆t is projected onto Mt. For each map cell mi,j ∈ Mt, the boosted value ˆmi,j is defined as: 
+
+ˆmi,j =
+
+αmax if (i, j ) ∈ B(p⋆t , r ),mi,j otherwise, (5) where mi,j denotes the original value of cell (i, j ) and αmax is the maximum allowed map value. Cells within the anchor neighborhood are thus guaranteed a value of αmax , while all other cells retain 5their original values unchanged. The updated map ˆMt subsequently influences the heading selection, ensuring that any direction whose ray passes through the anchor region retains a high score (the “Miss the target object!” remedy in Figure 2). 
+
+Hard override. Unlike the previous two operators, hard override completely disregards the original scores and forces the agent to execute a specific action when certain behavioral indicators reach critical thresholds. For each heading direction θk, the overridden score is: 
+
+ˆαk =
+
+ck k ∈ O ,αk k / ∈ O , (6) where O ⊆ 1, . . . , K denotes the set of overridden directions and ck the replacement value. Our canonical instantiation is anti-stuck recovery . The agent monitors its L2 displacement over a sliding window of W =2 steps, and activates an escape sub-routine when it falls below τmove . The sub-routine identifies the most open heading θ† disjoint from previously failed directions Ft and constructs: 
+
+O = {k†} ∪ F t, ck =
+
+cesc k = k†,
+
+0 k ∈ F t. (7) If θ† also fails to produce movement, k† is appended to Ft and the sub-routine selects the next most open direction, progressively eliminating dead ends until a viable exit is found. In addition, an ABAB oscillation detector checks whether the agent alternates between two positions over the last four steps; when triggered, the directions toward the repeated waypoint are added to Ft and overridden to 0,breaking the loop (the “stuck!” remedy in Figure 2). 
+
+3.3 Composition and Stability Guarantee 
+
+The three operators require principled ordering so that, when skills act on the same direction, the outcome follows from their declared tiers. The Refinement Layer applies them in this fixed sequence: 
+
+R(α, M t, h t) = Hard Override ◦ Lower-Bound Boost ◦ Soft Scaling (α), (8) that is, soft scaling is applied first, followed by lower-bound boost, and finally hard override. After composition writes final scores to Mt, the heading is selected as ˆθ = arg max k ˆαk. The Plan, Goal, and Action VLMs remain unmodified, making SkillNav compatible with existing pipelines. 
+
+Stability Properties. This ordering is the unique one, up to permutations among operators with disjoint active supports, that simultaneously satisfies the following three properties. (P1) Floor preservation: let βk ≥ 0 denote the lower-bound floor assigned to direction k by the boost operator. Then for every k with βk > 0 and k / ∈ O , the final score satisfies ˆαk ≥ βk.(P2) Override dominance: for every direction k ∈ O , the final score satisfies ˆαk = ck.(P3) Scaling neutrality: if γk = 1 , βk = 0 , and k / ∈ O , then ˆαk = αk.
+
+Intuition. Applying soft scaling after lower-bound boost violates (P1), because a multiplier γk < 1
+
+can demote a boosted direction below its floor. Applying lower-bound boost after hard override violates (P2), because a non-zero floor can re-elevate a direction just overridden to 0.
+
+Practical Consequence. New behavioral skills can be integrated into SkillNav by specifying only their operator family (scaling, boost, or override), without reasoning about interactions with existing skills. The fixed composition order guarantees conflict resolution is fully determined by (P1)–(P3), so a newly registered skill can never alter the semantics of an existing one unexpectedly. 
+
+3.4 Experience Prompt Injection 
+
+The Refinement Layer corrects behavioral failures via spatial encodings, but a residual class of errors arises from perceptual ambiguity: VLMs may confuse a stool with a chair, a couch with a bed, or accept a mirror reflection as a valid detection. As shown by the prior-knowledge channels in Figure 2, SkillNav addresses this through a bounded experience prompt channel. At episode start, at most Lmax 
+
+6Table 1: Comparison with state-of-the-art methods on ObjectNav. TF: training-free, ZS: zero-shot. Best results are in bold , second best are underlined.                                                                                                                                                                                                                 
+
+> MP3D HM3D v0.1 HM3D v0.2 Method TF ZS SR SPL SR SPL SR SPL ZSON [NeurIPS] Majumdar et al. [2022] ✗✓15.3 4.8 25.5 12.6 ––PixNav [ICRA] Cai et al. [2024] ✗✓––37.9 20.5 ––PSL [ECCV] Sun et al. [2024] ✗✓18.9 6.4 42.4 19.2 ––SGM [CVPR] Zhang et al. [2024] ✗✓37.7 14.7 60.2 30.8 ––VLFM [ICRA] Yokoyama et al. [2024] ✗✓36.4 17.5 52.5 30.4 62.6 31.0 CoW [CVPR] Gadre et al. [2023] ✓✓9.2 4.9 ––––ESC [ICML] Zhou et al. [2023] ✓✓28.7 14.2 39.2 22.3 ––L3MVN [IROS] Yu et al. [2023] ✓✓––50.4 23.1 36.3 15.7 VoroNav [ICML] Wu et al. [2024] ✓✓––42.0 26.0 ––TopV-Nav [arXiv] Zhong et al. [2024] ✓✓35.2 16.4 53.0 29.8 ––OpenFMNav [ICLR] Kuang et al. [2024] ✓✓––54.9 24.4 ––SG-Nav [NeurIPS] Yin et al. [2024] ✓✓40.2 16.0 54.0 24.9 49.6 25.5 VLMNav [NeuS] Goetting et al. [2025] ✓✓––50.4 21.0 ––UniGoal [CVPR] Yin et al. [2025] ✓✓41.0 16.4 54.5 25.1 ––InstructNav [CoRL] Long et al. [2025] ✓✓––58.0 20.9 ––MFNP [arXiv] Zhang et al. [2025] ✓✓41.1 15.4 58.3 26.7 ––TopoNav [arXiv] Liu et al. [2025] ✓✓45.5 16.8 60.1 34.6 ––WMNav [IROS] Nie et al. [2025] ✓✓45.4 17.2 58.1 31.2 72.2 33.3 MerNav [arXiv] Qi et al. [2026] ✓✓50.8 19.5 68.0 36.9 74.8 37.6
+> SkillNav (Ours) ✓✓48.3 25.5 69.7 39.3 75.9 43.2
+
+category-specific hints for g are loaded from an offline library and appended to the system prompts of the Predict and Plan VLMs, encoding cues such as a chair must have a backrest and objects visible only in mirrors are not valid detections . These hints remain fixed throughout the episode, incurring a token cost of O(1) in episode length. No position, bearing, or per-step decision ever enters this channel. All spatial behavioral memory is handled exclusively by the Refinement Layer through Mt and ht, while the prompt channel carries only category-level disambiguation cues. This strict separation keeps the two representations complementary: the score map records where the agent has been, while the experience prompt clarifies what it is looking for. 
+
+## 4 Experiments 
+
+This section evaluates SkillNav. Section 4.1 describes the experimental setup, covering datasets, metrics, and implementation details. Section 4.2 compares SkillNav against zero-shot and supervised baselines on HM3D v0.1, HM3D v0.2, and MP3D. Section 4.3 ablates the prompt channel and the Refinement Layer, showing that the two mechanisms target distinct failures. Section 4.4 provides a per-category breakdown across two VLM backbones and discusses remaining bottlenecks. 
+
+4.1 Experimental Setup 
+
+We evaluate on three standard ObjectNav benchmarks: HM3D v0.1 , HM3D v0.2 [Ramakrishnan et al., 2021, Yadav et al., 2023] (6 target categories), and MP3D [Chang et al., 2017] (21 target categories). All experiments run inside the Habitat simulator with a fixed budget of 40 steps, following the evaluation setting of WMNav [Nie et al., 2025], and a success threshold of dsucc = 1 .0 m. We report Success Rate (SR) and Success weighted by Path Length (SPL) following the standard protocol [Anderson et al., 2018]. Our main results use Gemini-3-Flash-Preview as the VLM backbone; ablations are additionally conducted with Qwen2.5-VL-7B-Instruct to verify backbone independence. SkillNav is fully training-free. 7Table 2: Ablation study results on HM3D v0.2. Best results are in bold .                                    
+
+> Navigation Efficiency #Model Memory Skill SR ↑SPL ↑FP ↓MS ↓
+> aQwen2.5-VL-7B-Instruct ✗✗69.9 28.3 10.1 19.8 bQwen2.5-VL-7B-Instruct ✓✗70.5 28.1 8.9 20.4 cQwen2.5-VL-7B-Instruct ✓✓71.6 31.9 9.7 18.7 dGemini-3-Flash-Preview ✓✓75.9 43.2 10.7 13.4
+
+4.2 Main Results State-of-the-art SPL across all three benchmarks. As shown in Table 1, SkillNav establishes new SPL state of the art on every benchmark: 25.5 on MP3D, 39.3 on HM3D v0.1, and 43.2 on HM3D v0.2, surpassing the strongest prior method (MerNav) by +6 .0, +2 .4, and +5 .6 absolute, respectively. We note that a subset of episodes in HM3D v0.1 contain annotation or navigation-graph issues that cause inconsistent success judgments; the results reported in Table 1 are computed after filtering these problematic instances. The gap is largest on MP3D, the benchmark with the most diverse category set and the longest geodesic distances, where path efficiency is hardest to maintain. This pattern is consistent with our central claim: writing cross-step behavioral memory directly onto the value map prevents the detours and re-visits that uniformly degrade SPL across baselines. 
+
+Highest SR on HM3D, competitive on MP3D. SkillNav achieves the best SR among zero-shot training-free methods on HM3D v0.1 (69.7, +1 .7 over MerNav) and HM3D v0.2 (75.9, +1 .1 over MerNav). On MP3D, SkillNav reaches 48.3, slightly below the 50.8 of MerNav but accompanied by a 6.0-point SPL lead. This trade-off reflects the design: methods that maximize SR on MP3D tend to extend exploration aggressively, inflating path length, whereas the behavioral memory of SkillNav short-circuits unnecessary exploration once a target is anchored, sacrificing a small fraction of late-episode successes for a substantial gain in path efficiency. Beyond the training-free group, SkillNav also surpasses all supervised zero-shot baselines on both metrics across all three benchmarks. 
+
+4.3 Ablation Study 
+
+We ablate the two memory mechanisms in SkillNav, the bounded prompt channel ( Memory ) and the Refinement Layer ( Skill ), on HM3D v0.2 (Table 2). Row (a) is the baseline pipeline with neither mechanism; rows (b) and (c) add Memory and Skill cumulatively; row (d) replaces the Qwen2.5-VL backbone with Gemini-3-Flash. 
+
+Each module contributes positively, and the gains are additive. Adding Memory alone (a → b) raises SR from 69.9 to 70.5 ( +0 .6). Adding Skill on top (b → c) further raises SR to 71.6 and SPL from 28.1 to 31.9 ( +3 .8 absolute). The full configuration improves on the baseline by +1 .7 SR and 
+
++3 .6 SPL, confirming that the two mechanisms are complementary. 
+
+Memory targets FP, the Refinement Layer targets MS. The failure-mode breakdown reveals a sharper picture. Adding Memory alone cuts the false-positive rate from 10.1% to 8.9% ( −1.2)while slightly increasing the max-steps rate ( 19 .8 → 20 .4). Adding Skill on top reverses the pattern: FP drifts back up slightly ( 8.9 → 9.7), but MS drops sharply from 20.4 to 18.7 ( −1.7). The two mechanisms therefore resolve different failure modes: the prompt channel injects category-level commonsense, such as a chair has a backrest, a stool does not , which helps the agent reject look-alike confusions and avoid premature stops, while the score-level corrections of the Refinement Layer eliminate the stuck-loop-detour patterns of Section 1 that otherwise cause episodes to time out. This empirical decoupling directly supports the dual-representation principle motivated in Section 3.4: semantic memory is the right tool for semantic confusions, spatial memory is the right tool for spatial inefficiencies, and forcing one to do the job of the other, as in prior prompt-only or map-only designs, leaves one of the two failure modes unaddressed. 
+
+Stronger backbones lift the ceiling without changing the structure. Replacing Qwen2.5-VL with Gemini-3-Flash (c → d) raises SR from 71.6 to 75.9 and SPL from 31.9 to 43.2. The MS rate 8Table 3: Per-category ObjectNav results on HM3D v0.2 with different backbone models.                                                          
+
+> Qwen2.5-VL-7B-Instruct Gemini-3-Flash-Preview Object SR SPL Succ / Total Object SR SPL Succ / Total
+> Bed 75.2 35.9 124 / 165 Bed 85.5 47.6 141 / 165 Sofa 81.8 42.7 153 / 187 Sofa 81.8 49.3 153 / 187 Chair 83.1 35.2 162 / 195 Chair 79.0 43.2 154 / 195 Toilet 75.3 35.0 125 / 166 Toilet 75.3 46.4 125 / 166 TV Screen 57.0 24.4 77 / 135 TV Screen 73.3 43.5 99 / 135 Plant 49.3 13.0 75 / 152 Plant 57.2 27.4 87 / 152
+> Overall 71.6 31.9 716 / 1000 Overall 75.9 43.2 759 / 1000
+
+drops further ( 18 .7 → 13 .4), while FP rises modestly ( 9.7 → 10 .7). The same SkillNav framework therefore continues to extract gains from a stronger VLM, and the residual failure mass shifts further toward semantic confusion (FP) rather than navigational inefficiency (MS), consistent with our reading that SkillNav has saturated the structural side of the problem. 
+
+4.4 Per-Category Analysis 
+
+To localize the remaining bottlenecks, Table 3 reports SR and SPL per target category for the two backbones used in the ablation. 
+
+Visually Salient Categories Already Saturate. The two backbones differ little in SR on visually unambiguous categories: Sofa (81.8 vs. 81.8) and Toilet (75.3 vs. 75.3) are essentially flat, while Chair is a mild exception in the opposite direction, with the stronger backbone slightly lowering SR (83.1 to 79.0, −4.1). On this group, Gemini’s gain appears in SPL rather than SR ( +8 .0 on Chair, 
+
++6 .6 on Sofa, +11 .4 on Toilet): on episodes that succeed, a stronger VLM reaches the target along shorter trajectories, even though it unlocks no additional successes and, on Chair, converts a few prior successes into failures. 
+
+Visually Ambiguous Categories Carry the Gap. The pattern reverses on categories prone to perceptual confusion. TV Screen exhibits the largest SR gain ( +16 .3, from 57.0 to 73.3), followed by Bed ( +10 .3) and Plant ( +7 .9), with equally pronounced SPL improvements ( +19 .1 on TV Screen, 
+
++14 .4 on Plant). These are targets most susceptible to mistaken identity—a powered-off screen, a bed conflated with a sofa, a small plant lost on a cluttered shelf—confirming that the bottleneck lies at the VLM’s perceptual side rather than at the navigation policy. 
+
+Implications for Future Work. The chair/sofa/toilet plateau shows SkillNav has substantially closed the cross-step behavioral awareness gap on perceptually easy targets, while the dominant residual failure source is visual grounding on ambiguous ones, a regime most amenable to improve-ment by scaling the underlying VLM. Two directions emerge: a goal verification module re-checking candidates across multiple viewpoints before committing the stop action, and a hierarchical experi-ence prompt sharing commonsense spatial priors across semantically related categories, relaxing the per-category prompt budget without violating the constant-token-cost constraint of Section 3.4. 
+
+## 5 Conclusion 
+
+This paper identifies underuse of spatial information as a structural blind spot of VLM-based Ob-jectNav agents and proposes SkillNav, an extensible behavioral skill framework inscribing memory directly on the curiosity value map. Skills are stratified into three tiers by behavioral authority: soft scaling, lower-bound boost, and hard override, and cooperate under a fixed composition order resolv-ing inter-skill conflicts by declared authority, complemented by a bounded experience prompt channel for category-level disambiguation. Together, they target orthogonal failures and establish new SPL state of the art on all three benchmarks and the highest SR on HM3D among training-free zero-shot methods, while reframing capability improvement as skill registration for continual refinement. 9References 
+
+P. Anderson, A. Chang, D. S. Chaplot, A. Dosovitskiy, S. Gupta, V. Koltun, J. Kosecka, J. Malik, R. Mottaghi, M. Savva, et al. On evaluation of embodied navigation agents. arXiv preprint arXiv:1807.06757 , 2018. D. Batra, A. Gokaslan, A. Kembhavi, O. Maksymets, R. Mottaghi, M. Savva, A. Toshev, and E. Wijmans. Objectnav revisited: On evaluation of embodied agents navigating to objects. arXiv preprint arXiv:2006.13171 , 2020. W. Cai, S. Huang, G. Cheng, Y. Long, P. Gao, C. Sun, and H. Dong. Bridging zero-shot object navi-gation and foundation models through pixel-guided navigation skill. In 2024 IEEE International Conference on Robotics and Automation (ICRA) , pages 5228–5234. IEEE, 2024. A. Chang, A. Dai, T. Funkhouser, M. Halber, M. Niessner, M. Savva, S. Song, A. Zeng, and Y. Zhang. Matterport3d: Learning from rgb-d data in indoor environments. arXiv preprint arXiv:1709.06158 ,2017. D. S. Chaplot, D. P. Gandhi, A. Gupta, and R. R. Salakhutdinov. Object goal navigation using goal-oriented semantic exploration. Advances in Neural Information Processing Systems , 33: 4247–4258, 2020. S. Y. Gadre, M. Wortsman, G. Ilharco, L. Schmidt, and S. Song. Cows on pasture: Baselines and benchmarks for language-driven zero-shot object navigation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 23171–23181, 2023. D. Goetting, H. G. Singh, and A. Loquercio. End-to-end navigation with vision-language models: Transforming spatial reasoning into question-answering. In International Conference on Neuro-symbolic Systems , pages 22–35. PMLR, 2025. A. Khandelwal, L. Weihs, R. Mottaghi, and A. Kembhavi. Simple but effective: Clip embeddings for embodied ai. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 14829–14838, 2022. Y. Kuang, H. Lin, and M. Jiang. Openfmnav: Towards open-set zero-shot object navigation via vision-language foundation models. In Findings of the Association for Computational Linguistics: NAACL 2024 , pages 338–351, 2024. P. Liu, Q. Zhang, D. Peng, L. Zhang, Y. Qin, H. Zhou, J. Ma, R. Xu, and Y. Ji. Toponav: Topological graphs as a key enabler for advanced object navigation. arXiv preprint arXiv:2509.01364 , 2025. Y. Long, W. Cai, H. Wang, G. Zhan, and H. Dong. Instructnav: Zero-shot system for generic instruction navigation in unexplored environment. In Conference on Robot Learning , pages 2049–2060. PMLR, 2025. A. Majumdar, G. Aggarwal, B. Devnani, J. Hoffman, and D. Batra. Zson: Zero-shot object-goal navigation using multimodal goal embeddings. Advances in Neural Information Processing Systems , 35:32340–32352, 2022. O. Maksymets, V. Cartillier, A. Gokaslan, E. Wijmans, W. Galuba, S. Lee, and D. Batra. Thda: Treasure hunt data augmentation for semantic navigation. In Proceedings of the IEEE/CVF International Conference on Computer Vision , pages 15374–15383, 2021. D. Nie, X. Guo, Y. Duan, R. Zhang, and L. Chen. Wmnav: Integrating vision-language models into world models for object goal navigation. In 2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 2392–2399. IEEE, 2025. D. Qi, S. Zeng, X. Chang, F. Xiong, S. Xie, X. Wu, and M. Xu. Mernav: A highly generaliz-able memory-execute-review framework for zero-shot object goal navigation. arXiv preprint arXiv:2602.05467 , 2026. S. K. Ramakrishnan, A. Gokaslan, E. Wijmans, O. Maksymets, A. Clegg, J. Turner, E. Undersander, W. Galuba, A. Westbury, A. X. Chang, et al. Habitat-matterport 3d dataset (hm3d): 1000 large-scale 3d environments for embodied ai. arXiv preprint arXiv:2109.08238 , 2021. 10 S. K. Ramakrishnan, D. S. Chaplot, Z. Al-Halah, J. Malik, and K. Grauman. Poni: Potential functions for objectgoal navigation with interaction-free learning. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 18890–18900, 2022. R. Ramrakhya, E. Undersander, D. Batra, and A. Das. Habitat-web: Learning embodied object-search strategies from human demonstrations at scale. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 5173–5183, 2022. R. Ramrakhya, D. Batra, E. Wijmans, and A. Das. Pirlnav: Pretraining with imitation and rl finetuning for objectnav. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 17896–17906, 2023. N. Shinn, F. Cassano, A. Gopinath, K. Narasimhan, and S. Yao. Reflexion: Language agents with verbal reinforcement learning. Advances in neural information processing systems , 36:8634–8652, 2023. X. Sun, L. Liu, H. Zhi, R. Qiu, and J. Liang. Prioritized semantic learning for zero-shot instance navigation. In European Conference on Computer Vision , pages 161–178. Springer, 2024. G. Wang, Y. Xie, Y. Jiang, A. Mandlekar, C. Xiao, Y. Zhu, L. Fan, and A. Anandkumar. Voyager: An open-ended embodied agent with large language models. arXiv preprint arXiv:2305.16291 , 2023. E. Wijmans, A. Kadian, A. Morcos, S. Lee, I. Essa, D. Parikh, M. Savva, and D. Batra. Dd-ppo: Learning near-perfect pointgoal navigators from 2.5 billion frames. In International Conference on Learning Representations , 2020. P. Wu, Y. Mu, B. Wu, Y. Hou, J. Ma, S. Zhang, and C. Liu. Voronav: Voronoi-based zero-shot object navigation with large language model. In International Conference on Machine Learning , pages 53757–53775. PMLR, 2024. K. Yadav, R. Ramrakhya, S. K. Ramakrishnan, T. Gervet, J. Turner, A. Gokaslan, N. Maestre, A. X. Chang, D. Batra, M. Savva, et al. Habitat-matterport 3d semantics dataset. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 4927–4936, 2023. S. Yao, J. Zhao, D. Yu, N. Du, I. Shafran, K. R. Narasimhan, and Y. Cao. React: Synergizing reasoning and acting in language models. In The Eleventh International Conference on Learning Representations , 2023. H. Yin, X. Xu, Z. Wu, J. Zhou, and J. Lu. Sg-nav: Online 3d scene graph prompting for llm-based zero-shot object navigation. Advances in neural information processing systems , 37:5285–5307, 2024. H. Yin, X. Xu, L. Zhao, Z. Wang, J. Zhou, and J. Lu. Unigoal: Towards universal zero-shot goal-oriented navigation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 19057–19066, 2025. N. Yokoyama, S. Ha, D. Batra, J. Wang, and B. Bucher. Vlfm: Vision-language frontier maps for zero-shot semantic navigation. In 2024 IEEE International Conference on Robotics and Automation (ICRA) , pages 42–48. IEEE, 2024. B. Yu, H. Kasaei, and M. Cao. L3mvn: Leveraging large language models for visual target navigation. In 2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , pages 3554–3560. IEEE, 2023. L. Zhang, H. Wang, E. Xiao, X. Zhang, Q. Zhang, Z. Jiang, and R. Xu. Multi-floor zero-shot object navigation policy. In 2025 IEEE International Conference on Robotics and Automation (ICRA) ,pages 6416–6422. IEEE, 2025. S. Zhang, X. Yu, X. Song, X. Wang, and S. Jiang. Imagine before go: Self-supervised generative map for object goal navigation. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pages 16414–16425, 2024. L. Zhong, C. Gao, Z. Ding, Y. Liao, H. Ma, S. Zhang, X. Zhou, and S. Liu. Topv-nav: Unlocking the top-view spatial reasoning potential of mllm for zero-shot object navigation. arXiv preprint arXiv:2411.16425 , 2024. 11 K. Zhou, K. Zheng, C. Pryor, Y. Shen, H. Jin, L. Getoor, and X. E. Wang. Esc: Exploration with soft commonsense constraints for zero-shot object navigation. In International Conference on Machine Learning , pages 42829–42842. PMLR, 2023. 12

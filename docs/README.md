@@ -6,41 +6,38 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-19
-- 运行时间：2026-07-19 21:22:36 UTC
+- 最新运行日期：2026-07-20
+- 运行时间：2026-07-20 21:49:12 UTC
 - 运行状态：成功
-- 本次总论文数：7
-- 精读区：2
+- 本次总论文数：6
+- 精读区：1
 - 速读区：5
 
 ### 今日简报（AI）
-今日日报精读2篇，聚焦世界模型与偏好学习；速读5篇覆盖视觉接口、语义导航与多视角驾驶世界模型。最值得关注的是《Xiaomi-Robotics-U0》的世界基础模型与《RENEW》的偏好学习修复方法。建议优先精读这两篇8分论文，再浏览速读中的视觉接口与驾驶世界模型相关研究。
-- 详情：[/202607/19/README](/202607/19/README)
+今日精读1篇、速读5篇，重点聚焦具身智能的鲁棒执行与泛化。最值得关注的是《AC-VLA》通过组合学习提升异常动作执行鲁棒性，以及《Dynamics-Aware Meta-Imitation》与《DA-Nav》分别从动态模仿与方向感知强化导航泛化。建议普通读者优先阅读精读论文《AC-VLA》，并速读方向感知导航与开放操作数据集相关研究。
+- 详情：[/202607/20/README](/202607/20/README)
 
 ### 精读区论文标签
-1. [Xiaomi-Robotics-U0: Unified Embodied Synthesis with World Foundation Model](/202607/19/2607.11643v1-xiaomi-robotics-u0-unified-embodied-synthesis-with-world-foundation-model)  
-   标签：评分：8.0/10、query:wam-vla
-   evidence：用于统一具身合成的世界基础模型，包含视频生成
-2. [RENEW: Towards Learning World Models and Repairing Model Exploitation from Preferences](/202607/19/2607.14180v1-renew-towards-learning-world-models-and-repairing-model-exploitation-from-preferences)  
-   标签：评分：8.0/10、query:wam-vla
-   evidence：通过偏好学习世界模型并使用想象滚动修复模型利用
+1. [AC-VLA: Robust Out-of-Distribution Action Execution via Compositional Learning](/202607/20/2607.15714v1-ac-vla-robust-out-of-distribution-action-execution-via-compositional-learning)  
+   标签：评分：8.0/10、query:latent-vla
+   evidence：通过组合学习增强VLA的分布外泛化
 
 ### 速读区论文标签
-1. [VIA: Visual Interface Agent for Robot Control](/202607/19/2607.11119v1-via-visual-interface-agent-for-robot-control)  
+1. [Dynamics-Aware Meta-Imitation for Generalization to Unseen Robotic Manipulation](/202607/20/2607.15880v1-dynamics-aware-meta-imitation-for-generalization-to-unseen-robotic-manipulation)  
    标签：评分：7.0/10、query:latent-vla
-   evidence：提出通过视觉接口利用基础模型控制机器人，是一种替代性VLA方法
-2. [From Language to Navigation Goals: A Vision-Language Approach for Semantic Navigation of Mobile Robots Using RGB-D Perception](/202607/19/2607.13624v1-from-language-to-navigation-goals-a-vision-language-approach-for-semantic-navigation-of-mobile-robots-using-rgb-d-perception)  
-   标签：评分：7.0/10、query:latent-vla
-   evidence：移动机器人语义导航的VLA方法
-3. [M$^\text{4}$World: A Multi-view Multimodal Driving World Model for Interactive Object Manipulation and Minute-long Streaming](/202607/19/2607.14005v1-mtext4world-a-multi-view-multimodal-driving-world-model-for-interactive-object-manipulation-and-minute-long-streaming)  
-   标签：评分：7.0/10、query:wam-vla
-   evidence：生成式驾驶世界模型，支持多视角视频和LiDAR，交互物体操控和长时稳定
-4. [RxBrain: Embodied Cognition Foundation Model with Joint Language-Visual Reasoning and Imagination](/202607/19/2607.14187v1-rxbrain-embodied-cognition-foundation-model-with-joint-language-visual-reasoning-and-imagination)  
-   标签：评分：7.0/10、query:wam-vla
-   evidence：联合语言-视觉推理与想象的具身认知模型用于规划
-5. [Exploratory, Communicative, and Deployable: Vision-Driven Embodied Agents for Open-World Mobile Manipulation](/202607/19/2607.13653v1-exploratory-communicative-and-deployable-vision-driven-embodied-agents-for-open-world-mobile-manipulation)  
+   evidence：在操作模仿学习中捕获潜在空间动力学
+2. [DA-Nav: Direction-Aware City-Scale Vision-Language Navigation](/202607/20/2607.11638v1-da-nav-direction-aware-city-scale-vision-language-navigation)  
    标签：评分：6.0/10、query:latent-vla
-   evidence：视觉驱动的开放世界移动操作智能体框架
+   evidence：视觉-语言导航中的动作预测
+3. [Open-AoE: An Open Egocentric Manipulation Dataset and Toolchain for Embodied Learning](/202607/20/2607.14183v1-open-aoe-an-open-egocentric-manipulation-dataset-and-toolchain-for-embodied-learning)  
+   标签：评分：6.0/10、query:vla-models
+   evidence：大规模第一人称操作数据集，支持VLA实验
+4. [SkillNav: Score-Level Skill Intervention for Zero-Shot Object Goal Navigation](/202607/20/2607.15758v1-skillnav-score-level-skill-intervention-for-zero-shot-object-goal-navigation)  
+   标签：评分：6.0/10、query:latent-vla
+   evidence：基于VLM的导航策略
+5. [JoyNexus: Service-Oriented Multi-Tenant Post-Training for VLA Models](/202607/20/2607.16074v1-joynexus-service-oriented-multi-tenant-post-training-for-vla-models)  
+   标签：评分：6.0/10、query:vla-models
+   evidence：面向VLA模型的多租户后训练服务，涉及GPU资源
 
 
 <div class="dpr-home-promo-card">

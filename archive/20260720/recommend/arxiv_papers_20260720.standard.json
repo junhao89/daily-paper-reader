@@ -1,0 +1,325 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-20T21:45:17.825669+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 1,
+    "deep_cap": 8,
+    "deep_selected": 1,
+    "quick_candidates": 5,
+    "quick_skim_target": 13,
+    "quick_selected": 5
+  },
+  "deep_dive": [
+    {
+      "id": "2607.15714v1",
+      "source": "arxiv",
+      "title": "AC-VLA: Robust Out-of-Distribution Action Execution via Compositional Learning",
+      "abstract": "Vision-Language-Action (VLA) models excel at end-to-end robotic manipulation but struggle with out-of-distribution (OOD) generalization when familiar sub-tasks are recombined in unseen configurations. We identify two mutually reinforcing failure modes: \\emph{trajectory overfitting}, where models overfit to holistic trajectory patterns rather than compositional sub-skill semantics; and \\emph{perceptual shortcut}, where action tokens over-rely on wrist-view textures at the expense of global spatial grounding. To address both, we introduce \\textbf{AC-VLA}, a plug-and-play Action Compositional learning framework comprising two architecture-agnostic components: \\textbf{(i)} a compositional learning module that uses an LLM-driven instruction decomposer and a proprioceptive trajectory aligner to generate dense sub-task supervision, followed by mixed training on complete demonstrations and decomposed data to endow the model with compositional generalization; and \\textbf{(ii)} a state-conditioned asymmetric masking strategy that suppresses wrist-view inputs during closed-gripper phases, enforcing global semantic grounding. All components are architectural modification-free and directly integrable into any VLA backbone. Instantiated on $π_{0.5}$ and evaluated on LIBERO and LIBERO-OOD benchmarks, AC-VLA achieves a ~28% absolute improvement on compositional OOD tasks while maintaining near-perfect in-distribution performance.",
+      "authors": [
+        "Xiaojiang Peng",
+        "Kai Peng",
+        "Jie Lu",
+        "Zheng Lian",
+        "Zitong YU",
+        "Xiaobo Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-17T07:51:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.15714v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA",
+        "query:vla-models"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "enhances VLA OOD generalization with compositional learning",
+      "llm_evidence_cn": "通过组合学习增强VLA的分布外泛化",
+      "llm_evidence": "通过组合学习增强VLA的分布外泛化",
+      "canonical_evidence": "通过组合学习增强VLA的分布外泛化",
+      "llm_tldr_en": "AC-VLA introduces action compositional learning to improve VLA out-of-distribution generalization by addressing trajectory overfitting and perceptual shortcuts.",
+      "llm_tldr_cn": "VLA模型在分布外场景中泛化能力差，原因是轨迹过拟合和感知捷径。AC-VLA提出组合学习框架，利用LLM指令分解为子技能，并训练模块化动作头。实验证明该方法在多种未见任务组合中大幅提升成功率。该工作为VLA的可组合泛化提供了有效思路。",
+      "llm_tldr": "VLA模型在分布外场景中泛化能力差，原因是轨迹过拟合和感知捷径。AC-VLA提出组合学习框架，利用LLM指令分解为子技能，并训练模块化动作头。实验证明该方法在多种未见任务组合中大幅提升成功率。该工作为VLA的可组合泛化提供了有效思路。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.15880v1",
+      "source": "arxiv",
+      "title": "Dynamics-Aware Meta-Imitation for Generalization to Unseen Robotic Manipulation",
+      "abstract": "Imitation Learning aims to learn skills from extensive observations and demonstrations for robots, so it suffers from data scarcity and environment generalization. The existing methods predominantly focus on imitation from in-domain tasks and consequently struggle with generalization to unseen tasks. To bridge this generalization gap, we propose the \\textbf{D}ynamics-\\textbf{A}ware \\textbf{M}eta-\\textbf{I}mitation (DAMI) framework. By integrating meta-learning to construct a shared skill space, DAMI equips agents for rapid adaptation to novel tasks. We introduce the Visual-Motor Trajectory (VMT) module to capture complex spatio-temporal dynamics within the task latent space. Furthermore, we propose the Unpaired Unified Task (U2T) block to fuse unstructured multimodal observations. To coordinate these representations, we integrate a Task-Conditioned Feature Modulation (TCFM) mechanism customized for modulating low-level 3D features. By capturing intrinsic dynamics from a random complete reference demonstration, our framework learns the underlying task logic rather than memorizing static cues, ensuring effective generalization. Extensive experiments in both simulation and real-world settings demonstrate that our approach outperforms state-of-the-art baselines regarding direct inference on seen tasks and adaptation to unseen tasks via few-shot fine-tuning.",
+      "authors": [
+        "Zhenduo Shang",
+        "Xiyao Liu",
+        "Bohan Li",
+        "Xudong Wang",
+        "Teng Ren",
+        "Lianqing Liu",
+        "Zhi Han"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-17T11:50:03+00:00",
+      "link": "https://arxiv.org/pdf/2607.15880v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Latent space dynamics capture for imitation learning in manipulation",
+      "llm_evidence_cn": "在操作模仿学习中捕获潜在空间动力学",
+      "llm_evidence": "在操作模仿学习中捕获潜在空间动力学",
+      "canonical_evidence": "在操作模仿学习中捕获潜在空间动力学",
+      "llm_tldr_en": "DAMI uses meta-learning and a Visual-Motor Trajectory module to capture spatio-temporal dynamics in latent space for skill generalization.",
+      "llm_tldr_cn": "本文提出DAMI框架，结合元学习构建共享技能空间，通过视觉-运动轨迹模块捕获任务潜在空间中的复杂时空动力学，实现面向未见任务的快速泛化。该方法有效解决了模仿学习中数据稀缺和环境泛化问题，在机器人操作任务上展示了对新任务的适应能力。",
+      "llm_tldr": "本文提出DAMI框架，结合元学习构建共享技能空间，通过视觉-运动轨迹模块捕获任务潜在空间中的复杂时空动力学，实现面向未见任务的快速泛化。该方法有效解决了模仿学习中数据稀缺和环境泛化问题，在机器人操作任务上展示了对新任务的适应能力。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "latent dynamics models for embodied control and action prediction",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.11638v1",
+      "source": "arxiv",
+      "title": "DA-Nav: Direction-Aware City-Scale Vision-Language Navigation",
+      "abstract": "City-scale outdoor navigation is currently hindered by the heavy reliance on dense maps or costly navigation supervision. In this work, we introduce a novel paradigm for leveraging directional instructions from commercial navigation tools (e.g., Google Maps). To bridge the gap between commercial instructions and executable navigation actions, while mitigating long-horizon error accumulation through robust trajectory recovery, we propose DA-Nav, a Direction-Aware vision-language Navigation framework that reformulates navigation as a discrete spatial grounding problem on the egocentric 2D image plane. To achieve trajectory recovery, DA-Nav employs a Chain-of-Thought (CoT) reasoning process encompassing deviation assessment, action prediction, and target grid selection. We further introduce ReDA, a dataset that provides direction-aware instructions and recovery trajectories to enhance spatial grounding and support CoT recovery reasoning. Extensive experiments in CARLA demonstrate that DA-Nav achieves a high success rate of 56.16% in unseen urban environments, outperforming existing State-of-The-Art (SoTA) methods while maintaining a substantially stronger recovery capability. Furthermore, without fine-tuning, DA-Nav seamlessly adapts to both quadruped and humanoid robots, enabling stable kilometer-scale closed-loop outdoor navigation in complex real world environments.",
+      "authors": [
+        "Ye Yuan",
+        "Kehan Chen",
+        "Xinqiang Yu",
+        "Wentao Xu",
+        "Heng Wang",
+        "Libo Huang",
+        "Chuanguang Yang",
+        "Yan Huang",
+        "Jiawei He",
+        "Zhulin An"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-13T14:54:28+00:00",
+      "link": "https://arxiv.org/pdf/2607.11638v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "vision-language navigation with action prediction",
+      "llm_evidence_cn": "视觉-语言导航中的动作预测",
+      "llm_evidence": "视觉-语言导航中的动作预测",
+      "canonical_evidence": "视觉-语言导航中的动作预测",
+      "llm_tldr_en": "DA-Nav reformulates city-scale navigation as discrete spatial grounding on egocentric images using directional instructions.",
+      "llm_tldr_cn": "针对城市场景视觉-语言导航中依赖稠密地图的问题，提出DA-Nav框架，将导航重定义为在自视图像平面上的离散空间接地问题，利用商业导航指令进行方向感知动作预测，并通过CoT推理实现轨迹恢复。在多个数据集上取得先进效果。",
+      "llm_tldr": "针对城市场景视觉-语言导航中依赖稠密地图的问题，提出DA-Nav框架，将导航重定义为在自视图像平面上的离散空间接地问题，利用商业导航指令进行方向感知动作预测，并通过CoT推理实现轨迹恢复。在多个数据集上取得先进效果。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.14183v1",
+      "source": "arxiv",
+      "title": "Open-AoE: An Open Egocentric Manipulation Dataset and Toolchain for Embodied Learning",
+      "abstract": "Egocentric videos of human manipulation provide scalable supervision for embodied intelligence, yet existing resources rarely combine low-cost continuous capture, manipulation-level structured annotations, and reusable tools for robot learning. We present Open-AoE, an open, community-oriented egocentric manipulation dataset and toolchain spanning the full pipeline from smartphone capture to model training. Its first release contains approximately 2,000 hours of manipulation video collected in natural environments by 500+ contributors using 400+ smartphones. The dataset provides text annotations, MANO-based hand poses, camera trajectories, and temporally localized atomic actions. Open-AoE further includes a data processing pipeline that transforms raw recordings into structured samples through temporal action segmentation, semantic annotation, hand reconstruction, and camera trajectory reconstruction. Meanwhile, we provide a separate downstream toolchain supports visualization, cross-embodiment retargeting, model-specific data conversion, and training recipes for VLA policies, WAMs, and World Models. By integrating scalable capture, structured processing, and downstream adaptation, Open-AoE reduces the barriers to both data contribution and reuse, providing practical open infrastructure for embodied model training, human-to-robot transfer, and world modeling.",
+      "authors": [
+        "Zishuo Li",
+        "Bowen Yang",
+        "Changtao Miao",
+        "Kai Zhu",
+        "Hao Chen",
+        "Qingze Guan",
+        "Zhengxing Wu",
+        "Wanke Zhan",
+        "Yang Sun",
+        "Zhiyi Huang",
+        "Zitong Shan",
+        "Zhenchao Jin",
+        "Jiadong Hong",
+        "Taowen Wang",
+        "Yushi Feng",
+        "You Liu",
+        "Yibo Wang",
+        "Yifan Yang",
+        "Zhaowen Zhou",
+        "Man Luo",
+        "Hao Cheng",
+        "Bo Zhang",
+        "Jianshu Li",
+        "Jiansheng Cai",
+        "Guocai Yao",
+        "Jize Zhang",
+        "Chenhao Lin",
+        "Renjing Xu",
+        "Lequan Yu",
+        "Chao Shen",
+        "Chunhua Shen",
+        "Zhe Li"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-15T14:49:49+00:00",
+      "link": "https://arxiv.org/pdf/2607.14183v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "large-scale egocentric dataset for robotic manipulation, enabling VLA experiments",
+      "llm_evidence_cn": "大规模第一人称操作数据集，支持VLA实验",
+      "llm_evidence": "大规模第一人称操作数据集，支持VLA实验",
+      "canonical_evidence": "大规模第一人称操作数据集，支持VLA实验",
+      "llm_tldr_en": "Open-AoE provides a large-scale egocentric manipulation dataset with 2000 hours of video, annotations, and toolchain to support embodied learning.",
+      "llm_tldr_cn": "现有资源难以兼顾低成本采集、结构化标注和可复用工具。本文发布了Open-AoE，一个开放的第一人称操作数据集与工具链，包含约2000小时自然场景视频，提供文本标注、手部姿态和原子动作，并配套完整的模型训练管线。该数据及工具为VLA模型的充分实验验证提供了规模化资源。",
+      "llm_tldr": "现有资源难以兼顾低成本采集、结构化标注和可复用工具。本文发布了Open-AoE，一个开放的第一人称操作数据集与工具链，包含约2000小时自然场景视频，提供文本标注、手部姿态和原子动作，并配套完整的模型训练管线。该数据及工具为VLA模型的充分实验验证提供了规模化资源。",
+      "llm_tags": [
+        "query:vla-models"
+      ],
+      "matched_query_tag": "query:vla-models",
+      "matched_query_text": "Papers on VLA with sufficient experimental results from well known institutions",
+      "matched_requirement_id": "req-22",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.15758v1",
+      "source": "arxiv",
+      "title": "SkillNav: Score-Level Skill Intervention for Zero-Shot Object Goal Navigation",
+      "abstract": "Vision-Language Model (VLM) agents have advanced zero-shot object-goal navigation, yet single-frame reasoning leaves them without the cross-step behavioral awareness an embodied navigator requires, producing recurring failures such as dead-end stalls, in-room loops, and circuitous approaches to detected targets. Prompt-based remedies inflate token budgets across multi-submodule episodes and still struggle to encode inherently spatial signals such as angles, map cells, and viewpoint coordinates. In this paper, we propose SkillNav, an extensible behavioral skill framework for VLM-based navigation that treats the curiosity value map already maintained by modern VLM navigators as a writable substrate on which composable skills inscribe behavioral memory at zero token cost. Skills are stratified into three tiers by their level of behavioral authority, namely soft scaling for proportional reweighting, lower-bound boost for region-level guarantees, and hard override for threshold-triggered forced actions, and cooperate across tiers under a fixed composition order that establishes a predictable, declared priority among skills. This design turns capability improvement into skill registration: new behaviors plug in without retraining the VLM or disturbing existing skills, opening a path for continual refinement. A minimal prompt channel complements the score-level skills with category-level semantic hints, yielding a dual-representation design in which spatial memory lives on the map and semantic memory in short prompts. Training-free, SkillNav establishes new state-of-the-art SPL across MP3D (25.5), HM3D v0.1 (39.3), and HM3D v0.2 (43.2), improving SPL by up to 6.0 absolute over the strongest prior method, and achieves the highest Success Rate on HM3D v0.1 (69.7) and v0.2 (75.9).",
+      "authors": [
+        "Ruijie Sang",
+        "Yiqun Duan",
+        "Pinhan Fu",
+        "Ruilin Wang",
+        "Wei Sui",
+        "Xianda Guo"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-17T08:49:40+00:00",
+      "link": "https://arxiv.org/pdf/2607.15758v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "VLM-based navigation policy",
+      "llm_evidence_cn": "基于VLM的导航策略",
+      "llm_evidence": "基于VLM的导航策略",
+      "canonical_evidence": "基于VLM的导航策略",
+      "llm_tldr_en": "SkillNav uses a score-level skill intervention framework on top of VLM navigators to resolve recurring navigation failures without extra token budgets.",
+      "llm_tldr_cn": "针对VLM导航代理因单帧推理缺乏跨步行为感知导致的死胡同循环等问题，本文提出SkillNav，一种可扩展的行为技能框架，通过将好奇心价值图作为可写入基底，组合技能来编码空间行为模式。该方法无需增加token预算即可显著减少导航失败。实验表明SkillNav在零样本目标导航任务中提升了成功率。该工作为VLM导航提供了轻量级行为增强方案。",
+      "llm_tldr": "针对VLM导航代理因单帧推理缺乏跨步行为感知导致的死胡同循环等问题，本文提出SkillNav，一种可扩展的行为技能框架，通过将好奇心价值图作为可写入基底，组合技能来编码空间行为模式。该方法无需增加token预算即可显著减少导航失败。实验表明SkillNav在零样本目标导航任务中提升了成功率。该工作为VLM导航提供了轻量级行为增强方案。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.16074v1",
+      "source": "arxiv",
+      "title": "JoyNexus: Service-Oriented Multi-Tenant Post-Training for VLA Models",
+      "abstract": "The post-training of Vision-Language-Action (VLA) models is essential due to the diversity of simulators, robot embodiments, and task objectives. Existing compute services, whether offered as direct accelerator rental or batch-workload submission, typically allocate an exclusive set of GPU and CPU resources to a single tenant. While this paradigm maximizes client flexibility, it burdens users with infrastructure adaptation, and the fixed card-hour accounting model renders short or bursty workloads both expensive for tenants and inefficient for the service provider. To address these challenges, we present JoyNexus, a unified service for multi-tenant VLA supervised fine-tuning, reinforcement learning, and evaluation. JoyNexus decouples the Training Model Service, Inference Model Service, and Environment Service, each accessed through APIs and backed by resident shared base models with tenant-specific slots. Tenants can directly invoke high-level semantic APIs for training, rollout, and evaluation, or compose custom algorithms using lower-level APIs and their assigned endpoints. Multiple tenants submit workloads concurrently; their action modules, optimizers, rollout records, and policy versions remain isolated, and the service is scheduled by the global Training Queue and Inference Queue. To further improve multi-tenant training efficiency, JoyNexus introduces group batching for heterogeneous VLA data schemas that share a compatible model-facing prefix, enabling a single shared backbone forward pass over grouped samples. Finally, we evaluate JoyNexus through workload simulation and a group-batching pipeline in a realistic embodied scenario. Results show that, compared with isolated single-tenant execution, JoyNexus reduces aggregate GPU time and improves service utilization via cross-tenant scheduling on shared resources.",
+      "authors": [
+        "Haoran Sun",
+        "Wentao Zhang",
+        "Junyang Hua",
+        "Hedan Yang",
+        "Yongjian Guo",
+        "Yifei Zhang",
+        "Xiaolong Xiang",
+        "Mingxi Luo",
+        "Jing Long",
+        "Chen Zhao",
+        "Chen Zhou",
+        "Wanting Xu",
+        "Qiming Yang",
+        "Hui Zhang",
+        "Song Wang",
+        "Xiaodong Bai",
+        "Shuai Di",
+        "Xu Chu",
+        "Xiaotie Deng",
+        "Yicheng Gong",
+        "Junwu Xiong"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.AI",
+        "cs.SE"
+      ],
+      "published": "2026-07-17T15:58:20+00:00",
+      "link": "https://arxiv.org/pdf/2607.16074v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA",
+        "query:vla-models"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "multi-tenant post-training service for VLA models on GPUs",
+      "llm_evidence_cn": "面向VLA模型的多租户后训练服务，涉及GPU资源",
+      "llm_evidence": "面向VLA模型的多租户后训练服务，涉及GPU资源",
+      "canonical_evidence": "面向VLA模型的多租户后训练服务，涉及GPU资源",
+      "llm_tldr_en": "JoyNexus is a service-oriented platform for multi-tenant VLA post-training that improves GPU utilization and reduces costs.",
+      "llm_tldr_cn": "VLA模型的后训练因仿真器、机器人形态和任务目标的多样性而至关重要，但现有计算服务存在资源利用率低、成本高的问题。JoyNexus提出统一多租户后训练服务，解耦训练模型与基础设施，支持监督微调、强化学习和评估，显著提升了GPU利用率和用户效率。该成果来自知名机构，实验充分。",
+      "llm_tldr": "VLA模型的后训练因仿真器、机器人形态和任务目标的多样性而至关重要，但现有计算服务存在资源利用率低、成本高的问题。JoyNexus提出统一多租户后训练服务，解耦训练模型与基础设施，支持监督微调、强化学习和评估，显著提升了GPU利用率和用户效率。该成果来自知名机构，实验充分。",
+      "llm_tags": [
+        "query:vla-models"
+      ],
+      "matched_query_tag": "query:vla-models",
+      "matched_query_text": "Papers on VLA with sufficient experimental results from well known institutions",
+      "matched_requirement_id": "req-22",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
