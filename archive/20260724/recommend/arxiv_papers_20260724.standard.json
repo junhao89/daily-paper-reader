@@ -1,0 +1,355 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-24T21:52:37.823973+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 5,
+    "deep_cap": 8,
+    "deep_selected": 5,
+    "quick_candidates": 3,
+    "quick_skim_target": 13,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2607.20988v1",
+      "source": "arxiv",
+      "title": "HyWorldVLA: A Vision-Language-Action Model with Hybrid World Modeling for Autonomous Driving",
+      "abstract": "Vision-Language-Action (VLA) models augmented with world modeling represent a promising paradigm for end-to-end autonomous driving. While pixel-level future prediction enables fine-grained spatiotemporal reasoning, it compromises robustness in noisy driving scenarios. Conversely, latent-based world models alleviate this sensitivity but often incur limited interpretability and representational degradation due to absent pixel-level grounding. To reconcile this trade-off, we propose HyWorldVLA, a hybrid world-VLA framework that unifies pixel-level supervision and latent representation learning. In the pre-training stage, HyWorldVLA predicts video latents encoded by a pre-trained video VAE, while simultaneously reconstructing video frames to provide precise pixel-level grounding. During the subsequent co-fine-tuning phase, the model exclusively predicts latent features, which are fed into an action expert to generate trajectories. Extensive experiments on NAVSIM v1 and v2 benchmarks demonstrate that HyWorldVLA significantly outperforms both pixel-based and latent-based world model baselines. Notably, we present the first comprehensive qualitative and quantitative analysis of world model noise robustness in autonomous driving, establishing a new benchmark for evaluating future architectures.",
+      "authors": [
+        "Quanfu Yu",
+        "Xian Wu",
+        "Hao Xu",
+        "Liulong Ma"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-07-23T07:11:41+00:00",
+      "link": "https://arxiv.org/pdf/2607.20988v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "hybrid world-VLA framework unifying latent and pixel-level learning for autonomous driving",
+      "llm_evidence_cn": "混合世界-VLA框架统一了潜在和像素级学习用于自动驾驶",
+      "llm_evidence": "混合世界-VLA框架统一了潜在和像素级学习用于自动驾驶",
+      "canonical_evidence": "混合世界-VLA框架统一了潜在和像素级学习用于自动驾驶",
+      "llm_tldr_en": "HyWorldVLA proposes a hybrid world-VLA framework that combines pixel-level video prediction with latent representation learning for end-to-end autonomous driving, achieving robust performance.",
+      "llm_tldr_cn": "针对自动驾驶中像素级预测鲁棒性不足和潜在世界模型可解释性差的问题，提出HyWorldVLA混合世界-VLA框架。该框架在预训练阶段同时预测视频VAE潜在编码并重建视频帧，统一了像素级监督与潜在表示学习。实验表明该方法在噪声驾驶场景下兼顾了鲁棒性和可解释性，为VLA与世界模型的结合提供了新范式。",
+      "llm_tldr": "针对自动驾驶中像素级预测鲁棒性不足和潜在世界模型可解释性差的问题，提出HyWorldVLA混合世界-VLA框架。该框架在预训练阶段同时预测视频VAE潜在编码并重建视频帧，统一了像素级监督与潜在表示学习。实验表明该方法在噪声驾驶场景下兼顾了鲁棒性和可解释性，为VLA与世界模型的结合提供了新范式。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world action models combined with vision language action policies",
+      "matched_requirement_id": "req-17",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.18042v2",
+      "source": "arxiv",
+      "title": "Anticipate Before Acting: Future-State-Conditioned Vision-Language Navigation",
+      "abstract": "End-to-end vision-language navigation (VLN) with causal vision-language models maps instructions and egocentric observations directly to actions, but standard behavior cloning supervises only the next action and does not explicitly encourage the policy state to be predictive of future visual outcomes, limiting long-horizon decision making. A privileged-input diagnostic shows that access to an expert-trajectory future image can substantially improve navigation, indicating that future observations contain rich, actionable cues, though such inputs are unavailable at deployment. Motivated by this signal, we propose Future-State-Conditioned VLN (FSC-VLN), a deployable model that augments a causal policy with a future-query token and uses training-only future-state supervision to distill information from future observations into the policy state. Concretely, during training we align the future-query representation to a frozen visual embedding $Δ$ steps ahead, while inference requires only past and current observations. This design preserves the baseline inference pattern and adds only two learned prefix tokens, implying minimal overhead. On R2R val-unseen, FSC-VLN improves SR/OSR/SPL over a StreamVLN-style baseline under two training-data regimes, with larger gains on long-horizon episodes; ablations further support the dual-query design that separates future and action queries.",
+      "authors": [
+        "Lingfeng Zhang",
+        "Zhanguang Zhang",
+        "Liheng Ma",
+        "Tongtong Cao",
+        "Yingxue Zhang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-07-20T15:11:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.18042v2",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "future-state-conditioned VLN, joint embedding predictive approach",
+      "llm_evidence_cn": "未来状态条件视觉语言导航，联合嵌入预测方法",
+      "llm_evidence": "未来状态条件视觉语言导航，联合嵌入预测方法",
+      "canonical_evidence": "未来状态条件视觉语言导航，联合嵌入预测方法",
+      "llm_tldr_en": "Proposes future-state-conditioned vision-language navigation (FSC-VLN) that augments causal policy with future-query token for state prediction, improving long-horizon decision making.",
+      "llm_tldr_cn": "该论文提出未来状态条件视觉语言导航（FSC-VLN），通过在因果策略中引入未来查询令牌，使模型学习预测未来视觉状态，从而提升长程导航决策能力。在标准行为克隆基础上，该方法显式鼓励策略状态具有预测性，实验表明未来状态信息包含丰富行动线索，有效改善了导航性能。",
+      "llm_tldr": "该论文提出未来状态条件视觉语言导航（FSC-VLN），通过在因果策略中引入未来查询令牌，使模型学习预测未来视觉状态，从而提升长程导航决策能力。在标准行为克隆基础上，该方法显式鼓励策略状态具有预测性，实验表明未来状态信息包含丰富行动线索，有效改善了导航性能。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "joint embedding predictive models applied to vision language action learning",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.21594v1",
+      "source": "arxiv",
+      "title": "Streaming Multi-Agent Autoregressive Diffusion Model with World State Registers",
+      "abstract": "Multi-agent interactive world models should not only generate consistent observations, but also maintain world states that persist across agents and evolve across views. Existing autoregressive video diffusion pipelines carry forward observation history as conditioning context, which makes shared state difficult to maintain in multi-agent and multi-view settings. We present WorldWeaver (W^2), a streaming multi-agent video diffusion model that augments rollout with cross-agent world state registers: learnable tokens that store shared world information, track individual agent status, and are dynamically updated after each generated chunk. We ground these registers with supervision signals spanning individual agent status, global state views including bird's-eye views, and scene text. We further improve the architecture with a Mixture-of-Transformers design that uses separate weights for world state modeling and visual frame modeling. Extensive experiments in two-agent Minecraft video generation show that explicit world-state modeling improves logical consistency and generation quality.",
+      "authors": [
+        "Sicheng Mo",
+        "Yuheng Li",
+        "Ziyang Leng",
+        "Krishna Kumar Singh",
+        "Bolei Zhou"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-23T17:59:58+00:00",
+      "link": "https://arxiv.org/pdf/2607.21594v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "streaming multi-agent video diffusion with world state registers for robot imagination",
+      "llm_evidence_cn": "流式多智能体视频扩散与世界状态寄存器用于机器人想象",
+      "llm_evidence": "流式多智能体视频扩散与世界状态寄存器用于机器人想象",
+      "canonical_evidence": "流式多智能体视频扩散与世界状态寄存器用于机器人想象",
+      "llm_tldr_en": "WorldWeaver presents a streaming multi-agent video diffusion model with world state registers for consistent multi-view rollout and shared world state maintenance.",
+      "llm_tldr_cn": "针对多智能体交互世界中视频生成难以维护共享世界状态的问题，提出WorldWeaver，一种流式多智能体视频扩散模型。通过引入跨智能体世界状态寄存器（可学习令牌）来存储和更新共享信息，并在生成每个块后动态更新。实验表明该方法在一致性和状态维护上优于现有扩散管道，为多视角机器人想象和rollout提供了新方案。",
+      "llm_tldr": "针对多智能体交互世界中视频生成难以维护共享世界状态的问题，提出WorldWeaver，一种流式多智能体视频扩散模型。通过引入跨智能体世界状态寄存器（可学习令牌）来存储和更新共享信息，并在生成每个块后动态更新。实验表明该方法在一致性和状态维护上优于现有扩散管道，为多视角机器人想象和rollout提供了新方案。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "video-based world models for robot imagination and rollout",
+      "matched_requirement_id": "req-14",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.20771v1",
+      "source": "arxiv",
+      "title": "Emergent Compositional Skills in Mixture-of-Experts VLAs",
+      "abstract": "We consider the problem of learning compositional robot policies end-to-end from expert demonstrations, without any pre-specified notion of task decomposition or hierarchy. We ask whether a VLA trained with a simplified Mixture-of-Experts (MoE) action head can emergently learn to decompose tasks into reusable, interpretable primitives. We find that learned experts are heavily reused across tasks and consistently correspond to qualitatively distinct low-level behaviors, suggesting that the router implicitly learns to perform high-level sequencing while experts serve as compositional primitives. Our MoE matches the task performance of a monolithic baseline while demonstrating meaningful expert specialization, a step toward modular, interpretable robot policies that emerge from data alone.",
+      "authors": [
+        "Shlok Shah",
+        "Rhiaan Jhaveri",
+        "Tharun Kumar Tiruppali Kalidoss",
+        "Chirayu Nimonkar",
+        "Ishaan Javali"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-22T22:36:52+00:00",
+      "link": "https://arxiv.org/pdf/2607.20771v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "VLA with MoE action head for compositional policies",
+      "llm_evidence_cn": "使用MoE动作头的VLA用于组合策略",
+      "llm_evidence": "使用MoE动作头的VLA用于组合策略",
+      "canonical_evidence": "使用MoE动作头的VLA用于组合策略",
+      "llm_tldr_en": "Proposes a MoE VLA that learns to decompose tasks into reusable primitives, matching baseline performance with emergent expert specialization.",
+      "llm_tldr_cn": "本文研究视觉-语言-动作（VLA）模型能否通过简化的混合专家（MoE）动作头端到端学习组合策略。该方法无需预先指定任务分解，每个专家自动对应不同的底层行为，路由器学习高层序列。实验表明，MoE VLA在保持任务性能的同时，专家出现有意义的专门化，为模块化可解释的机器人策略迈出一步。",
+      "llm_tldr": "本文研究视觉-语言-动作（VLA）模型能否通过简化的混合专家（MoE）动作头端到端学习组合策略。该方法无需预先指定任务分解，每个专家自动对应不同的底层行为，路由器学习高层序列。实验表明，MoE VLA在保持任务性能的同时，专家出现有意义的专门化，为模块化可解释的机器人策略迈出一步。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.20834v1",
+      "source": "arxiv",
+      "title": "Offline RL with Hierarchical Action Chunking",
+      "abstract": "Offline goal-conditioned reinforcement learning (RL) holds the promise of learning general-purpose policies from static datasets. However, scaling these methods to long-horizon tasks remains a challenge due to the curse of horizon, where value estimation errors can compound through long chains of bootstrapped Bellman backups. Existing hierarchical approaches mitigate this by decomposing tasks into subgoals, yet they often rely on low-level controllers that suffer from myopic execution and biased value estimates. In this work, we propose Hierarchical Implicit Q-Chunking (HiQC), an offline goal-conditioned RL algorithm that combines high-level latent planning with low-level action chunking. By conditioning the low-level critic on temporally extended action sequences, HiQC enables unbiased k-step value backups, compressing the horizon at both the planning and execution levels. We theoretically demonstrate that this dual decomposition results in a tighter bound on value error under a bounded per-backup error model compared to standard hierarchy or flat chunking alone. Empirically, HiQC achieves the highest aggregate performance among the compared methods on the OGBench suite, with its largest gains on long-horizon navigation tasks such as humanoid-giant.",
+      "authors": [
+        "Ahad Jawaid"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-23T01:48:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.20834v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Hierarchical latent planning with action chunking for offline RL",
+      "llm_evidence_cn": "分层潜在规划与动作分块用于离线RL",
+      "llm_evidence": "分层潜在规划与动作分块用于离线RL",
+      "canonical_evidence": "分层潜在规划与动作分块用于离线RL",
+      "llm_tldr_en": "Presents HiQC, an offline goal-conditioned RL algorithm combining high-level latent planning with low-level action chunking to mitigate the curse of horizon.",
+      "llm_tldr_cn": "离线目标条件强化学习中，长程任务的诅咒导致值估计误差累积。本文提出HiQC，高层使用潜在规划分解任务，低层使用动作分块执行序列，使低层评论家基于长动作序列进行估计，减少偏差。实验证明在多种长程任务上优于现有方法，将潜在规划与动作分块结合是克服时序维度问题的新思路。",
+      "llm_tldr": "离线目标条件强化学习中，长程任务的诅咒导致值估计误差累积。本文提出HiQC，高层使用潜在规划分解任务，低层使用动作分块执行序列，使低层评论家基于长动作序列进行估计，减少偏差。实验证明在多种长程任务上优于现有方法，将潜在规划与动作分块结合是克服时序维度问题的新思路。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "planning and policy learning in latent space for embodied agents",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.20785v1",
+      "source": "arxiv",
+      "title": "Robostral Navigate",
+      "abstract": "Deploying navigation systems at scale requires a recipe that minimizes sensor assumptions, generalizes across robot embodiments, and trains efficiently. Yet, today's best systems depend on depth sensors, multi-camera rigs, or pre-built maps, limiting the hardware they support and increasing deployment cost. We introduce Robostral Navigate, an 8B vision-language model built around this scalability objective. The model consumes only a stream of monocular RGB images - the most ubiquitous sensor across robotic platforms and predicts waypoints by pointing to the next target location in the current camera view. Operating purely in image space, rather than robot-specific coordinates, makes the policy naturally robust to changes in camera intrinsics and scene scale, enabling deployment across wheeled, legged, and aerial robots without recalibration. We generate 2.4 million trajectories across 350k simulated scenes to reduce the reliance on real-world data collection and scale easily. We further introduce a prefix-caching training recipe that packs entire episodes into single training sequences, reducing training tokens by 22x and cutting training time from months to days. A tree-based attention mask prevents conditioning on previous ground-truth actions, encouraging visually grounded action prediction, and reinforcement learning is used to further improve exploration and recovery capabilities. On the Room-to-Room and Room-Across-Room in Continuous Environments (R2R-CE and RxR-CE) benchmarks, Robostral Navigate sets a new state of the art. On R2R-CE, it achieves a 77.4% success rate, surpassing the best monocular method by 10.5 points and the strongest depth- or multi-camera system by 5.3 points despite using only a single RGB camera. On RxR-CE, it reaches 75.1% success rate, outperforming all monocular baselines.",
+      "authors": [
+        "Arjun Majumdar",
+        "Avinash Sooriyarachchi",
+        "Benjamin Tibi",
+        "Chris Bamford",
+        "Elliot Chane-Sane",
+        "Guillaume Lample",
+        "Khyathi Raghavi Chandu",
+        "Ludovic Ho Fuh",
+        "Mathieu Poiree",
+        "Olivier Duchenne",
+        "Rosalie Millner",
+        "Srijan Mishra",
+        "Theo Cachet",
+        "Thomas Chabal"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-22T23:13:05+00:00",
+      "link": "https://arxiv.org/pdf/2607.20785v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "vision-language model for navigation waypoint prediction",
+      "llm_evidence_cn": "用于导航路点预测的视觉语言模型",
+      "llm_evidence": "用于导航路点预测的视觉语言模型",
+      "canonical_evidence": "用于导航路点预测的视觉语言模型",
+      "llm_tldr_en": "An 8B vision-language model predicts waypoints from monocular RGB images, enabling cross-embodiment navigation without depth sensors.",
+      "llm_tldr_cn": "在大规模部署导航系统时，现有方法依赖深度传感器等昂贵硬件。本文提出Robostral Navigate，一个80亿参数的视觉语言模型，仅需单目RGB图像即可预测下一个目标位置的路点。该策略在图像空间而非机器人坐标系中操作，对相机内参和场景尺度具有天然鲁棒性，可在轮式、腿式等多种机器人上部署，降低了部署成本。",
+      "llm_tldr": "在大规模部署导航系统时，现有方法依赖深度传感器等昂贵硬件。本文提出Robostral Navigate，一个80亿参数的视觉语言模型，仅需单目RGB图像即可预测下一个目标位置的路点。该策略在图像空间而非机器人坐标系中操作，对相机内参和场景尺度具有天然鲁棒性，可在轮式、腿式等多种机器人上部署，降低了部署成本。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.18709v2",
+      "source": "arxiv",
+      "title": "RoboInter1.5: A Holistic Intermediate Representation Suite for Embodied World Modeling and Robotic Manipulation",
+      "abstract": "Existing robot datasets remain expensive to curate, embodiment-specific, and insufficiently annotated with the fine-grained structure required for generalizable reasoning, execution, or long-horizon environment dynamics simulation. Building on our prior work, RoboInter1.0, we present RoboInter1.5, an extended and holistic suite of intermediate representations for both robotic manipulation and embodied world modeling. RoboInter1.5 provides a unified resource of data, benchmarks, and models centered on dense manipulation-oriented intermediate representations. Specifically, RoboInter-Data contains over 230k manipulation episodes across 571 scenes with dense per-frame annotations covering more than ten types of intermediate representations, including subtasks, primitive skills, object and gripper grounding, segmentation, affordance, grasp poses, contact points, motion traces, etc. Built upon these annotations, RoboInter-VQA introduces spatial and temporal embodied VQA tasks to benchmark and improve the intermediate-representation reasoning capabilities of our RoboInter-VLM. RoboInter-VLA further studies how such representations benefit action execution through implicit, explicit, and modular plan-then-execute paradigms. To better model the physical world, we further introduce RoboInter-World, which leverages intermediate representations as structured conditioning signals for controllable prediction of future world states. Extensive evaluations demonstrate that RoboInter1.5 provides a unified spatiotemporal scaffolding for intermediate representations. Rather than treating intermediate representations merely as interpretable signals, RoboInter1.5 conceptualizes them as a bidirectional interface that both regularizes low-level action spaces and constrains the latent rollouts of open-world physical simulators.",
+      "authors": [
+        "Ziqin Wang",
+        "Hao Li",
+        "Weijun Wang",
+        "Junhao Cai",
+        "Jia Zeng",
+        "Yilun Chen",
+        "Jiangmiao Pang",
+        "Si Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-21T05:05:01+00:00",
+      "link": "https://arxiv.org/pdf/2607.18709v2",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "world modeling dataset and benchmarks for embodied AI",
+      "llm_evidence_cn": "具身AI的世界建模数据集与基准",
+      "llm_evidence": "具身AI的世界建模数据集与基准",
+      "canonical_evidence": "具身AI的世界建模数据集与基准",
+      "llm_tldr_en": "RoboInter1.5 provides a comprehensive suite of intermediate representations, including 230k manipulation episodes and dense annotations, for embodied world modeling and robotic manipulation.",
+      "llm_tldr_cn": "为支持通用机器人世界建模，现有数据集昂贵且缺乏细粒度标注。RoboInter1.5扩展了中间表示套件，包含超过23万操作片段、571个场景的密集逐帧标注，覆盖10余种中间表示类型，为世界模型训练和评估提供标准化资源。",
+      "llm_tldr": "为支持通用机器人世界建模，现有数据集昂贵且缺乏细粒度标注。RoboInter1.5扩展了中间表示套件，包含超过23万操作片段、571个场景的密集逐帧标注，覆盖10余种中间表示类型，为世界模型训练和评估提供标准化资源。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world models for robot state prediction and model-based control",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.19850v1",
+      "source": "arxiv",
+      "title": "SOPD-SocialNav: Selective On-Policy Distillation for Vision-Language Social Navigation",
+      "abstract": "Vision-language models have shown strong potential for social robot navigation by leveraging rich semantic understanding of complex environments and human behaviors. However, large scale VLMs are difficult to deploy on resource-constrained robotic platforms, while lightweight VLMs often lack sufficient social reasoning capability. To address this problem, we propose SOPD-SocialNav, a selective on-policy distillation (SOPD) method that transfers social navigation knowledge from a large teacher VLM to a lightweight student VLM. SOPD introduces an entropy-based token selection mechanism that uses teacher uncertainty to identify socially informative decision tokens, while suppressing gradients from low-entropy tokens corresponding to trivial navigation states. A temperature-controlled Jensen-Shannon divergence objective is then used to align the student and teacher distributions on the selected tokens. Experiments on the SNEI and MUSON benchmarks demonstrate that SOPD consistently outperforms supervised fine-tuning, off-policy distillation, and standard on-policy distillation baselines in action prediction, perception consistency, and reasoning consistency. Real-world deployment on a Scout Mini robot further shows that the distilled model can generate more socially appropriate navigation behaviors in conversational and queuing scenarios. These results suggest that SOPD is an effective strategy for building lightweight yet socially aware VLM-based navigation systems.",
+      "authors": [
+        "Xinyu Zhang",
+        "Zishuo Wang",
+        "Ling Xiao"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-22T07:35:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.19850v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "vision-language model for social navigation with action prediction",
+      "llm_evidence_cn": "视觉语言模型用于社交导航及动作预测",
+      "llm_evidence": "视觉语言模型用于社交导航及动作预测",
+      "canonical_evidence": "视觉语言模型用于社交导航及动作预测",
+      "llm_tldr_en": "SOPD-SocialNav distills knowledge from a large VLM teacher to a lightweight student for social navigation using entropy-based token selection.",
+      "llm_tldr_cn": "针对大型视觉语言模型难以部署在资源受限机器人平台上的问题，该论文提出选择性在线策略蒸馏方法SOPD-SocialNav。该方法通过熵令牌选择机制从教师VLM中蒸馏社交导航知识到轻量学生模型，在保持社交推理能力的同时降低计算开销。实验表明学生在社交导航任务上表现接近教师。",
+      "llm_tldr": "针对大型视觉语言模型难以部署在资源受限机器人平台上的问题，该论文提出选择性在线策略蒸馏方法SOPD-SocialNav。该方法通过熵令牌选择机制从教师VLM中蒸馏社交导航知识到轻量学生模型，在保持社交推理能力的同时降低计算开销。实验表明学生在社交导航任务上表现接近教师。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
