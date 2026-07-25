@@ -1,0 +1,662 @@
+Title: Certifiable Safe Model-Based Reinforcement Learning with Control-Affine Dynamics Approximation
+
+URL Source: https://arxiv.org/pdf/2607.16501v1
+
+Published Time: Tue, 21 Jul 2026 00:15:06 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Certifiable Safe Model-Based Reinforcement Learning with Control-Affine Dynamics Approximation 
+
+Hao Zhou 1, Yanze Zhang 1, Cameron Reid 1, and Wenhao Luo 2
+
+Abstract — Safe model-based reinforcement learning (RL) often bridges control-theoretic analysis and RL for robots to safely explore (partially) unknown system dynamics while deriv-ing control actions for task efficiency. The control performance and safety assurance typically rely on prior knowledge of partially modeled nominal system dynamics and the data-driven models that compensate for residual model uncertainties. How-ever, existing methods often overlook the structure of residual model uncertainties (e.g., components affine in control), which could lead to overly conservative robot behaviors or invalid safety guarantees under the safe learning-based controllers. This paper proposes a safe reinforcement learning framework that learns control-affine dynamics with a certifiable data-driven safe policy using control barrier functions (CBF). Specif-ically, we first use Control-Affine Random Fourier Features (ARFF) to model robot dynamics in a control-affine form, which offers computational efficiency that scales with dataset size and reduces potential model bias for model-based reinforcement learning. Then, a model-free, efficient uncertainty quantification method using adaptive conformal prediction (ACP) is applied to quantify the uncertainty in the safety constraint arising from the learned control-affine dynamics. This allows for data-driven safety assurance amenable to principled and efficient controller synthesis with CBF. Simulation results on the cartpole and the 3D quadrotor platforms demonstrate the effectiveness of the proposed framework. 
+
+I. I NTRODUCTION 
+
+Reinforcement Learning (RL) has been successfully ap-plied to various robotics tasks [1]–[5], in which a robot learns to perform a task optimally through interaction with the environment. In many real-world applications, however, the environmental uncertainty and limited prior information about the robot’s dynamics could easily render unsafe be-haviors during learning. This could often lead to catastrophic consequences and thus calls for safe reinforcement learning (safe RL) [6] that trains a policy to maximize task efficiency while ensuring safety during learning and deployment. Safe RL is usually achieved under the model-based rein-forcement learning (MBRL) framework [7], [8] or model-free reinforcement learning (MFRL) framework [9] with the addition of the safety constraint. MBRL first learns the dynamics and then uses them to obtain the policy, making it more sample-efficient than MFRL. Apart from the sample efficiency of the MBRL, the dynamics obtained  
+
+> ∗This work was supported in part by the U.S. National Science Founda-tion under Grant 2530297.
+> 1Authors are with the Department of Computer Science, University of Illinois Chicago, Chicago, IL 60607, USA. Email:
+
+{hzhou134, yzhan361, creid22 }@uic.edu         
+
+> 2The author is with the Department of Computer Science and En-gineering, Texas A&M University, College Station, TX 77843, USA.
+> wenhaol@tamu.edu
+
+from the MBRL can be embedded into the optimal control framework (e.g., model predictive control [2], [5]) or the safety filter method (e.g., control barrier function [9]–[11]) to guarantee safety. Due to the sample efficiency and the convenience of constructing optimization problem using the learned dynamics for the safety guarantee, MBRL will be adopted in this paper as the fundamental framework. Gaussian Processes (GPs) [12], as a data-driven model for learning dynamics, have been widely used in MBRL [3], [8], [10] since they can provide both mean and variance of the prediction for uncertainty-aware decisions, e.g., using variance to quantify uncertainty of the safety constraint for safe exploration [3]. However, GPs incur a high computa-tional burden during training, which limits their applicability to online control. Approximating the GPs via the Random Fourier Feature (RFF) or Sparse GPs is computationally efficient, but this potentially provides the biased prediction [13] and hence affects the performance of the MBRL. Apart from modeling the dynamics, safe MBRL aims to obtain a safe policy, e.g., through control barrier functions (CBF) [7], [9], [14], [15] that enforce safety-critical control constraints while learning the system dynamics. However, deriving effective CBF constraints with learned dynamics of-ten rely on the assumption that the control-affine component in the dynamics is fully known and the unmodelled residual part depends only on the state [7], [9], [10]. This restrictive assumption could significantly limit the applicability of the resulting policy, introduce a bias in the learned dynamics, and may yield invalid safety performance. On the other hand, approximating GPs using RFF usually underestimates uncertainty (variance) [16], leading to an overconfident uncertainty-aware safety constraint and, con-sequently, failing to guarantee safety. To effectively calibrate uncertainty, statistical methods such as conformal prediction (CP) [17] can be used to quantify the predictive uncertainty, thus enabling robust safe control [18]. Although CP can quantify uncertainty without depending on the predictive models, it assumes the testing data is exchangeable with those in a pre-collected calibration dataset, which can be vi-olated easily in the online setting where robots continuously collect data and refine the learned model. To address these challenges, in this paper we propose a novel safe RL approach for a robot to safely learn and approximate its control-affine dynamics with adaptive re-calibrated uncertainty for certifiable high-probability safety assurance during learning and deployment. We will first leverage the control-affine random fourier features (ARFF) [19] originally developed for learning control Lyapunov arXiv:2607.16501v1 [cs.RO] 17 Jul 2026 Fig. 1. The episodic framework for safe model-based reinforcement learning using control-affine dynamics approximation. For each episode, model predictive path integral (MPPI) as a model-based planner [21], [22] uses sampled dynamics via Thompson sampling to generate the reference control input. Then, uncertainty-aware safety constraint based on adaptive conformal prediction is leveraged to guarantee safety. 
+
+function to characterize the data-driven system dynamics and the control barrier functions without biasing the control-affine structure. Subsequently, we use adaptive conformal prediction (ACP) [20] to quantify the uncertainty when enforcing the learned safety constraints as robots collect data during learning in an online setting. Moreover, we integrate the learned control-affine dynamics and the uncertainty-aware CBF into an MBRL framework with optimism-based exploration, enabling safe exploration and achieving near-optimal control performance. Our contributions are three-fold: (1) We incorporate a control-affine approximation ap-proach within an MBRL framework to explicitly preserve the control-affine structure when learning the unknown sys-tem dynamics and constructing data-driven CBF-based safe control constraints. (2) We develop robustified safe control constraints by accounting for predictive uncertainty via ACP and provide theoretical analysis to justify the certifiable safety performance. (3) We present simulation results on the cartpole and the quadrotor platforms to demonstrate the effectiveness of our proposed method against the baselines in terms of control performance and safety assurance. II. P RELIMINARY 
+
+A. Safe Learning Objective 
+
+In this paper, we investigate safe model-based reinforce-ment learning due to its sample efficiency compared to model-free reinforcement learning. The unknown dynamics required to be learned under model-based reinforcement learning is defined as, 
+
+xk+1 = ˆf (xk) + ˆ g(xk)uk + d(xk, u k) (1) where xk ∈ Rn and xk+1 ∈ Rn are the robot states at current and next time steps. uk ∈ Rm is the robot control input and 
+
+d : Rn × Rm 7 → Rn is the unknown dynamics that must be learned. ˆf (xk) + ˆ g(xk)uk is the control-affine nominal robot dynamics with ˆf : Rn 7 → Rn and ˆg : Rn 7 → Rn×m, which can be derived from the underlying physical laws. Control-affine dynamics are widely used in robotics, such as in robotic manipulators, cartpoles, and quadrotors. Pre-vious work [3], [9], [10] leveraged Gaussian Process or neural networks to learn unknown dynamics d(xk, u k) with state-only input xk, which ignores the control-affine form of d(xk, u k) := ˜f (xk) + ˜ g(xk)uk where ˜f : Rn 7 → Rn,
+
+˜g : Rn 7 → Rn×m. Without considering the control-affine structure in d(xk, u k), the safe policy obtained by CBF under the reinforcement learning framework may not be solved efficiently and optimally. We discuss how to learn the control-affine component d(xk, u k) in section III-A and how to embed it into the safe reinforcement learning framework in IV-C. To learn unknown control-affine dynamics d(xk, u k) while guaranteeing the primary control task, a widely used ap-proach [7], [23] is to learn d(xk, u k) by optimizing the objective function below, 
+
+min  
+
+> π∈Π
+
+min  
+
+> d
+
+Jπ (x0; R, d ) = min  
+
+> π∈Π
+
+min  
+
+> d
+
+E[
+
+> K−1
+
+X
+
+> k=0
+
+R(xk, u k)|π, x 0, d ]
+
+(2) where R ∈ R+ and π represent the stage cost function and the control input, respectively. The total time horizon within each learning episode is K. To guarantee safety, the safety constraint is embedded into the Eq. (2) as follows 
+
+min  
+
+> π∈Π
+
+min  
+
+> d
+
+Jπ (x0; R, d ) s.t. P(c(xk, u k) ⩾ 0) ⩾ 1 − α (3) where c : Rn × Rm 7 → R is the safety constraint function with c(xk, u k) ⩾ 0 defining safety condition. We model 
+
+c(xk, u k) as a chance constraint because of the epistemic uncertainty from the learning model of d(xk, u k). α ∈ (0 , 1) 
+
+is the user-defined failure probability bound of the safety constraint. 
+
+B. Control Barrier Functions 
+
+Discrete-time Control Barrier Function (DT-CBF) has al-ready been successfully applied to reinforcement learning to guarantee safety [9], [11]. In this paper, we use the DT-CBF as a safety constraint to achieve safe reinforcement learn-ing, as it renders the predefined safe set forward invariant. The DT-CBF under the deterministic system is summarized below. 
+
+Lemma. 1 (Discrete-Time Control Barrier Function (DT-CBF) [24]) Given the deterministic dynamics ¯xk+1 =
+
+f (¯ xk) + g(¯ xk)uk where f : Rn 7 → Rn and g : Rn 7 → Rn×m,the DT-CBF ensures that the system state remains within a safe set C ⊂ Rn, which is defined as, 
+
+C ≜ {¯xk ∈ Rn | h(¯ xk) ⩾ 0} (4) Here h : Rn → R is a continuous safety constraint function. If the initial state satisfies x0 ∈ C , then the system state remains in C for all future time steps, provided that the control input uk belongs to the set 
+
+H(¯ xk) = {uk | h(f (¯ xk) + g(¯ xk)uk)) ⩾ (1 − γ)h(¯ xk)} (5) where γ ∈ (0 , 1] . h(f (¯ xk) + g(¯ xk)uk)) ⩾ (1 − γ)h(¯ xk) is named as safety barrier certificates that ensures the forward invariance of the safe set C. DT-CBF still requires the dy-namics to be control-affine in order to solve the optimization problem efficiently [24]. 
+
+C. Adaptive Conformal Prediction 
+
+Conformal Prediction (CP) [17] is a statistical method to obtain a confidence interval I with no dependence on the prediction model G : Rn 7 → R under the exchangeability assumption of the dataset. Given a testing input x∗, CP can guarantee the marginal probability as below, 
+
+P(G(x∗) ∈ I ) ⩾ 1 − αc (6) where αc ∈ (0 , 1) is the pre-defined failure probability bound. The confidence interval I is constructed by a quantile number S(r) ∈ R+ and hence I = [ G(x∗) − S(r), G (x∗) + 
+
+S(r)]. The quantile number S(r) is obtained by the non-conformity score (similar to the residual error in machine learning) computed in the dataset. r := ⌈(K + 1)(1 − αc)⌉
+
+where K is the size of the dataset and ⌈·⌉ is the ceiling function. 
+
+Adaptive Conformal Prediction (ACP). CP relies on the assumption of data exchangeability [17], which may be easily violated in dynamical time series prediction tasks [25]. To achieve reliable dynamical time series prediction over long time horizons, ACP [20], [26] was proposed to dynamically update the quantile number online. The estimating process is shown below: 
+
+αk+1 = αk + δ(αc − ek) with ek =
+
+(
+
+1, if S(r) 
+
+> k
+
+< S k,
+
+0, if S(r) 
+
+> k
+
+⩾ Sk.
+
+(7) where Sk ∈ R+ denotes the nonconformity score at time step k, and S(r) 
+
+> k
+
+is the corresponding quantile. If Sk ≤ S(r) 
+
+> k
+
+,then αk+1 is increased, resulting in a larger prediction region 
+
+I induced by S(r) 
+
+> k
+
+. δ is the user-specified learning rate. This paper will use ACP to quantify the uncertainty of the chance constraint (Eq. (3)) and then derive an uncertainty-aware safety constraint to solve Eq. (3). The uncertainty quantification method proposed in this paper is simple, easy to implement, and computationally inexpensive, as discussed in sections III-B and IV-C. III. M ETHOD 
+
+A. Learning Unknown Control-Affine Dynamics 
+
+To learn the unknown dynamics d(xk, u k) ∈ Rn under the safe learning optimization problem (Eq.(3)), Gaussian Pro-cesses have been widely used to model unknown dynamics in this setting [3], [10] because they naturally provide prediction variance, which can be used both to efficiently explore the environment and to formulate uncertainty-aware safety constraints. However, the Gaussian Processes for d(x, u ) do not scale well to large datasets, making training the model computationally intensive. Apart from the computation, [3], [10] ignores the control-affine form of the unknown dynam-ics and therefore may sacrifice performance due to intrinsic model error (not control-affine d(xk, u k)). To efficiently model d(x, u ) by exploiting control-affine structure, we will use control-Affine Random Fourier Fea-tures (ARFF) to model the unknown dynamics d(x, u ).Motivated by [19], the ARFF for d(x, u ) is defined as, 
+
+d(xk, u k) = ω⊤ϕ(xk, u k) (8) where ω ∈ RP ×n represents the weight matrix associated with the linear model. P is the number of features and n is the dimension of the robot state. ϕ(xk, u k) : Rn ×Rm 7 → RP
+
+is the ARFF, which has the following form, 
+
+ϕ(xk, u k) = [ φ1(xk), · · · , φ m+1 (xk)] 
+
+uk
+
+1
+
+
+
+(9) Here φi(xk) : Rn 7 → RP is the robot state-based random Fourier function (RFF) defined as, 
+
+φi(xk) = 
+
+r 2
+
+P [sin θ⊤
+
+> i, 1
+
+xk , cos θ⊤
+
+> i, 1
+
+xk , · · · ,
+
+sin θ⊤ 
+
+> i, P
+> 2
+
+xk , cos θ⊤ 
+
+> i, P
+> 2
+
+xk]⊤
+
+(10) where i = 1 , · · · , m +1 and the weight {θi,j }P/ 2 
+
+> j=1
+
+is drawn i.i.d from the Gaussian distribution. The training data, collected through safe interaction with the environment within a model-based reinforcement learn-ing framework, are used to train Eq. (8). Unlike the computa-tionally intensive approach based on Gaussian Processes, the parameter ω in Eq. (8) can be obtained analytically via ridge regression, whose computational cost does not scale with the dataset size. In addition to the computational benefits, the use of ARFF also allows for efficiently solving the safe reinforcement learning optimization problem (Eq.(3)). Further details are provided in section IV-A. ARFF is applied in [19] for learning control Lyapunov functions under hand-collected data. In contrast to [19], this paper focuses on learning unknown dynamics within a safe reinforcement learning framework, and thus, the data can be automatically obtained. 
+
+B. Uncertainty Quantification for Safety Constraint 
+
+To address safety constraints in safe reinforcement learn-ing (Eq.(3)), the CBF will be applied to guarantee safety. However, the epistemic uncertainty of the unknown dynamics 
+
+d invalidates the safety guarantee under the CBF because the CBF is often defined under known deterministic dynamics. On the other hand, unlike the uncertainty calibration of the Gaussian process applied to quantify the uncertainty of d, this paper leverages ARFF under the regression model(Eq.(8)) to approximate the Gaussian Process for computational efficiency, and hence the uncertainty estimation from the regression model is usually underestimated [13]. The un-derestimated uncertainty used to quantify the safe constraint may not guarantee safety. To address the underestimated uncertainty in the regression model (Eq. (8)), we use adaptive conformal prediction to quantify the uncertainty, which is online, computationally efficient, and yields a reliable confidence interval that does not depend on the model choice. Let G(xk, u k) ≜ h( ˆf (xk) + ˆ g(xk)uk + d(xk, u k)) −
+
+(1 − γ)h(xk), where G(xk, u k) denotes the predicted barrier certificates value. d(xk, u k) is a control-affine surrogate model learned through safe exploration, which captures the unknown dynamics. Let G∗(xk, u k) ≜ h(f (xk) + g(xk)uk)) − (1 − γ)h(xk)
+
+represent the true value of prediction model G(xk, u k). From Eq.(6) in section II-C, we know that, 
+
+P(−S(r) + G(xk, u k) ⩽ G∗(xk, u k) ⩽ S(r) + G(xk, u k)) 
+
+⩾ 1 − α (11) where S(r) denotes the quantile of the nonconformity score set S, which consists of the nonconformality scores Sk =
+
+|G∗(xk, u k) − G(xk, u k)| computed at each time step. 
+
+Theorem 1. Suppose there exists a failure probability α ∈
+
+(0 , 1) . Consider the system dynamics in Eq. (1) and a learn-ing horizon of length K. Let S(r) denote the corresponding quantile of the nonconformity score, where r := ⌈(K+1)(1 −
+
+αc)⌉. Then, enforcing Eq. (3) with a probability guarantee of 1 − α yields the following constraint: 
+
+P(G∗(xk, u k) ⩾ 0) ⩾ 1−α ⇒ − S(r)+G(xk, u k) ⩾ 0 (12) 
+
+Proof. Since the true prediction value G∗(xk, u k) is not directly accessible, we use the prediction model G(xk, u k)
+
+to construct a confidence region which F ∗(xk, u k) belongs to. By the ACP, it holds that P(−S(r) + G(xk, u k) ⩽
+
+G∗(xk, u k) ⩽ S(r) + G(xk, u k)) ⩾ 1 − α. Therefore, a sufficient condition for G∗(xk, u k) ⩾ 0 to hold with probability at least 1 − α is that the lower bound of the interval satisfies −S(r) + G(xk, u k) ⩾ 0.Theorem 1 translates the chance constraint into the uncertainty-aware deterministic constraint using ACP, which is simple and efficient because we only need to compute the quantile number S(r). Theorem 1 is also beneficial for solving the optimization problem (Eq.(3)) because the previous method (Gaussian Process) requires propagating the optimization variable through the kernel function to obtain the covariance matrix, which may render the optimization problem nonlinear. Using Theorem 1, we don’t need to prop-agate the optimization variable because S(r) is a constant inside the optimization problem (Eq.(3)). IV. A LGORITHMS AND ANALYSIS 
+
+A. Model Calibration 
+
+In section III-A, the unknown dynamics d(xk, u k) is modeled as d(xk, u k) = ω⊤ϕ(xk, u k), which translates the unknown dynamics into the control-affine form automati-cally. To avoid overfitting, we will use the ridge regression to obtain the ωt under each training episode t as below, 
+
+ωt = argmin 
+
+> ωt−1
+
+X
+
+> i=1
+> K
+
+X
+
+> k=1
+
+|| ϕT(xik, u ik)ω−dϵ(xik, u ik)|| 22 +λ|| ω|| F
+
+(13) where the observed unknown dynamics dϵ is obtained by 
+
+dϵ(xik, u ik) = xik+1 − ˆf (xk) − ˆg(xk)uk. ϵ represents the noise, such as the motion noise. t denotes the total number of training episodes, and K is the number of time steps in the i-th training episode. The parameter λ ∈ R+ is a regularization hyperparameter used to prevent overfitting, and || ω|| F denotes the Frobenius norm of the weight matrix 
+
+ω. Solving Eq.(13), the solution for the ωt can be obtained analytically, which is as below, 
+
+Σωt = Σ 0 +
+
+> t−1
+
+X
+
+> i=1
+> K
+
+X
+
+> k=1
+
+ϕ(xik, u ik)ϕ⊤(xik, u ik) (14) 
+
+ωt = (Σ ωt )−1
+
+> t−1
+
+X
+
+> i=1
+> K
+
+X
+
+> k=1
+
+ϕ(xik, u ik)dϵ (15) where Σωt ∈ RP ×P denotes the covariance matrix, with the initial covariance matrix given by Σ0 = λI P ×P . Substituting Eq.(15) into the Eq.(8), the unknown dynamics prediction is, 
+
+d(x∗, u ∗) = ω⊤ 
+
+> t
+
+Φ( x∗)
+
+| {z }  
+
+> Ξ( xik,x ∗,u ik)
+
+[u⊤∗ 1] ⊤ (16) where ωt is adopted from Eq.(15) and (x∗, u ∗) is the testing input for robot unknown dynamics. Φ( x∗) := [φ1(x∗), · · · , φ m+1 (x∗)] is adopted where φi is the RFF de-fined in Eq.(10). Ξ( xik, x ∗, u ik) is constant given the training dataset (xik, u ik) and the known robot state input x∗ ∈ Rn
+
+where i = 1 , · · · , t − 1 and k = 1 , · · · , K . The control input u∗ is explicitly decoupled from the unknown dynamics, which is convenient for constructing an optimization problem for safety under CBF and enables an efficient, optimal solution. The details are in section IV-C. 
+
+B. Efficient Data Collection 
+
+Model-based reinforcement learning is sample-efficient at learning dynamics for a good policy, but it requires balancing exploration and exploitation. Otherwise, the learned model may get stuck in a local minimum, leading to poor reward performance. We adopt LC 3 [23] to balance exploration and exploitation when collecting training data (paired robot state and control input) τi = {(xi
+
+> 0
+
+, u i
+
+> 0
+
+), . . . , (xiK−1, u iK−1), x iK }
+
+under the total time step K at episode i. Given the train-ing dataset {τi}t−1 
+
+> i=1
+
+, the weight ωt and covariance Σωt are obtained via Eq.(15) and Eq.(14) respectively. The uncertainty of the weight ωt is parameterized by 
+
+Σωt , which can be considered as a hyper-ball, i.e. Bt. To balance exploration and exploitation, Thompson Sampling (TS) for the robot’s unknown dynamics d is adopted for each exploration episode, which is ˜ωt ∼ N (ωt, (Σ ωt )−1).Thompson Sampling (TS) obtains model weights from the distribution defined by the covariance matrix Σωt , such that the sampled weights lie within the confidence ball Bt with probability at least 1 − 2δs, where δs ∈ [0 , 1] denotes the failure probability of sampling within Bt. Further details can be found in [7]. Unlike [7], [23] with RFF, this paper considers control-affine RFF for modeling robot dynamics, which has no intrinsic model error (control-affine form) for modeling the unknown dynamics. Although [11] adopts the Quadrature Fourier Features (QFF) to model the state-dependent dynam-ics, it cannot explicitly decouple the control input into the control-affine form, whereas this paper can learn control-affine dynamics via control-affine RFF, which can facilitate solving the optimization problem under CBF. 
+
+C. Algorithm Framework and Analysis 
+
+Safe model-based reinforcement learning in Eq.(3) re-quires learning the unknown dynamics and generating the safe policy simultaneously, which is intractable in practice [23]. Thus, work in [7], [11], [23] approximated the opti-mization problem (Eq.(3)) in two steps: learning d(xk, u k)
+
+while obtaining optimal policy and obtaining safe policy, which is presented in Algorithm 1. 
+
+Learning unknown dynamics while obtaining optimal policy. At episode t, we use the collected data to obtain 
+
+ωt and then embed the sampled dynamics via Thompson Sampling into the Model Predictive Path Integral (MPPI) to balance exploration and exploitation. MPPI will generate the optimal policy π∗ using the sampled dynamics, which approximates Eq.(2). 
+
+Obtaining safe policy. Let uref := ¯ utk denote the nominal control input generated by MPPI. The corresponding safe control policy is then obtained by solving the following optimization problem, 
+
+utk = argmin 
+
+> utk
+
+|| utk − uref  
+
+> k
+
+|| 2
+
+s.t. h(xtk+1 ) − h(xtk) ⩾ −γh (xtk) + S(r) (17) 
+
+utk ∈ [umin , u max ]
+
+where xtk+1 = ˆf (xtk) + ˆ g(xtk)utk + ω⊤ 
+
+> t
+
+Φ( xtk)
+
+utk
+
+1
+
+
+
+. umin and 
+
+umax are the maximum and minimum control limits allowed, respectively. The first constraint is from the uncertainty-aware safety barrier certificates from Eq. (12). Due to the employed control-affine RFF, the optimization problem (Eq. (17)) can be conveniently formulated using off-the-shelf tools, such as CVXPY [27], because we don’t need to propagate the optimization variable inside the data-driven model. Without considering the control-affine struc-ture, Eq. (17) requires the propagation of the optimization variable inside the data-driven model, e.g. Gaussian Process, which leads Eq. (17) to be a nonlinear optimization that may not find the optimal solution efficiently. V. R ESULTS 
+
+The simulations on the cartpole and 3D quadrotor are conducted to validate the sample efficiency, performance, and the safety guarantees under the proposed safe reinforcement 
+
+Algorithm 1: SafeCARL: Safe reinforcement learn-ing using control-affine dynamics 
+
+Input: Parameters: ACP failure probability α and learning rate δ, γ in CBF, number of features 
+
+P , stage cost function r, initial state x0 and the goal state xgoal , training episode T , total time steps K under each episodes 
+
+Output: Control-affine d(xk, u k) and usafe  
+
+> 1
+
+while t ≤ T do  
+
+> 2
+
+Initialization xt 
+
+> 0
+
+← x0 ; 
+
+> 3
+
+Sample ˜ωt ∼ N (ωt, (Σ ωt )−1) ; // Exploration with Thompson Sampling  
+
+> 4
+
+while k < K do  
+
+> 5
+
+πtk ← argmin π Jπ (xtk; R, ˜ωt) ; // ureference by MPPI  
+
+> 6
+
+utk ← Eq . (17) ;  
+
+> 7
+
+xtk+1 ← f (xtk) + g(xtk)utk + ϵtk ; 
+
+> 8
+
+dϵ(xtk, u tk) ← xtk+1 − ( ˆf (xtk) + ˆ g(xtk)utk) ; 
+
+> 9
+
+end  
+
+> 10
+
+Σωt+1 ← Eq . (14) ;  
+
+> 11
+
+ωt+1 ← Eq . (15) ;  
+
+> 12
+
+end 
+
+learning framework. To assess sample efficiency and perfor-mance, we compare against LC 3 [23], which employs RFF, whereas our method utilizes control-affine RFF (ARFF). To demonstrate the effectiveness of the proposed efficient uncertainty-aware safety constraint, we perform an ablation study under three settings: without the safety constraint (MPPI-ARFF), with the safety constraint (MPPI-ARFF-CBF), and with the uncertainty-aware safety constraint (our method). All algorithm parameters are kept identical unless otherwise noted. 
+
+A. Cartpole 
+
+We use the cartpole dynamics from Gymnasium [28]. The ground-truth cartpole dynamics can be written as, 
+
+¨θ = Gr sin θ − M cos θl
+
+ 43 − mp cos 2 θmc+mp
+
+
+
+¨p = M − mpl¨θ cos θmc + mp
+
+(18) where M = u+mpl ˙θ2 sin θmc+mp . Gr is the gravitational accelera-tion. θ ∈ R is the angle of the pole, p ∈ R is the position of the cartpole, and u ∈ R is the control input. The robot state x is defined as x = [ p, ˙p, θ, ˙θ]. mc = 1 .0, mp = 0 .1,and l = 0 .5 are the ground-truth parameter for simulation. In this simulation, we inject unknown dynamics by using inaccurate parameter values: mnom  
+
+> c
+
+= 1 .5, mnom  
+
+> p
+
+= 0 .05 ,and lnom = 0 .4.
+
+Simulation setting. The control task is to keep the cartpole upright ( xgoal = [0 , 0, 180 ◦, 0] ) via learning the unknown dynamics. The MPPI with the CBF is applied to the robot to ensure safety during exploration, as described in the Algorithm 1. The stage reward function r for controlling the cartpole is R = || x − xgoal || 2 
+
+> Q
+
++ || u|| 2 
+
+> Rc
+
+where Q =diag(5 , 0.1, 10 , 0.1) and Rc = diag(0 .01) . The motion noise is ϵ ∼ 0.001 ∗ N (04, I4×4). The following MPPI hyperpa-rameters are used throughout the experiments: a planning horizon of 50, 500 planning samples, a control variance of 
+
+52, and a temperature parameter of 1.0.To safely learn the unknown dynamics of the cartpole system, we use P = 100 features for both RFF and control-affine RFF (ARFF). The model training parameter is the same for fairness. The safety set is defined as C = {[p, ˙p]|1− 
+
+> p2
+> 2.52
+
+− ˙p2 
+
+> 3.02
+
+⩾ 0}. The CBF hyperparameter is set as γ = 0 .7,and the ACP uses a failure probability of α = 0 .02 . The simulation is repeated 100 times to obtain quantitative results for both safety and reward. The computation cost for solving Eq. (17) is presented in Table II. 
+
+Reward and explore efficiency. To evaluate the sample efficiency and the performance of the proposed method, the MPPI with the ground-truth dynamics (MPPI-GT), the LC 3
+
+algorithms [23] under the random Fourier feature (RFF) (MPPI-RFF), and our method without uncertainty-aware safety constraint (MPPI-ARFF) are applied for learning the unknown cartpole dynamics. Simulation results in Figure 2(a) show that the reward achieved by our method is com-parable to that of MPPI-GT and outperforms MPPI-RFF. On the other hand, our method converges in approximately 10 episodes, demonstrating its sample efficiency. 
+
+Ablation study for safety. We conduct experiments with MPPI-ARFF, MPPI-ARFF using only the CBF (MPPI-ARFF-CBF), and MPPI-ARFF with the uncertainty-aware CBF (i.e., MPPI-ARFF-CBF-ACP (our method), denoted as SafeCARL) to evaluate the effectiveness of the proposed uncertainty-aware safety module. The results in Figure 2(b) demonstrate that our framework can guarantee safety when learning the unknown dynamics, while MPPI-ARFF and MPPI-ARFF-CBF without consider-ing the uncertainty can not guarantee safety. Additionally, we perform 100 experiments to empirically estimate the safety probability. As shown in Table I, our framework maintains safety within the predefined failure probability ( α = 0 .02 ). 
+
+Exploration validation. For learning the unknown dy-namics, the robot must explore the environment both safely and efficiently. Figure 2(c) illustrates the exploration trajec-tory of our proposed method, demonstrating that it effectively explores the environment while ensuring safety. 
+
+B. 3D Quadrotor Stabilization 
+
+To validate the proposed method across different plat-forms, we use the 3D Quadrotor dynamics with differential flatness from [10] in this simulation. 
+
+
+
+¨p = Gr zw + R q zwfz /m, 
+
+
+
+˙ψ
+
+˙θ
+
+˙Ψ
+
+ =
+
+
+
+1 sψ tθ cψ tθ 
+
+0 cψ −sψ 
+
+0 sψ scθ cψ scθ 
+
+ wq .
+
+(19)                                           
+
+> TABLE I SAFETY EVALUATION : M INIMAL hACROSS TRAINING EPISODES
+> Method LC 3[23] MPPI-ARFF-CBF Ours(SafeCARL) Cartpole safe% 0% 19% 100% min h -1.69 ±1.18 -0.013 ±0.015 0.042 ±0.014 UAV safe% 0% 0% 98% min h -0.26 ±0.03 -0.029 ±0.006 0.01 ±0.026
+> We conduct 100 experiments to evaluate different algorithms. MPPI-ARFF-CBF represents our proposed framework without uncertainty quantification. For each experiment, we record the minimal value of h(x)across all training episodes. Safety is assessed by h(x)>0, and the corresponding safe rate over the 100 experiments is summarized in the table. The failure probability under adaptive conformal prediction is set to α= 0 .02 .
+
+where p ∈ R3 is the position of the quadrotor in 3D space, 
+
+Gr is the gravitational acceleration, and m is the quadrotor center mass. The ground truth for m is m = 1 .0. zw =[0 , 0, 1] ⊤ is adopted while Rq denotes the rotation matrix that transforms vectors from the body frame to the world frame, which can be found in [10]. ψ(roll), θ(pitch), and 
+
+Ψ(yaw) are the Euler angles to describe the orientation of the quadrotor w.r.t. the world frame. s, c, and t represent the 
+
+sin , cos , and tan , respectively. While sc represents the sec .The robot state x ∈ R9 is x = [ p, ˙p, ψ, θ, Ψ] . Control input 
+
+wq ∈ R3 is the angular velocity from the motor described under the world frame and control input fz ∈ R is the thrust, i.e. u = [ wq , f z ].
+
+Simulation setting. In this simulation, we assume the unknown dynamics arise from inaccurate parameter values and environmental wind. Accordingly, the nominal mass is set to mnom = 0 .8, and the wind is modeled as sin p. The nominal dynamics for the translation part in Eq.(19) becomes 
+
+¨p = Gr zw + Rq zwfz /m nom . Followed by [10], the safe reinforcement learning task for the quadrotor is to let the quadrotor reach the goal position, i.e. pgoal = [1 .5, 2.0, 3.0] ,while satisfying the safety constraint C = {[pz , ˙pz ]|1− p2 
+
+> z
+> 3.22
+
+− 
+
+> ˙p2
+> z
+> 3.52
+
+⩾ 0} where pz and ˙pz represent the position and velocity of z axis, respectively. The motion noise is modeled as ϵ ∼ 0.001 ∗ N (09, I9×9).MPPI with the uncertainty-aware safety constraint is ap-plied to achieve safe exploration. The stage cost function 
+
+R = || x − xgoal || 2 
+
+> Q
+
++ || u|| 2 
+
+> Rc
+
+where xgoal = [pgoal , 06],
+
+Q = diag(10 , 10 , 10 , 1, 1, 1, 1, 1, 1) and Rc = 0 .01 ∗ I4×4.The MPPI hyperparameters are used throughout the exper-iments: a planning horizon of 30, 500 planning samples, a control variance of diag(0 .5, 0.5, 0.5, 2.0) , and a temperature parameter of 1.0.We set P = 100 for both control-affine RFF and RFF, and the model training parameter is the same for fairness. 
+
+γ = 0 .7 is applied to CBF and failure probability α = 0 .02 
+
+are adopted. The computation cost for solving Eq. (17) is presented in Table II. 
+
+Reward and explore efficiency. Similar to the setting of the cartpole under reward and exploration efficiency, we compare our method without uncertainty-aware safety constraint (MPPI-ARFF) against MPPI-GT and MPPI-RFF. As shown in Figure 3(a), our approach using control-affine RFF outperforms MPPI-RFF and demonstrates high sample efficiency, achieving fast convergence. 0 10 20 
+
+> Episode
+
+−30000 
+
+−20000 
+
+−10000 0
+
+> Reward
+> MPPI-GT LC 3(MPPI-RFF) Ours(MPPI-ARFF)
+
+(a) −2 0 2
+
+p
+
+−202˙p   
+
+> C
+> MPPI-ARFF MPPI-ARFF-CBF Ours(SafeCARL)
+> 1.82.02.2
+> −2.00
+> −1.75
+> −1.50
+
+(b) −2 0 2
+
+p
+
+−202˙p
+
+C
+
+τ1
+
+τ5
+
+τ11 (c) Fig. 2. Cartpole . (a)The reward under different algorithms. MPPI-GT is the reward from the ground truth dynamics while MPPI-ARFF is our method without the uncertainty-aware safety constraint. (b)Ablation study for the proposed framework. The start is [0 , 0, 180 ◦, 0] and the goal is the [0 , 0, 0◦, 0] .
+
+C is the safety set. Safety cannot be guaranteed without an uncertainty-aware safety constraint under CBF. (c)The safe exploration trajectory is generated from our method(SafeCARL), which can explore the environment efficiently while enforcing safety. 0 10 20 
+
+> Episode
+
+−6400 
+
+−6200 
+
+−6000 
+
+−5800 
+
+−5600 
+
+> Reward
+> MPPI-GT LC 3(MPPI-RFF) Ours(MPPI-ARFF)
+
+(a) −2 0 2
+
+pz
+
+−202˙pz Start Goal    
+
+> C
+> MPPI-ARFF MPPI-ARFF-CBF Ours(SafeCARL)
+> 2.00 2.25 2.50 2.02.22.42.62.8
+
+(b) 0 1 2
+
+px
+
+0123  
+
+> pz
+> Start 1 Start 2 Start 3 Goal
+
+Ours(Start 1) Ours(Start 2) Ours(Start 3) 
+
+C
+
+Wind (c) Fig. 3. 3D Quadrotor . (a)The reward under different algorithms. MPPI-GT is the reward from the ground truth dynamics, while MPPI-ARFF is our method without the uncertainty-aware safety constraint. (b)Ablation study for the proposed framework. The start is the origin, and the target position is 
+
+[1 .5, 2.0, 3.0] . C is the safety set. Safety cannot be guaranteed without an uncertainty-aware safety constraint under CBF. (c)We test the learned dynamics from different initial positions while continuing to apply the uncertainty-aware safety constraint to ensure safety. The resulting trajectories demonstrate that our method can generalize to various starting points while maintaining safety. 
+
+(a) (b) (c) Fig. 4. 3D Quadrotor tracking. The control task is to track the blue figure-eight trajectory while learning the unknown dynamics. All the trajectories of the result are from the final learning episode. (a) LC 3 [23] applies RFF to learn the unknown dynamics. (b) Our method under the ARFF without safety constraints. (c) Our method (SafeCARL). SafeCARL not only enforces safety but also achieves better track performance than LC 3.
+
+Ablation study for safety. Similar to the setting of the cartpole under ablation study, we compare the method under the MPPI-ARFF, MPPI-ARFF-CBF, and MPPI-ARFF-CBF-ACP (our method named as SafeCARL). Figure 3(b) demonstrates that the proposed method can guarantee safety when learning the unknown dynamics for a quadrotor. 
+
+Applying the learned dynamics. To leverage the learned dynamics for controlling the 3D quadrotor, we test our method under different initial positions toward the same goal. The resulting quadrotor trajectories under our method are shown in Figure 3(c), demonstrating that our method successfully reaches the goal while maintaining safety. 
+
+C. 3D Quadrotor Tracking 
+
+We also adopt the same simulation settings as the 3D quadrotor stabilization to track the figure-eight trajectory shown in Figure 4. The safety set is defined as C =
+
+{[pz , ˙pz ]|1 − (pz −2) 4 
+
+> 0.64
+
+− ˙p4 
+
+> z
+> 1.84
+
+⩾ 0}. The control task is to track the figure-eight trajectory under unknown dynamics, which include uncertainties in the model parameters (i.e., mass) and environmental wind, assumed to be the same as in Section V-B. We compare our method (SafeCARL) with the LC 3 [23]. The simulation results in Figure 4 show that our method achieves higher tracking accuracy than LC 3. This improve-ment arises from explicitly accounting for control-affine TABLE II COMPUTATION EVALUATION OF EQ.(17) Method MPPI-RFF-CBF-ACP Ours(SafeCARL) Cartpole 2.51 ± 1.05 ms 0.38 ± 0.16 ms 
+
+UAV 3.27 ± 1.66 ms 0.44 ± 0.08 ms 
+
+To evaluate the computational efficiency of SafeCARL against the method under RFF for dynamics learning, we measured the average execution time per learning episode required to solve the optimization problem in Eq.(17). Benchmarked on an AMD Ryzen 7960X 24-Core processor, SafeCARL leverages a convex formulation solved via CVXPY [27], yielding approximately an eightfold speedup over the RFF-based method, which relies on the IPOPT solver [29]. Furthermore, in addition to its superior computational efficiency, SafeCARL empirically demonstrates enhanced control performance relative to the RFF-based baseline. 
+
+dynamics, which reduces potential model bias in the un-known dynamics and helps prevent overfitting. In addition to enhanced performance, our method ensures safety, whereas 
+
+LC 3 cannot. VI. C ONCLUSION 
+
+This paper introduced a novel safe RL framework that in-corporated a control-affine dynamics approximation method to model unknown dynamics amenable for safey control synthesis and used adaptive conformal prediction to derive an uncertainty-aware safety constraint. By integrating the con-straints into an optimism-based exploration process, we allow for safe and efficient model learning while maximizing the control task efficiency.Simulation under complex dynamics validates the effectiveness of the proposed method. Future work will apply the proposed framework to physical robotic platforms in the real world. REFERENCES [1] S. R. Chowdhury and A. Gopalan, “Online learning in kernelized markov decision processes,” in The 22nd International Conference on Artificial Intelligence and Statistics . PMLR, 2019, pp. 3197–3205. [2] K. Chua, R. Calandra, R. McAllister, and S. Levine, “Deep rein-forcement learning in a handful of trials using probabilistic dynamics models,” Advances in neural information processing systems , vol. 31, 2018. [3] S. Curi, F. Berkenkamp, and A. Krause, “Efficient model-based reinforcement learning through optimistic policy search and planning,” 
+
+Advances in Neural Information Processing Systems , vol. 33, pp. 14 156–14 170, 2020. [4] M. Deisenroth and C. E. Rasmussen, “Pilco: A model-based and data-efficient approach to policy search,” in Proceedings of the 28th International Conference on machine learning (ICML-11) , 2011, pp. 465–472. [5] S. Kamthe and M. Deisenroth, “Data-efficient reinforcement learning with probabilistic model predictive control,” in International confer-ence on artificial intelligence and statistics . PMLR, 2018, pp. 1701– 1710. [6] L. Brunke, M. Greeff, A. W. Hall, Z. Yuan, S. Zhou, J. Panerati, and A. P. Schoellig, “Safe learning in robotics: From learning-based control to safe reinforcement learning,” Annual Review of Control, Robotics, and Autonomous Systems , vol. 5, pp. 411–444, 2022. [7] W. Luo, W. Sun, and A. Kapoor, “Sample-efficient safe learning for online nonlinear control with control barrier functions,” in In-ternational Workshop on the Algorithmic Foundations of Robotics .Springer, 2022, pp. 419–435. [8] F. Berkenkamp, M. Turchetta, A. Schoellig, and A. Krause, “Safe model-based reinforcement learning with stability guarantees,” Ad-vances in neural information processing systems , vol. 30, 2017. [9] R. Cheng, G. Orosz, R. M. Murray, and J. W. Burdick, “End-to-end safe reinforcement learning through barrier functions for safety-critical continuous control tasks,” in Proceedings of the AAAI conference on artificial intelligence , vol. 33, no. 01, 2019, pp. 3387–3395. [10] L. Wang, E. A. Theodorou, and M. Egerstedt, “Safe learning of quadrotor dynamics using barrier certificates,” in IEEE International Conference on Robotics and Automation (ICRA) . IEEE, 2018, pp. 2460–2465. [11] H. Zhou, Y. Zhang, and W. Luo, “Safety-critical control with uncer-tainty quantification using adaptive conformal prediction,” in American Control Conference (ACC) . IEEE, 2024, pp. 574–580. [12] E. Schulz, M. Speekenbrink, and A. Krause, “A tutorial on gaussian process regression: Modelling, exploring, and exploiting functions,” 
+
+Journal of mathematical psychology , vol. 85, pp. 1–16, 2018. [13] A. Potapczynski, L. Wu, D. Biderman, G. Pleiss, and J. P. Cunning-ham, “Bias-free scalable gaussian processes via randomized trunca-tions,” in International Conference on Machine Learning . PMLR, 2021, pp. 8609–8619. [14] H. Zhou, Y. Zhang, and W. Luo, “Computationally and sample efficient safe reinforcement learning using adaptive conformal prediction,” in 
+
+IEEE International Conference on Robotics and Automation (ICRA) .IEEE, 2025, pp. 01–07. [15] Y. Emam, G. Notomista, P. Glotfelter, Z. Kira, and M. Egerstedt, “Safe reinforcement learning using robust control barrier functions,” IEEE Robotics and Automation Letters , vol. 10, no. 3, pp. 2886–2893, 2022. [16] K. Li, M. Balakirsky, and S. Mak, “Trigonometric quadrature fourier features for scalable gaussian process regression,” in International Conference on Artificial Intelligence and Statistics . PMLR, 2024, pp. 3484–3492. [17] H. Papadopoulos, K. Proedrou, V. Vovk, and A. Gammerman, “In-ductive confidence machines for regression,” in Machine learning: ECML 2002: 13th European conference on machine learning Helsinki, Finland, August 19–23, 2002 proceedings 13 . Springer, 2002, pp. 345–356. [18] L. Lindemann, M. Cleaveland, G. Shim, and G. J. Pappas, “Safe planning in dynamic environments using conformal prediction,” IEEE Robotics and Automation Letters , vol. 8, no. 8, pp. 5116–5123, 2023. [19] K. Kazemian, Y. Sattar, and S. Dean, “Random features approximation for control-affine systems,” in 6th Annual Learning for Dynamics & Control Conference . PMLR, 2024, pp. 732–744. [20] A. Dixit, L. Lindemann, S. X. Wei, M. Cleaveland, G. J. Pappas, and J. W. Burdick, “Adaptive conformal prediction for motion planning among dynamic agents,” in Learning for Dynamics and Control Conference . PMLR, 2023, pp. 300–314. [21] G. Williams, P. Drews, B. Goldfain, J. M. Rehg, and E. A. Theodorou, “Information-theoretic model predictive control: Theory and applica-tions to autonomous driving,” IEEE Transactions on Robotics , vol. 34, no. 6, pp. 1603–1622, 2018. [22] G. Williams, N. Wagener, B. Goldfain, P. Drews, J. M. Rehg, B. Boots, and E. A. Theodorou, “Information theoretic mpc for model-based reinforcement learning,” in IEEE international conference on robotics and automation (ICRA) . IEEE, 2017, pp. 1714–1721. [23] S. Kakade, A. Krishnamurthy, K. Lowrey, M. Ohnishi, and W. Sun, “Information theoretic regret bounds for online nonlinear control,” 
+
+Advances in Neural Information Processing Systems , vol. 33, pp. 15 312–15 325, 2020. [24] A. Agrawal and K. Sreenath, “Discrete control barrier functions for safety-critical control of discrete systems with application to bipedal robot navigation.” in Robotics: Science and Systems , vol. 13. Cambridge, MA, USA, 2017, pp. 1–10. [25] I. Gibbs and E. Candes, “Adaptive conformal inference under dis-tribution shift,” Advances in Neural Information Processing Systems ,vol. 34, pp. 1660–1672, 2021. [26] I. Gibbs and E. J. Cand` es, “Conformal inference for online predic-tion with arbitrary distribution shifts,” Journal of Machine Learning Research , vol. 25, no. 162, pp. 1–36, 2024. [27] S. Diamond and S. Boyd, “CVXPY: A Python-embedded modeling language for convex optimization,” Journal of Machine Learning Research , vol. 17, no. 83, pp. 1–5, 2016. [28] M. Towers, A. Kwiatkowski, J. Terry, J. U. Balis, G. De Cola, T. Deleu, M. Goul˜ ao, A. Kallinteris, M. Krimmel, A. KG et al. , “Gymnasium: A standard interface for reinforcement learning environments,” arXiv preprint arXiv:2407.17032 , 2024. [29] A. W¨ achter and L. T. Biegler, “On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear program-ming,” Mathematical programming , vol. 106, no. 1, pp. 25–57, 2006.

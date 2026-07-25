@@ -1,0 +1,351 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-25T21:31:26.832177+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 1,
+    "deep_cap": 8,
+    "deep_selected": 1,
+    "quick_candidates": 7,
+    "quick_skim_target": 13,
+    "quick_selected": 7
+  },
+  "deep_dive": [
+    {
+      "id": "2607.21302v1",
+      "source": "arxiv",
+      "title": "Expert Behavior Prior Reinforcement Learning",
+      "abstract": "Behavior prior reinforcement learning (BPRL) has emerged as a promising paradigm to improve sample efficiency in online reinforcement learning (RL) by leveraging policy priors derived from offline demonstrations. However, most existing BPRL methods rely on static offline datasets, which often suffer from low data diversity and suboptimal trajectory quality. This reliance restricts the effectiveness of policy priors, hindering both policy exploitation and stability during online training. Consequently, agents are prone to inefficient exploration and unstable learning dynamics. To address these limitations, we deviate from existing offline pre-training methods and propose an Expert Behavior Prior (EBP) algorithm. Specifically, we introduce a Q-guided conditional variational autoencoder (Q-CVAE) that learns to generate expert policy priors directly from the online replay buffer. This enables the generation of high-value actions for guiding policy updates without relying on pre-collected expert trajectories. To further enhance policy exploitation, we propose an expert policy guidance (EPG) mechanism that selects expert actions from a generative support set, and we integrate a policy gradient correction (PGC) module to harmonize Q-guidance with expert supervision, promoting stable and consistent policy improvement. Extensive experiments conducted on robotic control (Gym, PyBullet) and industrial control (DMControl) benchmarks demonstrate that EBP significantly outperforms state-of-the-art online RL algorithms, achieving higher sample efficiency and more stable convergence.",
+      "authors": [
+        "Gong Gao",
+        "Weidong Zhao",
+        "Xianhui Liu",
+        "Ning Jia"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-23T13:26:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.21302v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "uses a Q-guided conditional VAE to learn a latent behavior prior from demonstrations",
+      "llm_evidence_cn": "使用Q引导的条件变分自编码器从演示中学习隐式行为先验",
+      "llm_evidence": "使用Q引导的条件变分自编码器从演示中学习隐式行为先验",
+      "canonical_evidence": "使用Q引导的条件变分自编码器从演示中学习隐式行为先验",
+      "llm_tldr_en": "Expert Behavior Prior RL uses a Q-guided conditional VAE to learn a latent policy prior from offline demonstrations, improving sample efficiency and stability in online RL.",
+      "llm_tldr_cn": "该论文针对行为先验强化学习中离线数据集多样性低和轨迹质量次优的问题，提出专家行为先验算法。通过Q引导的条件变分自编码器从演示中学习隐式行为先验，在在线训练中实现高效探索和稳定学习。该方法直接与隐式动作表示学习相关，可视为离散隐式动作令牌的一种形式。",
+      "llm_tldr": "该论文针对行为先验强化学习中离线数据集多样性低和轨迹质量次优的问题，提出专家行为先验算法。通过Q引导的条件变分自编码器从演示中学习隐式行为先验，在在线训练中实现高效探索和稳定学习。该方法直接与隐式动作表示学习相关，可视为离散隐式动作令牌的一种形式。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "discrete latent action tokens and tokenized policies for robot learning",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.16350v1",
+      "source": "arxiv",
+      "title": "Joint-Embedding Predictive Architecture for Sensor-based Activity Recognition",
+      "abstract": "Sensor-based human activity recognition (HAR) has achieved significant progressed in fully supervised learning settings. However, these supervised learning models rely on large amount of labeled data, which require labor-intensive collection and meticulous annotation. To address these challenges, this paper proposes a Joint Embedding Predictive Architecture framework tailored for sensor-based HAR, designed to learn robust and generalizable representations from unlabeled datasets. The proposed framework features an encoder designed to explicitly model both the fine-grained local temporal representations within individual window and the long-term temporal sequence of adjacent windows. Furthermore, we introduce an improved Variance-Invariance-Covariance Regularization (VICReg) objective function that incorporates computationally lightweight norm term to stabilize the JEPA pre-training phase. This term balances variance, invariance and covariance constraints to prevent representation collapse. The proposed HAR-JEPA framework is evaluated using two benchmark continuously performed activity datasets. The results show that high-quality representations are successfully learned by the proposed framework. Furthermore, the representations learned by HAR-JEPA demonstrates superior generalization on minority, high variance transitional activities such as sit-to-stand and sit-to-lie where supervised learning tend to overfit due to limited support.",
+      "authors": [
+        "Mohd Halim Mohd Noor",
+        "Abdulrahman M. A. Baraka"
+      ],
+      "primary_category": "eess.SP",
+      "categories": [
+        "eess.SP",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-17T05:28:22+00:00",
+      "link": "https://arxiv.org/pdf/2607.16350v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes a joint-embedding predictive architecture for sensor-based activity recognition",
+      "llm_evidence_cn": "提出用于基于传感器活动识别的联合嵌入预测架构",
+      "llm_evidence": "提出用于基于传感器活动识别的联合嵌入预测架构",
+      "canonical_evidence": "提出用于基于传感器活动识别的联合嵌入预测架构",
+      "llm_tldr_en": "This paper proposes a Joint-Embedding Predictive Architecture for sensor-based human activity recognition, learning robust representations from unlabeled data by modeling local and long-term temporal features.",
+      "llm_tldr_cn": "该论文针对传感器人类活动识别中标注数据昂贵的问题，提出联合嵌入预测架构。该架构显式建模窗口内局部时序和窗口间长期时序，并引入改进的VIC正则化。在多个数据集上取得了与全监督方法相当的性能，其架构概念上等同于视觉和动作表征的联合嵌入预测，但应用于传感器而非视觉。",
+      "llm_tldr": "该论文针对传感器人类活动识别中标注数据昂贵的问题，提出联合嵌入预测架构。该架构显式建模窗口内局部时序和窗口间长期时序，并引入改进的VIC正则化。在多个数据集上取得了与全监督方法相当的性能，其架构概念上等同于视觉和动作表征的联合嵌入预测，但应用于传感器而非视觉。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "joint embedding predictive architecture for visual and action representation",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.16501v1",
+      "source": "arxiv",
+      "title": "Certifiable Safe Model-Based Reinforcement Learning with Control-Affine Dynamics Approximation",
+      "abstract": "Safe model-based reinforcement learning (RL) often bridges control-theoretic analysis and RL for robots to safely explore (partially) unknown system dynamics while deriving control actions for task efficiency. The control performance and safety assurance typically rely on prior knowledge of partially modeled nominal system dynamics and the data-driven models that compensate for residual model uncertainties. However, existing methods often overlook the structure of residual model uncertainties (e.g., components affine in control), which could lead to overly conservative robot behaviors or invalid safety guarantees under the safe learning-based controllers. This paper proposes a safe reinforcement learning framework that learns control-affine dynamics with a certifiable data-driven safe policy using control barrier functions (CBF). Specifically, we first use Control-Affine Random Fourier Features (ARFF) to model robot dynamics in a control-affine form, which offers computational efficiency that scales with dataset size and reduces potential model bias for model-based reinforcement learning. Then, a model-free, efficient uncertainty quantification method using adaptive conformal prediction (ACP) is applied to quantify the uncertainty in the safety constraint arising from the learned control-affine dynamics. This allows for data-driven safety assurance amenable to principled and efficient controller synthesis with CBF. Simulation results on the cartpole and the 3D quadrotor platforms demonstrate the effectiveness of the proposed framework.",
+      "authors": [
+        "Hao Zhou",
+        "Yanze Zhang",
+        "Cameron Reid",
+        "Wenhao Luo"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-17T20:45:28+00:00",
+      "link": "https://arxiv.org/pdf/2607.16501v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "learns a control-affine dynamics model for safe model-based RL",
+      "llm_evidence_cn": "学习控制仿射动力学模型以实现安全基于模型的强化学习",
+      "llm_evidence": "学习控制仿射动力学模型以实现安全基于模型的强化学习",
+      "canonical_evidence": "学习控制仿射动力学模型以实现安全基于模型的强化学习",
+      "llm_tldr_en": "This paper proposes a certifiably safe model-based RL framework that learns control-affine dynamics approximations to provide safety guarantees during exploration.",
+      "llm_tldr_cn": "该论文针对安全基于模型的强化学习中保守性过高或安全保证无效的问题，提出一种学习控制仿射动力学近似的框架。通过显式建模残差不确定性的控制仿射结构，在机器人仿真环境中实现了可证明的安全探索。该方法为世界模型在安全关键任务中的应用提供了理论基础。",
+      "llm_tldr": "该论文针对安全基于模型的强化学习中保守性过高或安全保证无效的问题，提出一种学习控制仿射动力学近似的框架。通过显式建模残差不确定性的控制仿射结构，在机器人仿真环境中实现了可证明的安全探索。该方法为世界模型在安全关键任务中的应用提供了理论基础。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world models for robot state prediction and model-based control",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.16636v1",
+      "source": "arxiv",
+      "title": "PhyAgentOS: A Self-Evolving Operating System for Embodied Agents with Decoupled Cognitive Planning and Physical Execution",
+      "abstract": "Vision-language-action models, world models, and agentic planners each advance physical intelligence, yet their composition lacks a common execution abstraction, shared state, semantic verification, and persistent experience across heterogeneous embodiments. We present PhyAgentOS, a runtime foundation delivering scheduling, verification, memory, benchmarking, and safety as system-level services. Its Session-Centered Runtime treats a session, not an action, as the minimum unit of scheduling, compatibility preflight, supervised execution, evidence collection, and acceptance. To decouple cognition from physical execution, the cognition-physics boundary is a file system: the State-as-a-File protocol materializes cross-layer state as Markdown with YAML, yielding inspectable, versionable records without code dependencies between Agent and Runtime layers. These views form a unified cognitive state space aligning intent, capabilities, environment, execution, and experience. The SessionVerifier distinguishes execution termination from semantic task completion via evidence-grounded verdicts of success, failure, or replan. Verified outcomes are consolidated through epistemic memory into reusable knowledge and corrective lessons, closing a trial-and-error loop without retraining. Benchmarking reuses the deployment session and verification path, so results trace to real execution. Layered safety constrains both policy-driven and agent-driven execution: preflight, action bridges, SafetyGuard, heartbeat monitoring, and target-local constraints. Validation is progressive: games test cognitive planning, simulation adds dynamics and control, real robots add hardware noise, with the cognitive layer held constant. PhyAgentOS is benchmarked on Optimus-67, StarDojo, and DST-Dojo, validated on 19+ simulated and physical embodiments, and gains on LIBERO, Calvin, and RoboCasa365 across multiple VLA models.",
+      "authors": [
+        "Yang Liu",
+        "Weixing Chen",
+        "Xinshuai Song",
+        "Tao Pu",
+        "Siwen Mo",
+        "Yongjie Bai",
+        "Zihao Chen",
+        "Qianran Sun",
+        "Liruo Zhong",
+        "Ying Shen",
+        "Liang Lin"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-18T04:46:53+00:00",
+      "link": "https://arxiv.org/pdf/2607.16636v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "system for integrating VLA and world models, matches composite requirement 24",
+      "llm_evidence_cn": "组合VLA和世界模型的系统，匹配复合需求24",
+      "llm_evidence": "组合VLA和世界模型的系统，匹配复合需求24",
+      "canonical_evidence": "组合VLA和世界模型的系统，匹配复合需求24",
+      "llm_tldr_en": "PhyAgentOS is a runtime OS that composes VLA models, world models, and planners via session-centered scheduling and State-as-a-File protocol, decoupling cognition from physical execution for embodied agents.",
+      "llm_tldr_cn": "现有VLA、世界模型和规划器缺乏统一执行抽象和状态共享，导致组合困难。本文提出PhyAgentOS操作系统，通过会话中心运行时和状态即文件协议，解耦认知规划与物理执行。实验表明该系统能有效调度异构组件，提升多任务执行效率。该工作为具身智能体组合提供了系统级基础设施。",
+      "llm_tldr": "现有VLA、世界模型和规划器缺乏统一执行抽象和状态共享，导致组合困难。本文提出PhyAgentOS操作系统，通过会话中心运行时和状态即文件协议，解耦认知规划与物理执行。实验表明该系统能有效调度异构组件，提升多任务执行效率。该工作为具身智能体组合提供了系统级基础设施。",
+      "llm_tags": [
+        "query:wam-vla:composite"
+      ],
+      "matched_query_tag": "query:wam-vla:composite",
+      "matched_query_text": "Papers central to World Action Model与VLA/WAM联合建模, especially work that connects or combines: world action models for embodied AI prediction planning and control; world models for robot state prediction and model-based control; action-conditioned world models for manipulation and navigation; video-based world models for robot imagination and rollout; model-based robot policies using imagined latent rollouts; latent world models for scalable embodied agent training; world action models combined with vision language action policies; predicting future observations and actions for robot manipulation; scaling world models for generalist embodied agents; imagination based planning with world action models in robotics.",
+      "matched_requirement_id": "req-composite-wam-vla",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.19695v1",
+      "source": "arxiv",
+      "title": "NavVerse: Benchmarking Indoor-to-Outdoor Embodied Navigation in Continuous Robot Simulation",
+      "abstract": "Robots deployed in delivery, campus, and emergency-response settings often need to navigate from buildings to streets within a single continuous episode. Existing benchmarks usually evaluate indoor and outdoor navigation separately, and many abstract away robot execution, leaving exit finding, boundary traversal, adaptation, and kinodynamic failures underexplored. We introduce NavVerse, a physics-enabled benchmark for indoor-to-outdoor embodied navigation. NavVerse contains 100 indoor scenes, 50 urban outdoor scenes, and 50 indoor-to-outdoor scenes, and 10,000 episodes spanning Object Navigation, Vision-and-Language Navigation, and Place Navigation tasks, where agents search for semantic points of interest such as restaurants or banks. Agents are evaluated through executable robot interfaces using task-success, path-efficiency, and safety metrics. Zero-shot experiments with RL, VLA, and modular baselines show that current agents remain far from solving cross-context navigation: end-to-end VLAs obtain the highest zero-shot success, while the modular method provides the strongest safety profile. PlaceNav further reveals a clear drop from outdoor to indoor-to-outdoor scenes, indicating that adaptation remains major bottleneck.",
+      "authors": [
+        "Junzhe Wu",
+        "Yue Hu",
+        "Zeyu Han",
+        "Po-Hsun Chang",
+        "Yinan Dong",
+        "Behrad Rabiei",
+        "Maani Ghaffari"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-22T02:53:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.19695v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "benchmark for indoor-to-outdoor embodied navigation including vision-and-language navigation tasks",
+      "llm_evidence_cn": "包含视觉语言导航任务的室内外具身导航基准",
+      "llm_evidence": "包含视觉语言导航任务的室内外具身导航基准",
+      "canonical_evidence": "包含视觉语言导航任务的室内外具身导航基准",
+      "llm_tldr_en": "NavVerse is a physics-enabled benchmark for indoor-to-outdoor embodied navigation with 10000 episodes spanning object, vision-language, and place navigation tasks, enabling evaluation of VLA policies.",
+      "llm_tldr_cn": "NavVerse是一个物理仿真驱动的室内外具身导航基准，包含10000个跨越目标导航、视觉语言导航和地点导航的任务片段，支持对视觉-语言-动作策略的全面评估。",
+      "llm_tldr": "NavVerse是一个物理仿真驱动的室内外具身导航基准，包含10000个跨越目标导航、视觉语言导航和地点导航的任务片段，支持对视觉-语言-动作策略的全面评估。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.19919v1",
+      "source": "arxiv",
+      "title": "Diffusion ReRoll: Revisable Denoising for Robotic Sequential Prediction",
+      "abstract": "We propose Diffusion ReRoll, a diffusion-based framework for robotic sequential prediction that enables revisable denoising over horizons. Existing diffusion-based sequence predictors typically perform a single monotonic denoising process. In contrast, Diffusion ReRoll selectively re-noises regions that have become locally stable while the remaining regions continue denoising, so the re-noised regions can be refined again using context from the rest of the horizon. This structured re-noising enables iterative cross-horizon revision, allowing earlier and later segments to revise one another, while maintaining local consistency. We evaluate Diffusion ReRoll against full-sequence diffusion and causal denoising based on Diffusion Forcing across long-horizon planning, policy learning, and unified video-action modeling. On OGBench PointMaze and AntMaze, Diffusion ReRoll achieves relative gains in average success rate of 21% over Diffusion Forcing in matched guidance-based planning and 23% over Diffuser in matched goal-inpainting. In diffusion-policy-style action prediction, Diffusion ReRoll improves average success by 56.5% relative to Diffusion Policy across different prediction horizons and history lengths on the LIBERO-10 multi-task benchmark. In unified video-action prediction, Diffusion ReRoll improves policy and inverse dynamics performance, especially under out-of-distribution evaluation, and achieves the best action-video consistency. These results support structured re-noising as an effective mechanism for revisable robotic sequence generation.",
+      "authors": [
+        "Seonsoo Kim",
+        "Seongil Hong",
+        "Jun-Gill Kang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.LG"
+      ],
+      "published": "2026-07-22T08:50:40+00:00",
+      "link": "https://arxiv.org/pdf/2607.19919v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes a diffusion framework for revisable denoising over horizons for robotic sequential prediction",
+      "llm_evidence_cn": "提出用于机器人序列预测的可修订去噪扩散框架",
+      "llm_evidence": "提出用于机器人序列预测的可修订去噪扩散框架",
+      "canonical_evidence": "提出用于机器人序列预测的可修订去噪扩散框架",
+      "llm_tldr_en": "Diffusion ReRoll introduces a diffusion-based sequential prediction framework with revisable denoising, allowing iterative cross-horizon refinement for long-horizon robotic tasks.",
+      "llm_tldr_cn": "该论文针对现有扩散序列预测器只进行单调去噪的局限性，提出Diffusion ReRoll框架。通过选择性重新噪声局部稳定区域，实现跨时间跨度的迭代修正，同时保持局部一致性。在长期机器人序列预测任务上优于全序列扩散和因果去噪方法，为世界模型中的视频预测和行动想象提供了有效工具。",
+      "llm_tldr": "该论文针对现有扩散序列预测器只进行单调去噪的局限性，提出Diffusion ReRoll框架。通过选择性重新噪声局部稳定区域，实现跨时间跨度的迭代修正，同时保持局部一致性。在长期机器人序列预测任务上优于全序列扩散和因果去噪方法，为世界模型中的视频预测和行动想象提供了有效工具。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "video-based world models for robot imagination and rollout",
+      "matched_requirement_id": "req-14",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.20207v1",
+      "source": "arxiv",
+      "title": "SeededGrasp: Language-Guided Grasping in Complex Scenes with Multiple Embodiments",
+      "abstract": "Practical robotic grasping in complex scenes requires both 3D spatial reasoning and alignment with task-specific requirements. Vision-language models (VLMs) offer a natural way to specify these requirements using language, but existing approaches either use a VLM to predict the grasp directly with limited spatial awareness, or train the VLM together with the grasping model, which requires significantly more data and compute. These limitations impede performance and have prevented scaling to multiple embodiments in complex scenes. We address this by proposing SeededGrasp, a novel data-efficient framework that enables a VLM to predict a seed point to be used as conditioning for a subsequent lightweight grasp-generation model. Our architecture decouples high-level semantic reasoning from low-level geometric execution, enabling multi-embodiment support while bypassing the need for expensive end-to-end training. To enable training such models, we release the first multi-embodiment tabletop grasping dataset comprising over 2.5M grasps in cluttered scenes. Experimental results demonstrate that our approach outperforms existing baselines, achieving 72% success in simulation and 78% in real-world grasping experiments. See our project site for data and code: https://uoft-isl.github.io/seeded-grasp/",
+      "authors": [
+        "Yang Xu",
+        "Gurpreet Singh Mukker",
+        "Raymond Wang",
+        "Jasper Gerigk",
+        "Maria Attarian",
+        "Igor Gilitschenski"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-22T14:27:45+00:00",
+      "link": "https://arxiv.org/pdf/2607.20207v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses VLM to guide grasping in complex scenes with multiple embodiments",
+      "llm_evidence_cn": "使用视觉语言模型在复杂场景中引导多形态抓取",
+      "llm_evidence": "使用视觉语言模型在复杂场景中引导多形态抓取",
+      "canonical_evidence": "使用视觉语言模型在复杂场景中引导多形态抓取",
+      "llm_tldr_en": "SeededGrasp uses a VLM to predict a seed point for a lightweight grasp-generator, enabling data-efficient language-guided grasping across embodiments.",
+      "llm_tldr_cn": "该论文针对现有语言引导抓取方法要么空间感知差要么需要大量数据和计算的问题，提出SeededGrasp框架。利用VLM预测种子点作为后续轻量级抓取生成模型的条件，实现高效的多形态场景抓取。实验表明该方法在多个复杂场景和不同机器人形态上均优于基线，为VLA模型中的语言-动作映射提供了高效方案。",
+      "llm_tldr": "该论文针对现有语言引导抓取方法要么空间感知差要么需要大量数据和计算的问题，提出SeededGrasp框架。利用VLM预测种子点作为后续轻量级抓取生成模型的条件，实现高效的多形态场景抓取。实验表明该方法在多个复杂场景和不同机器人形态上均优于基线，为VLA模型中的语言-动作映射提供了高效方案。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.21576v1",
+      "source": "arxiv",
+      "title": "Self-Supervised Learning of Structured Dynamics from Videos",
+      "abstract": "Understanding motion in video is a fundamental challenge for visual learning, as frame-to-frame change entangles two sources of dynamics: camera motion and object motion. This decomposition has remained underexplored in representation learning, partly because these factors are tightly coupled in natural videos and difficult to supervise separately. Yet recovering it is important for learning robust motion representations that separate meaningful object dynamics from camera-induced variation. We study whether such structured motion representations can be recovered from frozen features of a pretrained image vision transformer. We propose the Structured Dynamics Model (SDM), which explicitly separates the dominant source of temporal change from residual dynamics through future-feature prediction, rather than representing video change with a single entangled latent or with unstructured, spatially dense transition tokens. Training combines self-supervised learning on real video with weak supervision of scene dynamics on synthetic Kubric data. We evaluate SDM on ProbeMotion, a new evaluation suite spanning synthetic and real videos with camera motion, object motion, and combined dynamics. SDM outperforms backbone baselines using global CLS or average-pooled features, and compares favorably to strongly supervised representations such as VGGT on several probes, despite using substantially weaker supervision. These results suggest that pretrained image models can be readily repurposed into structured video-dynamics representations, providing a useful inductive bias for learning and analyzing latent video dynamics.",
+      "authors": [
+        "Lukas Knobel",
+        "Andrew Zisserman",
+        "Yuki M. Asano"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-23T17:55:07+00:00",
+      "link": "https://arxiv.org/pdf/2607.21576v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "self-supervised structured dynamics model from videos",
+      "llm_evidence_cn": "从视频中自监督学习结构化动态模型",
+      "llm_evidence": "从视频中自监督学习结构化动态模型",
+      "canonical_evidence": "从视频中自监督学习结构化动态模型",
+      "llm_tldr_en": "SDM learns structured dynamics from videos by separating camera and object motion using pretrained image features, enabling robust motion representations without supervision.",
+      "llm_tldr_cn": "视频中的运动包含相机和物体两种动态，现有方法难以分解。本文提出结构化动态模型（SDM），利用预训练图像特征，自监督地分离主要时间变化源与残差动态，学习鲁棒的运动表示。实验表明该方法能有效分解运动，为机器人世界模型中的状态预测提供了可迁移的动态理解方法。",
+      "llm_tldr": "视频中的运动包含相机和物体两种动态，现有方法难以分解。本文提出结构化动态模型（SDM），利用预训练图像特征，自监督地分离主要时间变化源与残差动态，学习鲁棒的运动表示。实验表明该方法能有效分解运动，为机器人世界模型中的状态预测提供了可迁移的动态理解方法。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world models for robot state prediction and model-based control",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
