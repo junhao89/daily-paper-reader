@@ -1,0 +1,237 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-26T21:26:43.831476+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 0,
+    "deep_cap": 8,
+    "deep_selected": 0,
+    "quick_candidates": 5,
+    "quick_skim_target": 13,
+    "quick_selected": 5
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.21582v1",
+      "source": "arxiv",
+      "title": "Scale Up Strategically: Learning Compositional Generalization via Bias-Aware Evaluation and Data Collection for Robotic Manipulation",
+      "abstract": "Compositional generalization is essential for robot to follow diverse instructions. However, pretrained policies are known to take shortcuts, deferring to salient cues rather than grounding language. We introduce a diagnostic framework that localizes this failure to individual \\textit{instruction factors}, \\textit{e.g.,} reusable semantic components such as color, verb, object, size, and spatial attribute. Our framework formalizes instruction factor bias, the tendency of fine-tuned policies to over-rely on dominant factors as shortcuts, and quantifies it through two metrics: Factor Dominance Rate (FDR), capturing pairwise bias between factors, and Factor Dominance Hierarchy (FDH), aggregating these into a global ranking. Evaluation on six foundation policies reveals broadly consistent ordering, \\textit{i.e.}, color $\\geq$ object $\\geq$ spatial $\\geq$ verb $\\geq$ size, with color dominant, and verb and size most under-grounded. We further show the diagnosis is actionable: a bias-aware data collection strategy that reallocates a fixed budget toward under-grounded factors outperforms baselines in simulation and on a real robot using half the demonstrations, thereby enabling more sample-efficient and generalizable policy learning.",
+      "authors": [
+        "Yu Qi",
+        "Zhang Ye",
+        "Xinyi Xu",
+        "Yuxuan Lu",
+        "Amitoj Sandhu",
+        "Boce Hu",
+        "Haojie Huang",
+        "Jonathan Tremblay",
+        "Lawson L. S. Wong"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-23T17:57:09+00:00",
+      "link": "https://arxiv.org/pdf/2607.21582v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "compositional generalization for robotic manipulation with language",
+      "llm_evidence_cn": "机器人操作中的组合泛化与语言指导",
+      "llm_evidence": "机器人操作中的组合泛化与语言指导",
+      "canonical_evidence": "机器人操作中的组合泛化与语言指导",
+      "llm_tldr_en": "Proposes a diagnostic framework for compositional generalization in robotic manipulation, identifying instruction factor bias and providing metrics to guide data collection for better VLA policies.",
+      "llm_tldr_cn": "该论文针对预训练机器人策略在遵循多样指令时出现组合泛化失败的问题，提出诊断框架定位指令因子偏差（如颜色、动词等）。通过因子主导率（FDR）和因子主导层次（FDH）量化偏差，并指导数据收集以缓解捷径学习。该方法直接服务于视觉-语言-动作模型，帮助提升策略的语言理解与泛化能力。",
+      "llm_tldr": "该论文针对预训练机器人策略在遵循多样指令时出现组合泛化失败的问题，提出诊断框架定位指令因子偏差（如颜色、动词等）。通过因子主导率（FDR）和因子主导层次（FDH）量化偏差，并指导数据收集以缓解捷径学习。该方法直接服务于视觉-语言-动作模型，帮助提升策略的语言理解与泛化能力。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.16938v1",
+      "source": "arxiv",
+      "title": "What Do They See? Interpreting Complex Road Scenarios Through the Eyes of Vision-Language-Action Models for Safe and Trustworthy Autonomous Vehicle Learning",
+      "abstract": "End-to-end autonomous driving models are now able to navigate complex road scenarios, mapping raw sensor observations directly to observed paths for open-loop evaluation and often effective driving in closed-loop evaluation. Yet the internal logic of these safety-critical systems remains largely opaque, due to the complexity of traffic scenes. We propose a counterfactual ablation framework called Counterfactual Vision Action Analysis (CVAA) that systematically removes individual detected objects from front-camera images using photorealistic generative inpainting to prepare counterfactual sets to evaluate the difference in the model's response. This isolates the causal effect of each object's presence on the model's planning behaviour. Applied to the Alpamayo 1 trajectory predictor across 210 nuScenes driving scenes, we create a dataset Counter -nuScenes, using which we see that vehicles and pedestrians within the model's 'path' dominate causal influence as expected, while traffic lights, as expected, exert disproportionate effect relative to their image footprint. However, we also find cases where the model responds strongly to objects a human driver would consider irrelevant. This brings forth a deeper question: does the model itself view the scene as a sum of individual objects influencing the outcome, or does it encode an entirely different set of internal features that do not correspond to human-legible scene elements? To further understand this, we compare intermediate representations of original and inpainted image pairs using mechanistic interpretability techniques and examine the effect of the removal through the various model layers. Together, these two stages offer a path from behavioral auditing to representational understanding, creating explainable driving systems and solidifying human-AI trust.",
+      "authors": [
+        "Kalpana Panda",
+        "Wesley Maia",
+        "Vinti Agarwal",
+        "Ross Greer"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.LG",
+        "cs.RO"
+      ],
+      "published": "2026-07-18T19:20:16+00:00",
+      "link": "https://arxiv.org/pdf/2607.16938v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "interprets vision-language-action models for autonomous driving",
+      "llm_evidence_cn": "解释视觉-语言-动作模型在自动驾驶中的行为",
+      "llm_evidence": "解释视觉-语言-动作模型在自动驾驶中的行为",
+      "canonical_evidence": "解释视觉-语言-动作模型在自动驾驶中的行为",
+      "llm_tldr_en": "Counterfactual Vision Action Analysis (CVAA) systematically ablates objects to interpret VLA models in autonomous driving.",
+      "llm_tldr_cn": "为了理解端到端自动驾驶中VLA模型的内部逻辑，本文提出了反事实视觉动作分析（CVAA）框架。通过从图像中移除检测到的物体并观察模型输出变化，该方法揭示了模型对特定物体的依赖关系，为安全可信的自动驾驶学习提供了可解释性工具。",
+      "llm_tldr": "为了理解端到端自动驾驶中VLA模型的内部逻辑，本文提出了反事实视觉动作分析（CVAA）框架。通过从图像中移除检测到的物体并观察模型输出变化，该方法揭示了模型对特定物体的依赖关系，为安全可信的自动驾驶学习提供了可解释性工具。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.18985v1",
+      "source": "arxiv",
+      "title": "Athena-Brain Technical Report: An Efficient Robot Brain for General Intelligence and Embodied Interactio",
+      "abstract": "Large language models (LLMs) have demonstrated remarkable capabilities in language understanding, reasoning, and world knowledge. As embodied agents become increasingly capable, there is a growing demand for compact models that can serve as an on-device brain, preserving the broad general intelligence of LLMs while enabling effective high-level interaction with embodied environments. Existing approaches, however, often prioritize either general-purpose intelligence or specialized embodied capabilities, making it challenging to satisfy both requirements within a single model. We present \\textbf{Athena-Brain-8B}, an 8B LLM designed to serve as an on-device brain for embodied intelligence for embodied intelligence. Through a multi-stage post-training pipeline consisting of General Supervised Fine-Tuning, General Reinforcement Learning, Embodied Expert training, and Model Merge, Athena-Brain-8B maintains strong general capabilities while acquiring strong high-level embodied interaction capabilities and generating concise responses for efficient embodied interaction. Experimental results demonstrate the effectiveness of Athena across both general and embodied evaluations. Compared with the corresponding Qwen3-8B thinking model, Athena-Brain-8B achieves comparable performance on general language and reasoning benchmarks while generating substantially shorter responses. On in-domain embodied benchmarks, Athena-Brain-8B consistently outperforms models of similar scale and surpasses several substantially larger frontier models evaluated zero-shot, demonstrating that compact language models can effectively integrate strong general intelligence with embodied capabilities.",
+      "authors": [
+        "Jialian Li",
+        "Junhong Liu",
+        "Yuchen Cao",
+        "Weiran Guo",
+        "Jiaming Song",
+        "Xutao Wang",
+        "Yi Zhao",
+        "Jiangpin Liu",
+        "Jie Chen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-07-21T11:19:21+00:00",
+      "link": "https://arxiv.org/pdf/2607.18985v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM as robot brain for embodied interaction",
+      "llm_evidence_cn": "LLM作为具身交互机器人大脑",
+      "llm_evidence": "LLM作为具身交互机器人大脑",
+      "canonical_evidence": "LLM作为具身交互机器人大脑",
+      "llm_tldr_en": "Presents Athena-Brain-8B, a compact LLM serving as on-device brain for embodied intelligence, balancing general intelligence and specialized embodied capabilities.",
+      "llm_tldr_cn": "大型语言模型在语言理解与推理方面表现出色，但作为具身智能体的机载大脑时，现有模型难以同时兼顾通用智能与专用具身能力。本文提出Athena-Brain-8B，一个8B参数的紧凑型LLM，专为具身智能设计，通过训练在保持通用智能的同时实现高效的环境交互。该模型在多种机器人任务上展示了良好性能，为构建通用具身智能体提供了轻量级基础。",
+      "llm_tldr": "大型语言模型在语言理解与推理方面表现出色，但作为具身智能体的机载大脑时，现有模型难以同时兼顾通用智能与专用具身能力。本文提出Athena-Brain-8B，一个8B参数的紧凑型LLM，专为具身智能设计，通过训练在保持通用智能的同时实现高效的环境交互。该模型在多种机器人任务上展示了良好性能，为构建通用具身智能体提供了轻量级基础。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.19194v1",
+      "source": "arxiv",
+      "title": "Cognitive Dual-Process Planning for Autonomous Driving with Structured Scene Knowledge and Verifiable Reasoning-Action Consistency",
+      "abstract": "High-level planning for autonomous driving is a knowledge-intensive engineering decision task that requires accurate scene understanding, timely inference, and internally consistent action selection. Vision-language models (VLMs) can make intermediate reasoning explicit, but their use in deployed planners is constrained by costly structured supervision, unnecessary reasoning in routine scenes, and possible inconsistencies between generated rationales and driving actions. We present a cognitive dual-process planning framework that represents planning-relevant scene knowledge in a machine-parsable structured chain-of-thought (S-CoT) schema. An automated data engine integrates perception foundation models, critical-path filtering, and an expert VLM to generate S-CoT supervision without manual annotation of individual rationales. A lightweight visual Arbiter estimates scene complexity from multilevel vision-encoder features before language decoding and routes each input to either fast meta-action prediction or slow structured reasoning. For slow-path outputs, a deterministic rule-based validator checks whether the parsed S-CoT fields are consistent with the final meta-action and provides verifiable rewards for Group Relative Policy Optimization (GRPO). In a 195-scene manual audit, the generated annotations achieve 91.8\\% CoT accuracy and a 98.5\\% Logical Consistency Score (LCS). On 574 manually verified NAVSIM test samples, the planner achieves 80.14\\% planning accuracy and 97.20\\% LCS while reducing average latency by 17.39\\% relative to applying slow reasoning to every scene. Evaluation on external long-tail subsets further identifies conditions under which routing and planning performance degrade. Together, these results show how explicit scene knowledge can be operationalized through adaptive reasoning and rule-based verification to support high-level VLM planning decisions.",
+      "authors": [
+        "Zhongyao Yang",
+        "Haoyu Li",
+        "Yu Yan",
+        "Zhuangxuan Yu",
+        "Jiangfeng Nan",
+        "Jinrui Nan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-21T15:29:21+00:00",
+      "link": "https://arxiv.org/pdf/2607.19194v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "VLM-based planning with reasoning-action consistency",
+      "llm_evidence_cn": "基于视觉语言模型的规划与推理动作一致性",
+      "llm_evidence": "基于视觉语言模型的规划与推理动作一致性",
+      "canonical_evidence": "基于视觉语言模型的规划与推理动作一致性",
+      "llm_tldr_en": "Presents a cognitive dual-process planning framework for autonomous driving using structured scene knowledge and verifiable reasoning-action consistency via VLMs.",
+      "llm_tldr_cn": "针对自动驾驶中视觉语言模型规划器存在的推理冗余和动作不一致问题，提出认知双过程规划框架。采用结构化链式思维表示场景知识，并通过自动数据引擎整合感知基础模型。在规划任务上验证了推理-动作一致性，为VLA模型在自动驾驶中的应用提供了可行方案。",
+      "llm_tldr": "针对自动驾驶中视觉语言模型规划器存在的推理冗余和动作不一致问题，提出认知双过程规划框架。采用结构化链式思维表示场景知识，并通过自动数据引擎整合感知基础模型。在规划任务上验证了推理-动作一致性，为VLA模型在自动驾驶中的应用提供了可行方案。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.20289v1",
+      "source": "arxiv",
+      "title": "Courteous Anticipation: Improving Long-Lived Task Planning in Persistent Shared Environments",
+      "abstract": "We consider a task planning scenario in which robots sharing a persistent environment are assigned tasks one at a time from a held-out sequence. Standard task planners, lacking foresight of future tasks and inconsiderate of others' constraints, solve each task in isolation, leaving terminal states that increase future cost for all, side effects that compound over lengthy task sequences. To reduce cost over the sequence, a robot must anticipate how its actions now may impact performance on future tasks for all robots sharing the environment. Therefore, we present courteous anticipatory planning, wherein a model-based planner proposes candidate plans and selects the one that jointly minimizes immediate cost and aggregated expected future cost across all robots, estimated via independent per-robot learned estimators. This factored formulation avoids combinatorial joint rollouts and supports modular deployment: adding a robot requires only training its own estimator. We evaluate in two persistent PDDL domains, a home environment with robots that have similar capabilities but different responsibilities, and a restaurant environment where robots' distinct capabilities create states that other robots lack the capability to resolve. During lengthy task sequences, our planner reduces total cost by 10.43% versus myopic and 4.03% versus selfish anticipatory planning in a two-robot home environment and by 17.41% and 13.24%, respectively, in a three-robot restaurant.",
+      "authors": [
+        "Md Ridwan Hossain Talukder",
+        "Roshan Dhakal",
+        "Elizabeth Phillips",
+        "Gregory J. Stein"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "published": "2026-07-22T15:36:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.20289v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "model-based anticipatory planning for shared robot environments",
+      "llm_evidence_cn": "面向共享机器人环境的基于模型的预期规划",
+      "llm_evidence": "面向共享机器人环境的基于模型的预期规划",
+      "canonical_evidence": "面向共享机器人环境的基于模型的预期规划",
+      "llm_tldr_en": "Courteous Anticipation uses a model-based planner to anticipate future tasks and select plans that minimize both immediate and expected future costs for all robots in persistent shared environments.",
+      "llm_tldr_cn": "标准任务规划器缺乏对未来任务的预见，导致累积副作用增加。本文提出礼貌预期规划，使用模型基规划器生成候选计划，选择同时最小化即时成本和未来期望成本的方案。实验表明该方法在长期任务序列中显著降低总体成本。该工作为模型基机器人策略在持久共享环境中的应用提供了有效范例。",
+      "llm_tldr": "标准任务规划器缺乏对未来任务的预见，导致累积副作用增加。本文提出礼貌预期规划，使用模型基规划器生成候选计划，选择同时最小化即时成本和未来期望成本的方案。实验表明该方法在长期任务序列中显著降低总体成本。该工作为模型基机器人策略在持久共享环境中的应用提供了有效范例。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "model-based robot policies using imagined latent rollouts",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
