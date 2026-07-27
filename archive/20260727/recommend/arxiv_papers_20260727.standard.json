@@ -1,0 +1,355 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-27T21:13:26.965540+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 6,
+    "deep_cap": 8,
+    "deep_selected": 6,
+    "quick_candidates": 2,
+    "quick_skim_target": 13,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2607.21670v1",
+      "source": "arxiv",
+      "title": "Ordered Action Tokens for Visuomotor Policy Learning",
+      "abstract": "Action tokenization maps continuous robot action chunks to discrete tokens and has become an important interface for modern visuomotor policies. Existing approaches either rely on analytical discretization methods that produce prohibitively long token sequences or learned latent tokenizers that lack structure, limiting their compatibility with downstream policies. In this work, we identify three desiderata for action tokenization - high compression, total decodability, and an ordered token space - and introduce Ordered Action Tokenization (OAT), a learned action tokenizer that satisfies all three. OAT discretizes action chunks into an ordered sequence of tokens using a transformer with registers, finite scalar quantization, and ordering-inducing training mechanisms. By training each token prefix to decode into a valid action chunk, OAT places coarse control information in early tokens and uses later tokens to refine residual detail, yielding an anytime tradeoff between inference cost and action fidelity. We validate OAT in two prevailing uses of action tokens: autoregressive policies that generate tokens for control, and token co-training policies that use token losses to shape the vision-language model context consumed by a flow-based action expert. Across three policy backbones and more than 60 tasks spanning five simulation benchmarks and real-world settings, OAT consistently delivers strong policy performance while offering significantly greater flexibility at inference time.",
+      "authors": [
+        "Chaoqi Liu",
+        "Yue Zhao",
+        "Haonan Chen",
+        "Xiaoshen Han",
+        "Jiawei Gao",
+        "Ehsan Adeli",
+        "Yilun Du"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-07-23T07:04:51+00:00",
+      "link": "https://arxiv.org/pdf/2607.21670v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Discrete latent action tokens with ordered space",
+      "llm_evidence_cn": "有序离散潜在动作令牌",
+      "llm_evidence": "有序离散潜在动作令牌",
+      "canonical_evidence": "有序离散潜在动作令牌",
+      "llm_tldr_en": "OAT introduces discrete ordered action tokens for visuomotor policies with high compression and total decodability.",
+      "llm_tldr_cn": "本文提出有序动作令牌化（OAT），一种学习到的动作分词器，满足高压缩、完全可解码和有向令牌空间三个理想属性。OAT使用带寄存器、有限标量量化和顺序诱导训练机制的Transformer将连续动作块离散化为有序令牌序列。在机器人策略学习任务中，OAT比现有方法更有效地支持下游策略。",
+      "llm_tldr": "本文提出有序动作令牌化（OAT），一种学习到的动作分词器，满足高压缩、完全可解码和有向令牌空间三个理想属性。OAT使用带寄存器、有限标量量化和顺序诱导训练机制的Transformer将连续动作块离散化为有序令牌序列。在机器人策略学习任务中，OAT比现有方法更有效地支持下游策略。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "discrete latent action tokens and tokenized policies for robot learning",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.22530v1",
+      "source": "arxiv",
+      "title": "ViTacWorld: Scaling Visuo-Tactile World Models for Contact-Rich Robot Manipulation",
+      "abstract": "Contact-rich robot manipulation requires physical interaction cues that are often invisible to cameras, making tactile sensing essential for robust control. However, scaling visuo-tactile robot learning remains difficult because real tactile interaction data are expensive to collect, hardware-dependent, and limited in task and scene diversity. We present ViTacWorld, an action-conditioned visuo-tactile world model for scalable contact-rich robot manipulation. ViTacWorld leverages public real tactile datasets and a constructed simulation environment to scale visuo-tactile-action data, exploiting the fact that tactile signals are directly grounded in physical contact and can exhibit a smaller simulation-to-real gap than purely visual observations. The model is first pretrained with large-scale real and simulated visuo-tactile trajectories, and then finetuned with real-world policy rollouts to better match downstream manipulation behaviors. Given robot actions, ViTacWorld predicts temporally aligned visual observations and tactile feedback, enabling visuo-tactile-action rollout generation. To the best of our knowledge, ViTacWorld is the first framework that uses a world model for robot visuo-tactile-action trajectory generation and policy evaluation. It serves two roles: synthesizing rollouts to improve downstream tactile policies, and evaluating policies by predicting action-conditioned visuo-tactile outcomes under controlled action sequences. Experiments on contact-rich manipulation tasks show that ViTacWorld generates physically meaningful rollouts, improves policy performance through scalable data augmentation, and enables action-conditioned policy evaluation. Project page: https://vitacworld.github.io/",
+      "authors": [
+        "Yunao Huang",
+        "Shiyu Sang",
+        "Haotao Lu",
+        "Suting Ni",
+        "Shijie Wu",
+        "Ziyang Guo",
+        "Ye Shi",
+        "Jingya Wang"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-24T17:59:33+00:00",
+      "link": "https://arxiv.org/pdf/2607.22530v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "action-conditioned visuo-tactile world model for contact-rich robot manipulation",
+      "llm_evidence_cn": "动作条件的视觉-触觉世界模型用于接触丰富的机器人操作",
+      "llm_evidence": "动作条件的视觉-触觉世界模型用于接触丰富的机器人操作",
+      "canonical_evidence": "动作条件的视觉-触觉世界模型用于接触丰富的机器人操作",
+      "llm_tldr_en": "ViTacWorld presents an action-conditioned visuo-tactile world model that leverages public tactile datasets and simulation to scale data for contact-rich robot manipulation, achieving robust control via tactile integration.",
+      "llm_tldr_cn": "该论文提出ViTacWorld，一种动作条件的视觉-触觉世界模型，通过利用公开触觉数据集和仿真环境规模化接触丰富的机器人操作数据。模型将触觉信号直接嵌入世界模型，利用触觉信号在物理接触中的直接性和较小的仿真到现实差距，实现鲁棒控制。实验表明该方法在多种接触任务上优于纯视觉世界模型，为触觉-视觉融合的机器人学习提供了可扩展方案。",
+      "llm_tldr": "该论文提出ViTacWorld，一种动作条件的视觉-触觉世界模型，通过利用公开触觉数据集和仿真环境规模化接触丰富的机器人操作数据。模型将触觉信号直接嵌入世界模型，利用触觉信号在物理接触中的直接性和较小的仿真到现实差距，实现鲁棒控制。实验表明该方法在多种接触任务上优于纯视觉世界模型，为触觉-视觉融合的机器人学习提供了可扩展方案。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "action-conditioned world models for manipulation and navigation",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.22535v1",
+      "source": "arxiv",
+      "title": "Robot-Factored World Models via Robot Rendering",
+      "abstract": "Action-conditioned video world models predict future observations from an initial observation and an action signal. In robotics, actions influence future observations through two distinct processes: they are first realized into robot motion by the robot body and controller, and the scene then responds through contact and object motion. Conditioning directly on action commands asks the world model to learn the realization process itself, while conditioning on logged future states leaks the interaction outcomes it is meant to predict. We propose robot-factored world models, which move two robot-specific factors outside the world model. First, action realization: each command is rolled through the robot's own controller and kinematics into a deployment-available nominal trajectory, a middle signal that avoids both action-realization learning and future-state leakage. Second, robot rendering: this nominal trajectory is rendered through the robot URDF, factoring the robot's geometry, kinematics, and appearance out of the model and into explicit rendered robot geometry. To resolve depth ambiguity, we pair end-effector depth with scene depth, giving geometric cues for contact and occlusion beyond image-plane overlap. Together, camera-aware static RGB/depth context and rendered robot geometry form a shared visual world-model interface that stays consistent across viewpoints and robot embodiments, so the model sees the action only as visible robot geometry and learns how objects respond to it. Our experiments show that the rendered interface outperforms vector-conditioned baselines and generalizes to unseen robot embodiments at inference. We further demonstrate that our model generates robot manipulation videos from human demonstrations by retargeting and rendering the hand motion as robot geometry.",
+      "authors": [
+        "Byungjun Kim",
+        "Taeksoo Kim",
+        "Hyunsoo Cha",
+        "Hanbyul Joo"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "published": "2026-07-24T17:59:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.22535v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "action-conditioned video world model that factors out robot-specific dynamics, directly relevant to world action models",
+      "llm_evidence_cn": "将机器人特定动力学因子化的动作条件视频世界模型，直接与世界动作模型相关",
+      "llm_evidence": "将机器人特定动力学因子化的动作条件视频世界模型，直接与世界动作模型相关",
+      "canonical_evidence": "将机器人特定动力学因子化的动作条件视频世界模型，直接与世界动作模型相关",
+      "llm_tldr_en": "Proposes robot-factored world models that separate action realization and scene response, using robot rendering to provide nominal trajectories, improving prediction and generalization.",
+      "llm_tldr_cn": "现有动作条件视频世界模型直接对动作命令进行条件化，要求模型同时学习机器人自身运动与场景响应，负担重且泛化差。提出机器人因子化世界模型，将动作实现过程通过机器人控制器和运动学转换为标称轨迹，仅对场景响应进行预测。实验表明该方法提升了未来观测预测准确性和对未见机器人的泛化能力。",
+      "llm_tldr": "现有动作条件视频世界模型直接对动作命令进行条件化，要求模型同时学习机器人自身运动与场景响应，负担重且泛化差。提出机器人因子化世界模型，将动作实现过程通过机器人控制器和运动学转换为标称轨迹，仅对场景响应进行预测。实验表明该方法提升了未来观测预测准确性和对未见机器人的泛化能力。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "action-conditioned world models for manipulation and navigation",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.22000v1",
+      "source": "arxiv",
+      "title": "Music-JEPA: Learning a World Model of Sound from Action",
+      "abstract": "Joint Embedding Predictive Architectures (JEPA) have recently emerged as a paradigm for learning world models by predicting latent representations, offering a promising direction for self-supervised learning. While initial attempts have applied JEPA to the music domain, it remains unclear how such frameworks can naturally support the formation of a world model for music. In this work, we propose to learn a world model of piano sound using JEPA by framing music as an action-conditioned system: the audio is treated as the state, and the pianoroll as the instrument action. Given a current audio state and an action, the model predicts the resulting future audio state, mirroring how humans learn musical sound through interaction. The model is trained in a fully offline setting using paired audio-pianoroll data, without environment interaction. Experiments show that the learned model captures the relationships between musical actions and their resulting sound. The resulting representations support downstream tasks, including beat tracking, composer identification, and key estimation, and enable piano transcription via planning, by searching for actions that best explain a target sound.",
+      "authors": [
+        "Ziyu Wang",
+        "Kun Fang",
+        "Yann LeCun"
+      ],
+      "primary_category": "cs.SD",
+      "categories": [
+        "cs.SD"
+      ],
+      "published": "2026-07-24T05:59:30+00:00",
+      "link": "https://arxiv.org/pdf/2607.22000v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "JEPA for action-conditioned world model in audio domain",
+      "llm_evidence_cn": "音频领域的动作条件世界模型JEPA",
+      "llm_evidence": "音频领域的动作条件世界模型JEPA",
+      "canonical_evidence": "音频领域的动作条件世界模型JEPA",
+      "llm_tldr_en": "Music-JEPA applies Joint Embedding Predictive Architecture to learn a world model of piano sound by predicting future audio states from current audio and pianoroll actions.",
+      "llm_tldr_cn": "Music-JEPA将联合嵌入预测架构(JEPA)应用于音乐领域，通过将音频视为状态、钢琴卷帘视为动作，学习预测未来音频状态的世界模型。该模型在完全离线数据上训练，模仿了人类通过交互学习声音的方式，展示了JEPA在学习动作条件世界模型方面的潜力。",
+      "llm_tldr": "Music-JEPA将联合嵌入预测架构(JEPA)应用于音乐领域，通过将音频视为状态、钢琴卷帘视为动作，学习预测未来音频状态的世界模型。该模型在完全离线数据上训练，模仿了人类通过交互学习声音的方式，展示了JEPA在学习动作条件世界模型方面的潜力。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "joint embedding predictive architecture for visual and action representation",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.22393v1",
+      "source": "arxiv",
+      "title": "SceneActBench: Can Agents Act on the 3D Scenes They See?",
+      "abstract": "Vision-language model (VLM) agents increasingly use tools to act on 3D scenes rather than only describe them. Existing 3D benchmarks score textual responses or single-object operations, leaving agent action on complete multi-object 3D scenes under evaluated. We present SceneActBench, a benchmark for visually conditioned action across five 3D tasks under a unified agent-environment loop. Given PNG images or sampled video frames and, where applicable, supplied 3D assets, an agent acts on a 3D environment. We evaluate each final output against hidden ground truth with task-specific geometric metrics. SceneActBench comprises five tasks built from 210 source instances, yielding 520 task cases including paired input conditions. Every task runs through one fixed agent loop to keep the comparison fair. Across eleven proprietary VLM configurations, Overall scores span 38.6-50.2, and none performs consistently well across tasks. We further analyse where and how failures manifest.",
+      "authors": [
+        "Yifei Zhao",
+        "Xiangxin Zhou",
+        "Wenhao Yang",
+        "Jiaqi Tang",
+        "Pu Jian",
+        "Huanjin Yao",
+        "Jiarui Yao",
+        "Haowei Lin",
+        "Chunchao Guo",
+        "Zhuo Chen",
+        "Wenkai Lyu",
+        "Jianzhu Ma",
+        "Xueqian Wang",
+        "Wenxi Zhu"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-07-24T15:16:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.22393v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "keyword:vla-models",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "benchmark for vision-language models acting on 3D scenes, directly evaluates VLA capabilities",
+      "llm_evidence_cn": "面向在3D场景中行动的视觉语言模型基准，直接评估VLA能力",
+      "llm_evidence": "面向在3D场景中行动的视觉语言模型基准，直接评估VLA能力",
+      "canonical_evidence": "面向在3D场景中行动的视觉语言模型基准，直接评估VLA能力",
+      "llm_tldr_en": "Introduces SceneActBench, a benchmark for visually conditioned action on 3D scenes across five tasks, evaluating VLM agents in a unified environment loop with geometric metrics.",
+      "llm_tldr_cn": "现有3D基准仅评估文本回答或单物体操作，缺乏对多物体场景完整行动的评测。SceneActBench提出五种3D任务，在统一智能体-环境循环中评估VLM代理的视觉条件行动，并使用任务特定几何度量评分。基于210个源实例构建520个任务用例，提供了全面的VLA能力诊断。",
+      "llm_tldr": "现有3D基准仅评估文本回答或单物体操作，缺乏对多物体场景完整行动的评测。SceneActBench提出五种3D任务，在统一智能体-环境循环中评估VLM代理的视觉条件行动，并使用任务特定几何度量评分。基于210个源实例构建520个任务用例，提供了全面的VLA能力诊断。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "vision-language-action models for robotic manipulation and navigation",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.22430v1",
+      "source": "arxiv",
+      "title": "On the Identifiability of Controlled World Models",
+      "abstract": "Learning world models that infer environment dynamics from high-dimensional observations and predict outcomes under candidate actions is central to planning and control. Joint-Embedding Predictive Architectures (JEPAs) provide a compelling framework for learning such models in representation space. Recent action-conditioned extensions perform promisingly in visual control and latent-space planning, but leave a fundamental question unresolved: when does controlled latent prediction identify both the underlying state and the controlled dynamics? This is challenging under nonlinear observations and behavior policies with limited conditional action variation, where state-dependent evolution and action effects can be statistically confounded. We establish a joint identifiability theory for controlled world models with Gaussian latent states under state-dependent Gaussian behavior policies. We identify two policy-dependent conditions: spectral separation of the predictable signal governs representation identifiability, while non-degenerate conditional action variation governs transition identifiability. We prove that when both conditions hold, every global minimizer of the JEPA objective identifies the latent state and controlled transition up to an orthogonal transformation. We further derive quantitative bounds on representation and transition identifiability under approximate optimization. Finally, we construct predictor perturbations along weakly excited action directions whose counterfactual-to-on-policy error ratio is the inverse transition-identifiability margin, revealing the cost of limited action coverage. Experiments across nonlinear observation maps and behavior policies corroborate the theory and demonstrate implications for transition identifiability, counterfactual prediction, and goal-conditioned latent planning.",
+      "authors": [
+        "Xiangteng Zhang",
+        "Yang Guan",
+        "Bo Zhang",
+        "Ya-Qin Zhang",
+        "Shengbo Eben Li"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-24T15:49:12+00:00",
+      "link": "https://arxiv.org/pdf/2607.22430v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Joint-Embedding Predictive Architecture for world models",
+      "llm_evidence_cn": "联合嵌入预测架构用于世界模型",
+      "llm_evidence": "联合嵌入预测架构用于世界模型",
+      "canonical_evidence": "联合嵌入预测架构用于世界模型",
+      "llm_tldr_en": "This paper studies identifiability of controlled world models learned via JEPA for latent-space planning.",
+      "llm_tldr_cn": "本文研究通过联合嵌入预测架构（JEPA）学习的受控世界模型的可识别性问题。这类模型在表示空间中推断环境动态并预测行动结果，但面临状态与动作效应统计混淆的挑战。论文建立了联合可识别性条件，为在视觉控制和潜在空间规划中可靠使用JEPA提供了理论基础。",
+      "llm_tldr": "本文研究通过联合嵌入预测架构（JEPA）学习的受控世界模型的可识别性问题。这类模型在表示空间中推断环境动态并预测行动结果，但面临状态与动作效应统计混淆的挑战。论文建立了联合可识别性条件，为在视觉控制和潜在空间规划中可靠使用JEPA提供了理论基础。",
+      "llm_tags": [
+        "query:latent-vla"
+      ],
+      "matched_query_tag": "query:latent-vla",
+      "matched_query_text": "joint embedding predictive architecture for visual and action representation",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.21918v1",
+      "source": "arxiv",
+      "title": "Action-Conditioned World Model for Goal Plane Probe Guidance in Robotic Ultrasound",
+      "abstract": "We present an action-conditioned world model framework for goal plane probe guidance in robotic ultrasound, with a focus on neck ultrasound scanning. Autonomous ultrasound tasks often require large numbers of probe-motion trajectories for training, but collecting high-quality demonstrations is labor-intensive and explicit simulators are difficult to build because ultrasound appearance depends on contact, tissue deformation, and view-dependent acoustic artifacts. We address this problem with a two-stage model-based learning pipeline. First, a latent conditional diffusion world model predicts future ultrasound observations from recent context frames, probe motions and temporal offset. Second, a goal-conditioned temporal transformer predicts ordered probe motions and is fine-tuned using rewards from the frozen world model. Experiments on the self-collected dataset show that the world model preserves action-dependent anatomical structure on target-directed scans. In real-world closed loop experiments, the framework achieves success rates of 70.0\\% for carotid guidance and 65.0\\% for thyroid guidance. These results demonstrate the potential of learned ultrasound dynamics for training goal-directed robotic probe navigation.",
+      "authors": [
+        "Siqi Fan",
+        "Mingcong Chen",
+        "Ran Liu",
+        "Zixuan Yang",
+        "Xiaoyu Fu",
+        "Xiaoqing Gao",
+        "Yunhui Liu",
+        "Hongbin Liu"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-24T02:48:13+00:00",
+      "link": "https://arxiv.org/pdf/2607.21918v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes an action-conditioned latent diffusion world model for robotic ultrasound probe guidance",
+      "llm_evidence_cn": "提出用于机器人超声探针引导的动作条件潜在扩散世界模型",
+      "llm_evidence": "提出用于机器人超声探针引导的动作条件潜在扩散世界模型",
+      "canonical_evidence": "提出用于机器人超声探针引导的动作条件潜在扩散世界模型",
+      "llm_tldr_en": "This paper presents an action-conditioned world model framework for robotic ultrasound, using a latent conditional diffusion model to predict future observations and a goal-conditioned transformer for probe guidance.",
+      "llm_tldr_cn": "该论文提出一个动作条件世界模型框架用于机器人超声扫描，包含两个阶段：首先使用潜在条件扩散世界模型预测未来超声图像，然后利用目标条件时间变换器预测探针动作。该方法解决了超声数据难以获取和显式仿真困难的问题。",
+      "llm_tldr": "该论文提出一个动作条件世界模型框架用于机器人超声扫描，包含两个阶段：首先使用潜在条件扩散世界模型预测未来超声图像，然后利用目标条件时间变换器预测探针动作。该方法解决了超声数据难以获取和显式仿真困难的问题。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "action-conditioned world models for manipulation and navigation",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.22225v1",
+      "source": "arxiv",
+      "title": "Safe Learning Predictive Control for Ego-World Robotic Systems",
+      "abstract": "Safe autonomous navigation in shared environments requires the ability to anticipate and react to the latent behaviors of surrounding robots. In this paper, we propose SOWL-MPC, a safe learning-based predictive control strategy for a novel scenario, which we name ego-world robotic framework. In this setting, the control policy of the world robot is unknown and the ego exploits data to learn it and perform safe maneuvers. The proposed architecture combines an online learning mechanism based on Sparse Variational Gaussian Processes (SVGPs) with a receding-horizon control scheme. Relying solely on noisy state measurements, our approach infers a posterior distribution over the latent world policy, which is updated on streaming data via Online Variational Conditioning (OVC). The learned policy is propagated through the nonlinear world dynamics using an approximate moment propagation scheme, and fed to an uncertainty-aware Model Predictive Control (MPC), thus enabling safe maneuvering of the ego robot. The real-time feasibility and safety guarantees of SOWL-MPC are demonstrated through extensive Monte Carlo virtual experiments in ROS 2, and validated on real-world robotic hardware in an indoor arena.",
+      "authors": [
+        "Davide Valenti",
+        "Giuseppe Notarstefano"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-07-24T11:43:57+00:00",
+      "link": "https://arxiv.org/pdf/2607.22225v1",
+      "tags": [
+        "keyword:Latent-VLA",
+        "keyword:WAM-VLA",
+        "query:Latent-VLA",
+        "query:WAM-VLA"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Learns latent world policy for safe predictive control in ego-world robotic systems",
+      "llm_evidence_cn": "在自我-世界机器人系统中学习潜在世界策略用于安全预测控制",
+      "llm_evidence": "在自我-世界机器人系统中学习潜在世界策略用于安全预测控制",
+      "canonical_evidence": "在自我-世界机器人系统中学习潜在世界策略用于安全预测控制",
+      "llm_tldr_en": "SOWL-MPC combines online learning of latent world policy via Sparse Variational Gaussian Processes with receding-horizon control for safe navigation, relevant to world action models.",
+      "llm_tldr_cn": "SOWL-MPC针对自我-世界机器人场景提出安全学习预测控制策略。它结合稀疏变分高斯过程在线学习未知世界机器人的潜在策略，并通过滚动时域控制进行安全机动。该方法仅依赖噪声状态测量即可推断潜在世界策略的后验分布，并在流式数据上在线更新。实验表明该方法在保证安全的同时有效适应了未知世界策略，为世界动作模型在安全关键任务中的应用提供了思路。",
+      "llm_tldr": "SOWL-MPC针对自我-世界机器人场景提出安全学习预测控制策略。它结合稀疏变分高斯过程在线学习未知世界机器人的潜在策略，并通过滚动时域控制进行安全机动。该方法仅依赖噪声状态测量即可推断潜在世界策略的后验分布，并在流式数据上在线更新。实验表明该方法在保证安全的同时有效适应了未知世界策略，为世界动作模型在安全关键任务中的应用提供了思路。",
+      "llm_tags": [
+        "query:wam-vla"
+      ],
+      "matched_query_tag": "query:wam-vla",
+      "matched_query_text": "world models for robot state prediction and model-based control",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,516 @@
+Title: Music-JEPA: Learning a World Model of Sound from Action
+
+URL Source: https://arxiv.org/pdf/2607.22000v1
+
+Published Time: Mon, 27 Jul 2026 00:25:30 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# MUSIC-JEPA: LEARNING A WORLD MODEL OF SOUND FROM ACTION 
+
+## Ziyu Wang 1,3 Kun Fang 2,4 Yann LeCun 1,51 Courant Institute, New York University 2 Schulich School of Music, McGill University  
+
+> 3
+
+## Mohamed bin Zayed University of Artificial Intelligence (MBZUAI)  
+
+> 4
+
+## Centre for Interdisciplinary Research in Music Media and Technology (CIRMMT)  
+
+> 5
+
+## Advanced Machine Intelligence (AMI Labs) 
+
+{ziyu.wang, yann.lecun}@nyu.edu, kun.fang@mail.mcgill.ca 
+
+ABSTRACT 
+
+Joint Embedding Predictive Architectures (JEPA) have re-cently emerged as a paradigm for learning world models by predicting latent representations, offering a promising di-rection for self-supervised learning. While initial attempts have applied JEPA to the music domain, it remains un-clear how such frameworks can naturally support the for-mation of a world model for music. In this work, we pro-pose to learn a world model of piano sound using JEPA by framing music as an action-conditioned system: the au-dio is treated as the state, and the pianoroll as the instru-ment action. Given a current audio state and an action, the model predicts the resulting future audio state, mir-roring how humans learn musical sound through interac-tion. The model is trained in a fully offline setting using paired audio–pianoroll data, without environment interac-tion. Experiments show that the learned model captures the relationships between musical actions and their result-ing sound. The resulting representations support down-stream tasks, including beat tracking, composer identifi-cation, and key estimation, and enable piano transcription via planning, by searching for actions that best explain a target sound. 1
+
+1. INTRODUCTION 
+
+While humans may be passively exposed to a wide range of sound signals, understanding music typically arises from active engagement. For example, learning piano music often involves interacting with the instrument and under-standing how actions on the keyboard produce acoustic outcomes. Through such interaction, cognitive studies sug-gest that humans develop internal representations that en-able them to anticipate and mentally simulate musical out-comes without direct auditory input [1, 2]. This learning process naturally suggests a music world model : a self-supervised framework that learns music representation by modeling the temporal dynamics between actions (e.g., playing an instrument) and resulting states (e.g., sound) in the latent space. The music world model can be naturally instanti-ated within the Joint Embedding Predictive Architecture       
+
+> 1The demo page of this project can be accessed via: https:// zzwaang .github .io/music-jepa-demo/ . Code and pretrained models will be released soon. MSE
+> !!!!"#
+> "!"#"!
+> #
+> $
+> MSE
+> !̂!"#
+> "&!"#
+> ℰ$ℰ$
+> ℰ%ℰ%
+> (!(!"#
+> )!"#)!
+> Action
+> Obs .
+> State
+> Latents
+> Action
+> Latents
+> State
+> Obs .
+
+Figure 1 : Model diagram of Music-JEPA. Es, Ea, f , and 
+
+g denote the state encoder, action encoder, state predictor, and action predictor, respectively. The shaded region rep-resents the latent temporal dynamics. (JEPA) [3], which is framed to predict representations di-rectly in a latent space without reconstructing raw ob-servations, avoiding the burden of modeling unnecessary details. Originally developed in vision [4, 5], JEPA has only recently been explored in music information retrieval (MIR) [6–9]. Existing work primarily treats JEPA as a self-supervised approach for learning general audio representa-tions in a passive way, as an alternative to contrastive learn-ing [10, 11] or autoencoding [12, 13]. As a result, these approaches do not model how music evolves through time and are rarely evaluated on music-specific concepts such as key, chord, or beat. It remains unclear whether JEPA-based representations can capture temporal dynamics re-quired for music understanding and planning. In this work, we propose Music-JEPA, a music world model that captures latent temporal dynamics of audio con-ditioned on performance actions. As shown in Figure 1, we treat a 2-second piano audio segment as the state, and the corresponding pianoroll and sustain pedal signals as the ac-1arXiv:2607.22000v1 [cs.SD] 24 Jul 2026 tion. The model predicts the next state from the previous state and current action directly in the latent space, with-out reconstructing raw audio. To prevent representation collapse, we adopt an exponential moving average (EMA) training scheme [14]. Although trained offline without in-teraction, the learned dynamics capture coherent relation-ships between states and actions, including pitch, timing, velocity, and pedal control, and outperform JEPA models trained on passive audio alone. We further evaluate Music-JEPA on downstream MIR tasks, including beat tracking, composer identification, and key detection on classical piano datasets. The learned rep-resentations consistently outperform the audio-only JEPA baseline and achieve performance comparable to MERT, despite using only 7% of its parameters. We also ex-plore planning using the learned dynamics via amortized planning [15]. Specifically, we train an inverse predictor to infer action representations and generate outputs with a separately trained decoder, enabling piano transcription through planning. The resulting transcriptions are coher-ent and perceptually meaningful, and are particularly ef-fective at capturing continuous pedal variations, which re-main challenging for supervised methods [16]. Overall, we show that Music-JEPA provides a new learning framework that can understand music, predict the future, and plan. 
+
+2. RELATED WORKS 
+
+Learning meaningful representations is a fundamental problem not only in music but more broadly in machine intelligence. While recent advances in generative model-ing have achieved strong performance, they often empha-size reproducing statistical patterns rather than capturing the underlying structure of how signals evolve [17]. This limitation has motivated the study of world models, where the goal is to learn representations that reflect system dy-namics over time, rather than merely predicting observa-tions [18, 19]. Among these approaches, JEPA [3] is of particular interest because it predicts future states directly in a latent space without reconstructing raw observations, which is advantageous for high-dimensional inputs that may contain unpredictable or irrelevant details. This pre-dictive perspective aligns with predictive coding theories in cognitive science [2, 20], and also with music cognition, where internal anticipation has been argued to shape listen-ing experience [1], pitch and tonal expectations [21], and rhythmic or metric perception [22]. JEPA is proposed in the context of self-supervised learning (SSL), where the goal is to learn informative latent representations while preventing collapse. In vi-sion, this paradigm has led to effective frameworks for im-age and video representation learning, with demonstrated success in downstream tasks and planning [4, 5]. Vari-ous techniques have been proposed to regularize the la-tent space, including variance-based regularization [23], self-distillation approaches [24], exponential moving av-erage (EMA) [14], and more recent distributional con-straints [25]. Among these, EMA-based methods have emerged as simple and effective solutions and are adopted in this work. Building on these developments, several self-supervised approaches have been explored in the MIR domain. Recent work adapts JEPA-style architectures to audio by predict-ing masked regions of spectrograms or modeling coher-ence between audio tracks [6–9]. Other approaches em-ploy contrastive learning [11, 26], self-distillation [10, 27], masked prediction [12, 13], or invariance-based objec-tives [28, 29] to learn audio representations. While these methods achieve strong performance on general audio tasks, they primarily operate on passive observations and do not explicitly model how music evolves through time or how actions influence sound, leaving action-conditioned dynamics largely unexplored. 
+
+3. METHOD 
+
+Music-JEPA models music as a dynamical system, where audio evolves over time under the influence of performance actions. We instantiate this framework on piano music us-ing paired audio and control sequences (x1: T , y 1: T ), where 
+
+xt is a short audio segment and yt the corresponding pi-anoroll and pedal signals. In our implementation, each segment spans 2 seconds. As shown in Figure 1, we learn latent state and action representations st = Estate (xt) and at = Eaction (yt), and model the dynamics as: 
+
+st+1 = f (st, a t+1 ), at+1 = g(at). (1) Here, f (·, ·) predicts the next state, and g(·) models the temporal structure of actions. Unlike typical settings where actions are low-dimensional, piano control is high-dimensional and correlated over time; modeling its evolu-tion provides a structured prior over the action space. 2
+
+3.1 Data Representation 
+
+We use paired, time-aligned piano audio and MIDI data, segmented into 2-second intervals. Audio is represented as log-mel spectrograms with F = 229 mel bins at a 10 ms frame rate, yielding xt ∈ RL×F with L = 200 . We use 
+
+nfft = 2048 and a hop length of 160. The action yt is derived from MIDI and aligned to the same frame rate as the audio. It consists of two compo-nents: a pianoroll ynote  
+
+> t
+
+∈ RL×P with P = 88 pitches, and a sustain pedal signal ypedal  
+
+> t
+
+∈ RL. Each entry of the pianoroll encodes note velocity over time. 
+
+3.2 Model Architecture 
+
+Our model follows the Joint Embedding Predictive Ar-chitecture (JEPA) framework, using a Vision Transformer (ViT) backbone [30] to encode both state and action rep-resentations. We treat the spectrogram and pianoroll as image-like inputs and map them into patch-based repre-sentations.          
+
+> 2In standard formulations, transitions are written as f(xt, a t). Here, we use f(xt, a t+1 )since actions are aligned with the audio segment they generate in time, i.e., at+1 produces st+1 .
+
+The spectrogram xt ∈ RL×F is divided into Ks =
+
+KT × KF patches along time and frequency. Each patch corresponds to a local region of size (cT , c F ) = ⌈ LKT , FKF ⌉
+
+and is projected into a D-dimensional embedding via a convolutional layer. Similarly, the pianoroll ynote  
+
+> t
+
+∈ RL×P
+
+is partitioned into Ka = KT × KP patches along time and pitch, and embedded using another convolutional pro-jection. The sustain pedal signal ypedal  
+
+> t
+
+∈ RL is treated as a one-dimensional temporal sequence, partitioned into KT
+
+segments and encoded with a 1D convolution. Its represen-tation is broadcast across pitch patches and fused with the pianoroll embeddings. After patch embedding, the state and action tokens are processed by transformer encoders, producing latent representations: 
+
+s = Es(xt) ∈ RKs×D , a = Ea(yt) ∈ RKa×D . (2) The state and action predictors are also ViT-based, with distinct designs for modeling their dynamics. The state predictor f (s, a ) operates on a partially masked state se-quence, taking st and a masked version of st+1 as in-put, and predicting the missing regions via self-attention. Cross-attention to the action tokens at+1 is applied at each layer to condition the prediction. In contrast, the action predictor g(a) is a standard Transformer without cross-attention. It takes at and the masked tokens at time t + 1 ,and is trained to reconstruct at.
+
+3.3 Training Objective and Regularization 
+
+Given inputs (xt−1, y t−1) and (xt, y t), we encode their la-tent representations and perform prediction in the latent space. Let θ = {θf , θ g , θ Es , θ Ea } denote the model pa-rameters. The training objective is: 
+
+L(θ) = ∥f (st, a t+1 ) − st+1 ∥2 + λ∥g(at) − at+1 ∥2, (3) where λ controls the strength of the action prior. Predict-ing in the latent space introduces the risk of representation collapse, where the encoder may converge to trivial con-stant outputs. To mitigate this, we adopt an exponential moving average (EMA) strategy [14], maintaining stop-gradient teacher encoders with parameters ¯θ updated as 
+
+¯θEk ← τ ¯θEk + (1 − τ )θEk , k ∈ { s, a }, (4) where τ is a momentum coefficient. The teacher encoders produce the target representations st+1 and at+1 in Eq. 3, providing stable training target. In addition, the model may reduce the loss by simply in-creasing the magnitude of representations without improv-ing their alignment. To prevent this, we apply layer nor-malization to both student and teacher encoder outputs to control representation scale. With these design choices, the overall training procedure is summarized in Algorithm 1. 
+
+3.4 Downstream Tasks and Planning 
+
+After training, we freeze the model and use the state en-coder as a feature extractor, producing representations of size (Ks, D ) for each 2-second audio segment. For longer 
+
+Algorithm 1 Pseudocode of Music-JEPA training.             
+
+> # Es_stu, Es_tea: student and teacher state encoders # Ea_stu, Ea_tea: student and teacher action encoders # f, g: state and action predictors # sg: stop-gradient operator; LN: layer normalization # tau: EMA momentum; lambda: action pred. loss weight Es_tea.params = Es_stu.params Ea_tea.params = Ea_stu.params for states, actions in loader: x_curr, x_next = states # spectrogram (audio) y_curr, y_next = actions # pianoroll + pedal # Student representations s_curr = LN(Es_stu(x_curr)) a_curr = LN(Ea_stu(y_curr)) a_next = LN(Ea_stu(y_next)) # Teacher targets s_next_tgt = sg(LN(Es_tea(x_next))) a_next_tgt = sg(LN(Ea_tea(y_next))) # Prediction s_pred = f(s_curr, a_next) a_pred = g(a_curr) # Optimization loss = MSE(s_pred, s_next_tgt) + \\ lambda *MSE(a_pred, a_next_tgt) loss.backward() # SGD/Adam update optimizer_step(Es_stu, Ea_stu, f, g) # EMA update Es_tea.params = tau *Es_tea.params + \\ (1 - tau) *Es_stu.params Ea_tea.params = tau *Ea_tea.params + \\ (1 - tau) *Ea_stu.params
+
+audio of length T seconds, representations are concate-nated along the temporal dimension, resulting in a se-quence of size   T 
+
+> 2
+
+× Ks, D . We evaluate the learned rep-resentations on beat tracking, composer identification, and key recognition in Section 4.4. Beyond representation learning, the learned dynamics enable piano transcription via planning in latent space, i.e., inferring actions that produce the desired audio states. Given a known sequence of latent states s1: T , the problem can be formulated as: 
+
+a∗ 
+
+> 1: T
+
+= argmin  
+
+> a1: T
+> T−1
+
+X
+
+> t=1
+
+
+
+∥f (st, a t+1 )−st+1 ∥2+∥g(at)−at+1 ∥2
+
+.
+
+(5) 
+
+In practice, the action space is high-dimensional, and gradient-based planning at this scale remains challeng-ing [31, 32]. Unlike many planning settings where ac-tions are low-dimensional control variables, Music-JEPA plans over dense latent action representations correspond-ing to expressive piano performances, resulting in a sub-stantially larger optimization space. We therefore adopt an amortized optimization approach by training an inverse predictor at+1 = h(st, s t+1 , a t) to approximate the solu-tion [33, 34]. The predicted latent actions are then mapped back to the observation space using a separately trained ac-tion decoder. The JEPA parameters are kept frozen during the training of the inverse predictor and decoder. Experi-ment details are provided in Section 4.5. st − 1 st + 1 st + 2 st + 3 σ = 0.1 σ = 0.2 σ = 0.3 σ = 0.4              
+
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random State Time Index Gaussian Noise
+> stst+ 2 st+ 3 st+ 4
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random State Time Index
+> p-7
+> p-6
+> p-5
+> p-4
+> p-3
+> p-2
+> p-1
+> p+1
+> p+2
+> p+3
+> p+4
+> p+5
+> p+6
+> p+7
+> t-20
+> t-15
+> t-10
+> t-5
+> t+5
+> t+10
+> t+15
+> t+20
+> v × 0.7
+> v × 0.8
+> v × 0.9
+> v × 1.1
+> v × 1.2
+> v × 1.3
+> none
+> σ = 0.1
+> σ = 0.2
+> σ = 0.3
+> σ = 0.4
+> full
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random Pitch Shift Time Shift Velocity Noise Pedal
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+
+(a) Input state perturbation. st − 1 st + 1 st + 2 st + 3 σ = 0.1 σ = 0.2 σ = 0.3 σ = 0.4               
+
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random State Time Index Gaussian Noise
+> stst+ 2 st+ 3 st+ 4
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random State Time Index
+> p-7
+> p-6
+> p-5
+> p-4
+> p-3
+> p-2
+> p-1
+> p+1
+> p+2
+> p+3
+> p+4
+> p+5
+> p+6
+> p+7
+> t-20
+> t-15
+> t-10
+> t-5
+> t+5
+> t+10
+> t+15
+> t+20
+> v × 0.7
+> v × 0.8
+> v × 0.9
+> v × 1.1
+> v × 1.2
+> v × 1.3
+> none
+> σ = 0.1
+> σ = 0.2
+> σ = 0.3
+> σ = 0.4
+> full
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random Pitch Shift Time Shift Velocity Noise Pedal
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+
+(b) Target state perturbation. st − 1 st + 1 st + 2 st + 3 σ = 0.1 σ = 0.2 σ = 0.3 σ = 0.4              
+
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random State Time Index Gaussian Noise
+> stst+ 2 st+ 3 st+ 4
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random State Time Index
+> p-7
+> p-6
+> p-5
+> p-4
+> p-3
+> p-2
+> p-1
+> p+1
+> p+2
+> p+3
+> p+4
+> p+5
+> p+6
+> p+7
+> t-20
+> t-15
+> t-10
+> t-5
+> t+5
+> t+10
+> t+15
+> t+20
+> v × 0.7
+> v × 0.8
+> v × 0.9
+> v × 1.1
+> v × 1.2
+> v × 1.3
+> none
+> σ = 0.1
+> σ = 0.2
+> σ = 0.3
+> σ = 0.4
+> full
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> Δ Loss
+> Random Pitch Shift Time Shift Velocity Scale Pedal
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Win Rate
+
+(c) Action perturbation. 
+
+Figure 2 : Sensitivity to perturbations measured by the loss difference ∆L = L(perturbed ) − L (correct ) and win rate (frac-tion of cases with ∆L > 0). Top: input (left) and target (right) state perturbations via random sampling from the dataset, replacing segments at different time indices, and Gaussian noise on the input state with standard deviation proportional to spectrogram magnitude (e.g., 10%, 20%). Bottom: action perturbations including random actions, pitch shifts (semitones), temporal shifts (frames, 10 ms), velocity scaling (scaling from 0.7-1.3), and pedal variations (removal, full activation, and additive noise with standard deviation proportional to velocity range). 
+
+4. EXPERIMENTS 
+
+In this section, we evaluate Music-JEPA. We first describe the dataset, training procedure (Section 4.1), and baselines (Section 4.2). We then assess the model from three per-spectives: temporal dynamics (Section 4.3), representation quality on downstream MIR tasks (Section 4.4), and tran-scription via planning (Section 4.5). 
+
+4.1 Dataset and Training Details 
+
+We train Music-JEPA on the MAESTRO v3.0.0 dataset [35], which contains approximately 200 hours of piano recordings with time-aligned MIDI captured from Yamaha Disklavier pianos. The repertoire is primarily classical, spanning composers from the 17th to early 20th century. We use the standard train/validation/test splits. For the spectrogram, we use a patch size of 
+
+25 × 15 , yielding Ks = 16 × 16 = 256 patches. For the pianoroll, we use a patch size of 25 × 6, yielding 
+
+Ka = 16 × 15 = 240 patches. With embedding dimension 
+
+D = 256 , the resulting state and action representations are of size (256 , 256) and (240 , 256) , respectively. The state encoder uses 12 Transformer layers, and the action encoder uses 8 layers with the same architecture. Both the state and action predictors are 6-layer Transformers. All modules use dmodel = 256 , dff = 512 , and 4 attention heads. The state encoder and predictor contain 6.5M and 4.9M parameters, while the action encoder and predictor contain 4.3M and 3.3M parameters, for a total of approximately 19M parameters. We set λ = 0 .5 in Eq. 3 and the EMA momentum τ =0.95 . The model is trained with Adam [36] using a learning rate of 6 × 10 −4 and weight decay of 10 −4, on a single NVIDIA A100 GPU with batch size 128. Since EMA-based training involves a moving target and the loss may not reflect convergence [37], we empirically train for 15– 25 epochs, which we find to yield stable results. 
+
+4.2 Baseline Models 
+
+Music-JEPA is evaluated against two types of baselines. First, to assess the benefit of action-conditioned dynamics, we compare against an existing JEPA that operates solely on audio via random patch masking without action condi-tioning (referred to as “passive” JEPA in Section 1). This baseline follows prior work such as Audio-JEPA [7] and A-JEPA [6]. Since these models are trained on general audio and no public checkpoints are available, we re-implement and train this model on MAESTRO, denoted as AO-JEPA 
+
+(audio-only JEPA). Second, we compare against MERT [13], a large-scale pre-trained model widely used for music understanding, as a representative non-JEPA baseline. We also note that an-other recent self–distillation–based approach exists [10], but is not included as publicly available implementations or checkpoints are not available. 
+
+4.3 Evaluation of Latent Dynamics 
+
+We evaluate whether Music-JEPA captures action-conditioned temporal dynamics in the latent space. Given an input state st and action at+1 , the model predicts the next state ˆst+1 = f (st, a t+1 ), and we measure the error Sample 1 Sample 2                                      
+
+> Sample 3 Sample 4
+> Ground-truth
+> st+ 1 =f(st,at+ 1 )
+> Prediction
+> st+ 1 =f(st,at+ 1 )
+> Counterfactual Prediction
+> st+ 1 =f(st,at+ 1 )
+> Ground-truth
+> st+ 1 =f(st,at+ 1 )
+> Prediction
+> st+ 1 =f(st,at+ 1 )
+> Counterfactual Prediction
+> st+ 1 =f(st,at+ 1 )
+> State
+> [st,st+ 1 ]
+> Action
+> at+ 1
+> State
+> [st,st+ 1 ]
+> Action
+> at+ 1
+
+Figure 3 : Four action-conditioned synthesis examples given (st, a t+1 ) pairs from the test set. In each group: left, ground truth; middle, model prediction; right, counterfactual prediction with a different action. 
+
+Model Input State Target State 
+
+Temporal Random Temporal Random Ours 0.929 0.999 0.991 0.992 
+
+AO-JEPA 0.787 0.986 0.576 0.984 
+
+Table 1 : Win rate under temporal and random perturba-tions of input and target states. Temporal win rates are averaged over all time-index shifts (Figure 2a and 2b); ran-dom denotes samples drawn from the dataset. Higher val-ues indicate stronger sensitivity to mismatched transitions. against the ground truth sgt 
+
+> t+1
+
+:
+
+L(st, a t+1 , s gt 
+
+> t+1
+
+) = ∥f (st, a t+1 ) − sgt 
+
+> t+1
+
+∥2. (6) A well-formed dynamics model assigns lower error to cor-rect state–action–target triplets and higher error when any component is perturbed. Figure 2 summarizes the results. We visualize the distribution of loss differences ∆L un-der perturbations relative to ground truth using box plots, where positive values indicate increased prediction error after perturbation. We also report the win rate, defined as the fraction of cases with ∆L > 0.Figures 2a and 2b show perturbations to the input and target states, respectively. For the input state, we apply temporal shifts (replacing it with nearby segments) and ad-ditive Gaussian noise; for the target state, we apply tem-poral shifts. Both yield win rates close to 1.0, indicating strong sensitivity to mismatched states. When the input is replaced with st+1 , the win rate is lowest (yet still > 0.8), suggesting partial tolerance to repetition. The loss dif-ference also increases with temporal distance, indicating sensitivity to temporal structure. Figure 2c shows action perturbations, including pitch shifts, temporal shifts, ve-locity scaling, and pedal variations. Pitch shifts have the strongest effect, particularly at tritone and other dissonant intervals. For other perturbations, sensitivity decreases for small temporal shifts (within 50 ms) and minor velocity or pedal changes (e.g., 10% scaling). Overall, the model re-sponds consistently to both state and action perturbations. Table 1 compares Music-JEPA with the AO-JEPA base-line using win rates under input and target state perturba-tions. For temporal shifts, we report win rates averaged across all time indices in Figures 2a and 2b. Without ac-tion conditioning, AO-JEPA captures temporal dynamics less effectively and shows limited ability to distinguish the correct next state from nearby alternatives (e.g., st+1 vs. 
+
+st or st+2 ). This suggests that while masked prediction captures temporal proximity, incorporating actions enables more accurate modeling of state transitions. Finally, to further verify the learned dynamics, we freeze the encoder and train a spectrogram decoder to re-construct ˆxt+1 in the spectrogram domain. As shown in Figure 3, with ground-truth actions, the model pro-duces outputs that closely match the ground truth (first column). When given counterfactual actions (e.g., ran-dom pianoroll samples, arpeggios, or scales), the pre-dicted spectrogram changes accordingly. These results suggest that the model captures informative and non-trivial action-conditioned dynamics through latent-space predic-tion alone. 
+
+4.4 Evaluation on MIR Downstream Tasks 
+
+We evaluate representations learned by the Music-JEPA state encoder on MIR tasks, including beat tracking, com-poser identification, and key recognition on classical pi-ano music. We use 4-second clips for beat and key tasks, and 12-second clips for composer identification to capture longer-term structure. We compare against AO-JEPA and MERT, with results in Table 2. Overall, Music-JEPA out-performs AO-JEPA on all tasks and remains competitive with MERT despite using only 7% of its parameters. We do not claim to outperform MERT in general, as it is trained on broad audio and not specialized for classical piano. 
+
+Beat tracking We use the ASAP dataset [38], which provides a subset of MAESTRO audio and MIDI with beat annotations. For both JEPA-based models and MERT, we Model Encoder Params. Beat Tracking Composer Identification Key Recognition                                                       
+
+> P70 R70 F1 70 P100 R100 F1 100 wF1 Top-1 Top-3 Top-5 wP wR wF1
+> Ours 6M 0.5346 0.8159 0.6208 0.5695 0.8634 0.6599 0.5520 0.3540 0.7045 0.8734 0.7638 0.7625 0.7617
+> AO-JEPA 6M 0.4929 0.8506 0.6013 0.5185 0.8941 0.6325 0.4606 0.3308 0.6635 0.8422 0.7657 0.7625 0.7615 MERT 95M 0.4932 0.7368 0.5780 0.5379 0.8040 0.6309 0.6690 0.4059 0.6493 0.7996 0.6580 0.6485 0.6469
+
+Table 2 : Comparison of pretrained music representations on three downstream MIR tasks. Beat tracking is evaluated using precision, recall, and F1 at 70 ms and 100 ms onset tolerance thresholds. Composer identification is evaluated using weighted F1 (wF1) and Top-1/3/5 accuracy. Key recognition is evaluated using weighted precision (wP), recall (wR), and F1 (wF1). Higher is better for all metrics. use a comparable probing head of approximately 4M pa-rameters, consisting of four ViT blocks followed by con-volutional layers for frame-level prediction. Training uses the loss from [39] together with standard Madmom post-processing [40]. As shown in Table 2, results are reported under 70 ms and 100 ms tolerance thresholds, with Music-JEPA achieving the best overall F1. Beat tracking in clas-sical piano music remains particularly challenging due to weak percussive cues and rich temporal structure, and re-mains difficult even for supervised methods [39]. 
+
+Composer identification We train a downstream clas-sifier using composer labels from MAESTRO. We remove pieces with multiple composer annotations (e.g., Liszt ar-rangements of Beethoven) and retain the 11 most frequent composers appearing in both the training and test sets. The probe is a 2-layer MLP with ∼16K parameters that ag-gregates frequency patches (or MERT latent dimensions), followed by mean pooling over time. Table 2 shows that Music-JEPA outperforms AO-JEPA and achieves the high-est Top-3 and Top-5 accuracy, though its Top-1 accuracy and weighted F1 are lower than MERT. Figure 4 shows that Music-JEPA yields structured confusions aligned with mu-sic history, such as between Haydn and Mozart and among Romantic composers, while Beethoven bridges Classical and Romantic styles. MERT, in contrast, makes less struc-tured errors and tends to over-predict certain composers (e.g., Liszt), suggesting less interpretable behavior.  
+
+> (a) Our model. (b) MERT.
+
+Figure 4 : Comparison of confusion matrices for classical composer identification task. 
+
+Key recognition Although ASAP provides key sig-nature annotations, modulations within a piece without changing the key signature are common in classical music. To assess how scale-related concepts are represented, we construct pseudo key labels by matching pianoroll chroma features to the 12 major scales and selecting the closest match [21]. We use the same probe architecture as in com-poser identification. Table 2 shows that both JEPA meth-ods outperform MERT by about 10 points across metrics, indicating that scale-related information is well captured. 
+
+4.5 Transcription via Planning 
+
+Finally, we explore leveraging the learned dynamics for piano transcription via planning, as formulated in Sec-tion 3.4. Due to instability in high-dimensional gradient-based optimization, we adopt an amortized approach by training an inverse predictor ˆat+1 = h(st, s t+1 , a t) to in-fer actions, analogous to policy learning in reinforcement learning. The predicted actions are then decoded into pi-anoroll representations using a separately trained decoder.                           
+
+> Model Note F1 Pedal Frm. ↑Ons. ↑+Off. ↑+Vel. ↑MAE ↓
+> Ours 0.8381 0.7325 0.5372 0.4000 0.1222
+> Kong et al. [41] 0.9113 0.9681 0.8524 0.8377 0.1471 Yan et al. [42] 0.9375 0.9833 0.9166 0.9122 0.1414 Zhang et al. [16] ————0.1339
+
+Table 3 : Transcription and continuous sustain pedal es-timation results on the MAESTRO test split. Note-level metrics include frame, onset, onset+offset, and on-set+offset+velocity F1 scores. Arrows indicate whether higher or lower values are better. “—” indicates N/A. We compare our transcription results with state-of-the-art methods, including Yan et al. [42] and Kong et al. [41], as well as a supervised sustain pedal model by Zhang et al. [16]. As shown in Table 3, while our model produces perceptually coherent transcriptions, its note-level perfor-mance remains below fully supervised methods. Following Zhang et al. [16], sustain pedal estimation is evaluated us-ing the mean absolute error (MAE) between the predicted and ground-truth continuous pedal curves at 100 frames per second. In contrast, Music-JEPA achieves the best performance on continuous sustain pedal estimation. This may be because pedal control has a strong and direct im-pact on the resulting audio, making it more accessible to modeling via action-conditioned dynamics. By compari-son, supervised approaches often rely on matching ground-truth pedal values, which may admit multiple equivalent patterns. Overall, these results highlight both the potential of planning-based transcription and the need for improved perceptual metrics and more stable planning strategies. 5. CONCLUSION AND FUTURE WORK 
+
+We propose Music-JEPA, a music world model that learns action-conditioned temporal dynamics of audio in latent space. We demonstrate three key capabilities. First, the model captures temporal dynamics more effectively than audio-only JEPA baselines, showing consistent sensitivity to state–action transitions. Second, the learned representa-tions are informative, achieving competitive performance on piano MIR tasks compared to larger self-supervised models. Third, the learned dynamics enable planning, yielding meaningful transcription behavior. At the same time, it remains unclear how well the model scales or gen-eralizes to broader musical settings where action annota-tions are unavailable. Extending the framework to more abstract or latent actions, and enabling more meaningful planning tasks such as composition, remain open chal-lenges. We hope this work provides a foundation for future exploration. 
+
+6. REFERENCES 
+
+[1] D. B. Huron, Sweet anticipation: Music and the psy-chology of expectation , 2006. [2] J. Hohwy, The predictive mind . OUP Oxford, 2013. [3] Y. LeCun, “A path towards autonomous machine in-telligence version 0.9.2, 2022-06-27,” 2022. [Online]. Available: https://api .semanticscholar .org/CorpusID: 251881108 [4] M. Assran, Q. Duval, I. Misra, P. Bojanowski, P. Vincent, M. G. Rabbat, Y. LeCun, and N. Ballas, “Self-supervised learning from im-ages with a joint-embedding predictive architec-ture,” in IEEE/CVF Conference on Computer Vision and Pattern Recognition, CVPR 2023, Vancou-ver, BC, Canada, June 17-24, 2023 . IEEE, 2023, pp. 15 619–15 629. [Online]. Available: https://doi .org/10 .1109/CVPR52729 .2023 .01499 [5] M. Assran, A. Bardes, D. Fan, Q. Garrido, R. Howes, M. Komeili, M. J. Muckley, A. Rizvi, C. Roberts, K. Sinha, A. Zholus, S. Arnaud, A. Gejji, A. Martin, F. R. Hogan, D. Dugas, P. Bojanowski, V. Khalidov, P. Labatut, F. Massa, M. Szafraniec, K. Krishnakumar, Y. Li, X. Ma, S. Chandar, F. Meier, Y. LeCun, M. Rabbat, and N. Ballas, “V-JEPA 2: Self-supervised video models enable understanding, prediction and planning,” CoRR , vol. abs/2506.09985, 2025. [Online]. Available: https://doi .org/10 .48550/arXiv .2506 .09985 [6] Z. Fei, M. Fan, and J. Huang, “A-JEPA: joint-embedding predictive architecture can listen,” CoRR ,vol. abs/2311.15830, 2023. [Online]. Available: https: //doi .org/10 .48550/arXiv .2311 .15830 [7] L. Tuncay, E. Labbé, E. Benetos, and T. Pelle-grini, “Audio-jepa: Joint-embedding predictive archi-tecture for audio representation learning,” CoRR ,vol. abs/2507.02915, 2025. [Online]. Available: https://doi .org/10 .48550/arXiv .2507 .02915 [8] A. Riou, S. Lattner, G. Hadjeres, and G. Peeters, “Investigating design choices in joint-embedding predictive architectures for general audio repre-sentation learning,” in IEEE International Con-ference on Acoustics, Speech, and Signal Pro-cessing, ICASSP 2024 - Workshops, Seoul, Re-public of Korea, April 14-19, 2024 . IEEE, 2024, pp. 680–684. [Online]. Available: https: //doi .org/10 .1109/ICASSPW62465 .2024 .10626360 [9] A. Riou, S. Lattner, G. Hadjeres, M. Anslow, and G. Peeters, “Stem-jepa: A joint-embedding predictive architecture for musical stem compatibility estimation,” in Proceedings of the 25th International Society for Music Information Retrieval Conference, ISMIR 2024, San Francisco, California, USA and Online, November 10-14, 2024 , B. Kaneshiro, G. J. Mysore, O. Nieto, C. Donahue, C. A. Huang, J. H. Lee, B. McFee, and M. C. McCallum, Eds., 2024, pp. 625–633. [Online]. Available: https: //doi .org/10 .5281/zenodo .14877415 [10] Y. Kong, G. Meseguer-Brocal, V. Lostanlen, M. La-grange, and R. Hennequin, “Emergent musical properties of a transformer under contrastive self-supervised learning,” in Proceedings of the 26th International Society for Music Information Retrieval Conference, ISMIR 2025, Daejeon, South Korea, September 21-25, 2025 , J. Nam, D. Jeong, K. Choi, L. Su, M. Fuentes, T. Nakano, X. Hu, and H. H. Dong, Eds., 2025, pp. 235–243. [Online]. Available: https://doi .org/10 .5281/zenodo .17811358 [11] J. Spijkervet and J. A. Burgoyne, “Contrastive learning of musical representations,” in Proceedings of the 22nd International Society for Music Information Retrieval Conference, ISMIR 2021, Online, November 7-12, 2021 , J. H. Lee, A. Lerch, Z. Duan, J. Nam, P. Rao, P. van Kranenburg, and A. Srinivasamurthy, Eds., 2021, pp. 673–681. [Online]. Available: https: //archives .ismir .net/ismir2021/paper/000084 .pdf [12] P. Huang, H. Xu, J. Li, A. Baevski, M. Auli, W. Galuba, F. Metze, and C. Feichtenhofer, “Masked autoencoders that listen,” in Advances in Neural Information Processing Systems 35: Annual Conference on Neural Information Processing Systems 2022, NeurIPS 2022, New Orleans, LA, USA, November 28 - December 9, 2022 , S. Koyejo, S. Mohamed, A. Agarwal, D. Belgrave, K. Cho, and A. Oh, Eds., 2022. [Online]. Available: http : / / papers .nips .cc / paper _ files / paper / 2022 / hash / b89d5e209990b19e33b418e14f323998 - Abstract -Conference .html [13] Y. Li, R. Yuan, G. Zhang, Y. Ma, X. Chen, H. Yin, C. Xiao, C. Lin, A. Ragni, E. Benetos, N. Gyenge, R. Dannenberg, R. Liu, W. Chen, G. Xia, Y. Shi, W. Huang, Z. Wang, Y. Guo, and J. Fu, “MERT: Acoustic Music Understanding Model with Large-Scale Self-supervised Training,” in 
+
+The Twelfth International Conference on Learning Representations , 2024. [Online]. Available: https: //openreview .net/forum?id=w3YZ9MSlBu [14] Z. Cai, A. Ravichandran, S. Maji, C. C. Fowlkes, Z. Tu, and S. Soatto, “Exponential moving av-erage normalization for self-supervised and semi-supervised learning,” in IEEE Conference on Computer Vision and Pattern Recognition, CVPR 2021, virtual, June 19-25, 2021 . Computer Vi-sion Foundation / IEEE, 2021, pp. 194–203. [Online]. Available: https://openaccess .thecvf .com/ content/CVPR2021/html/Cai_Exponential_Moving_ Average _ Normalization _ for _ Self - Supervised _ and _ Semi-Supervised_Learning_CVPR_2021_paper .html [15] J. Marino, A. Piché, A. D. Ialongo, and Y. Yue, “Iterative amortized policy optimization,” in Ad-vances in Neural Information Processing Systems 34: Annual Conference on Neural Information Pro-cessing Systems 2021, NeurIPS 2021, December 6-14, 2021, virtual , M. Ranzato, A. Beygelzimer, Y. N. Dauphin, P. Liang, and J. W. Vaughan, Eds., 2021, pp. 15 667–15 681. [Online]. Avail-able: https://proceedings .neurips .cc/paper/2021/hash/ 83fa5a432ae55c253d0e60dbfa716723-Abstract .html [16] H. Zhang, K. Fang, Z. Wang, and I. Fujinaga, “High-resolution sustain pedal depth estimation from piano audio across room acoustics,” in Proceedings of the 26th International Society for Music Information Retrieval Conference, ISMIR 2025, Daejeon, South Korea, September 21-25, 2025 , J. Nam, D. Jeong, K. Choi, L. Su, M. Fuentes, T. Nakano, X. Hu, and H. H. Dong, Eds., 2025, pp. 589–595. [Online]. Available: https://doi .org/10 .5281/zenodo .17811439 [17] E. P. Xing, M. Deng, J. Hou, and Z. Hu, “Critiques of world models,” CoRR , vol. abs/2507.05169, 2025. [Online]. Available: https://doi .org/10 .48550/ arXiv .2507 .05169 [18] J. Xiang, Y. Gu, Z. Liu, Z. Feng, Q. Gao, Y. Hu, B. Huang, G. Liu, Y. Yang, K. Zhou, D. Abrahamyan, A. Ahmad, G. Bannur, J. Chen, K. Chen, M. Deng, R. Han, X. Huang, H. Kang, Z. Li, E. Ma, H. Ren, Y. Shinde, R. Shingre, R. Tanikella, K. Tao, D. Yang, X. Yu, C. Zeng, B. Zhou, H. Liu, Z. Hu, and E. P. Xing, “PAN: A world model for general, interactable, and long-horizon world simulation,” 
+
+CoRR , vol. abs/2511.09057, 2025. [Online]. Available: https://doi .org/10 .48550/arXiv .2511 .09057 [19] W. Huang, Y. Chao, A. Mousavian, M. Liu, D. Fox, K. Mo, and L. Fei-Fei, “Pointworld: Scaling 3d world models for in-the-wild robotic manipulation,” 
+
+CoRR , vol. abs/2601.03782, 2026. [Online]. Available: https://doi .org/10 .48550/arXiv .2601 .03782 [20] K. Friston, “A theory of cortical responses,” Philosoph-ical transactions of the Royal Society B: Biological sci-ences , vol. 360, no. 1456, pp. 815–836, 2005. [21] C. L. Krumhansl, Cognitive Foundations of Musical Pitch . Oxford University Press, 2001. [22] J. London, Hearing in Time: Psychological Aspects of Musical Meter . Oxford University Press, 2012. [23] J. Zhu, R. Shwartz-Ziv, Y. Chen, and Y. Le-Cun, “Variance-covariance regularization improves representation learning,” CoRR , vol. abs/2306.13292, 2023. [Online]. Available: https://doi .org/10 .48550/ arXiv .2306 .13292 [24] M. Caron, H. Touvron, I. Misra, H. Jé-gou, J. Mairal, P. Bojanowski, and A. Joulin, “Emerging properties in self-supervised vision transformers,” in 2021 IEEE/CVF International Conference on Computer Vision, ICCV 2021, Montreal, QC, Canada, October 10-17, 2021 .IEEE, 2021, pp. 9630–9640. [Online]. Available: https://doi .org/10 .1109/ICCV48922 .2021 .00951 [25] R. Balestriero and Y. LeCun, “Lejepa: Provable and scalable self-supervised learning without the heuris-tics,” CoRR , vol. abs/2511.08544, 2025. [Online]. Available: https://doi .org/10 .48550/arXiv .2511 .08544 [26] J. Wilkins, S. Ding, M. Fuentes, and J. P. Bello, “Balancing information preservation and disentangle-ment in self-supervised music representation learn-ing,” in IEEE Workshop on Applications of Sig-nal Processing to Audio and Acoustics, WASPAA 2025, Tahoe City, CA, USA, October 12-15, 2025 .IEEE, 2025, pp. 1–5. [Online]. Available: https: //doi .org/10 .1109/WASPAA66052 .2025 .11230932 [27] J. Anton, H. Coppock, P. Shukla, and B. W. Schuller, “Audio barlow twins: Self-supervised audio represen-tation learning,” in ICASSP 2023-2023 IEEE Inter-national Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 2023, pp. 1–5. [28] A. Riou, S. Lattner, G. Hadjeres, and G. Peeters, “PESTO: pitch estimation with self-supervised transposition-equivariant objective,” in Proceedings of the 24th International Society for Music Informa-tion Retrieval Conference, ISMIR 2023, Milan, Italy, November 5-9, 2023 , A. Sarti, F. Antonacci, M. San-dler, P. Bestagini, S. Dixon, B. Liang, G. Richard, and J. Pauwels, Eds., 2023, pp. 535–544. [Online]. Available: https://doi .org/10 .5281/zenodo .10265343 [29] Y. Wu, Z. Wang, B. Raj, and G. Xia, “Unsupervised disentanglement of content and style via variance-invariance constraints,” in The Thirteenth International Conference on Learning Representations, ICLR 2025, Singapore, April 24-28, 2025 . OpenReview.net, 2025. [Online]. Available: https://openreview .net/forum?id= Lut5t3qElA [30] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weis-senborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, and N. Houlsby, “An image is worth 16x16 words: Transformers for image recognition at scale,” in 9th International Conference on Learning Representa-tions, ICLR 2021, Virtual Event, Austria, May 3-7, 2021 . OpenReview.net, 2021. [Online]. Available: https://openreview .net/forum?id=YicbFdNTTy [31] A. Parthasarathy, N. Kalra, R. Agrawal, Y. LeCun, O. Bounou, P. Izmailov, and M. Goldblum, “Closing the train-test gap in world models for gradient-based planning,” CoRR , vol. abs/2512.09929, 2025. [Online]. Available: https://doi .org/10 .48550/arXiv .2512 .09929 [32] Y. Wang, O. Bounou, G. Zhou, R. Balestriero, T. G. J. Rudner, Y. LeCun, and M. Ren, “Tem-poral straightening for latent planning,” CoRR ,vol. abs/2603.12231, 2026. [Online]. Available: https://doi .org/10 .48550/arXiv .2603 .12231 [33] B. Amos, “Tutorial on amortized optimization for learning to optimize over continuous domains,” 
+
+CoRR , vol. abs/2202.00665, 2022. [Online]. Available: https://arxiv .org/abs/2202 .00665 [34] H. Nguyen, X. Xu, and X. Huang, “Latent geometry beyond search: Amortizing planning in world models,” 2026. [Online]. Available: https://arxiv .org/ abs/2605 .08732 [35] C. Hawthorne, A. Stasyuk, A. Roberts, I. Si-mon, C.-Z. A. Huang, S. Dieleman, E. Elsen, J. Engel, and D. Eck, “Enabling factorized piano music modeling and generation with the MAE-STRO dataset,” in International Conference on Learning Representations , 2019. [Online]. Available: https://openreview .net/forum?id=r1lYRjC9F7 [36] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,” in 3rd International Conference on Learning Representations, ICLR 2015, San Diego, CA, USA, May 7-9, 2015, Conference Track Proceedings , Y. Bengio and Y. LeCun, Eds., 2015. [Online]. Available: http://arxiv .org/abs/1412 .6980 [37] J.-B. Grill, F. Strub, F. Altché, C. Tallec, P. Richemond, E. Buchatskaya, C. Doersch, B. Avila Pires, Z. Guo, M. Gheshlaghi Azar, B. Piot, k. kavukcuoglu, R. Munos, and M. Valko, “Bootstrap your own latent - a new approach to self-supervised learning,” in 
+
+Advances in Neural Information Processing Systems ,H. Larochelle, M. Ranzato, R. Hadsell, M. Balcan, and H. Lin, Eds., vol. 33. Curran Associates, Inc., 2020, pp. 21 271–21 284. [Online]. Available: https://proceedings .neurips .cc/paper_files/paper/2020/ file/f3ada80d5c4ee70142b17b8192b2958e-Paper .pdf [38] F. Foscarin, A. McLeod, P. Rigaux, F. Jacquemard, and M. Sakai, “ASAP: a dataset of aligned scores and performances for piano transcription,” in Proceedings of the 21th International Society for Music Information Retrieval Conference, ISMIR 2020, Montreal, Canada, October 11-16, 2020 , J. Cumming, J. H. Lee, B. McFee, M. Schedl, J. Devaney, C. McKay, E. Zangerle, and T. de Reuse, Eds., 2020, pp. 534– 541. [Online]. Available: http://archives .ismir .net/ ismir2020/paper/000127 .pdf [39] F. Foscarin, J. Schlüter, and G. Widmer, “Beat this! accurate beat tracking without DBN postprocessing,” in Proceedings of the 25th International Society for Music Information Retrieval Conference, ISMIR 2024, San Francisco, California, USA and Online, November 10-14, 2024 , B. Kaneshiro, G. J. Mysore, O. Nieto, C. Donahue, C. A. Huang, J. H. Lee, B. McFee, and M. C. McCallum, Eds., 2024, pp. 962–969. [Online]. Available: https://doi .org/10 .5281/zenodo .14877491 [40] S. Böck, F. Korzeniowski, J. Schlüter, F. Krebs, and G. Widmer, “madmom: a new Python Audio and Mu-sic Signal Processing Library,” in Proceedings of the 24th ACM International Conference on Multimedia ,Amsterdam, The Netherlands, 10 2016, pp. 1174– 1178. [41] Q. Kong, B. Li, X. Song, Y. Wan, and Y. Wang, “High-resolution piano transcription with pedals by regressing onset and offset times,” IEEE ACM Trans. Audio Speech Lang. Process. , vol. 29, pp. 3707–3717, 2021. [Online]. Available: https://doi .org/10 .1109/ TASLP .2021 .3121991 [42] Y. Yan and Z. Duan, “Scoring time intervals using non-hierarchical transformer for automatic piano transcription,” in Proceedings of the 25th International Society for Music Information Retrieval Conference, ISMIR 2024, San Francisco, California, USA and Online, November 10-14, 2024 , B. Kaneshiro, G. J. Mysore, O. Nieto, C. Donahue, C. A. Huang, J. H. Lee, B. McFee, and M. C. McCallum, Eds., 2024, pp. 973–980. [Online]. Available: https: //doi .org/10 .5281/zenodo .14877493
